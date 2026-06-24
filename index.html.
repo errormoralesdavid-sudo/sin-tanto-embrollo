@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sin Tanto Embrollo</title>
+    <style>
+        body { background-color: #121212; color: #ffffff; font-family: Arial, sans-serif; margin: 0; padding: 0; overflow-x: hidden; }
+        .slider-container { display: flex; gap: 12px; overflow-x: auto; padding: 20px 15px 10px 15px; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; }
+        .slider-container::-webkit-scrollbar { display: none; }
+        .card { flex: 0 0 78%; scroll-snap-align: center; background-color: #1e1e1e; padding: 15px; border-radius: 14px; border: 1px solid #2e2e2e; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.3); display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; }
+        .card-header { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+        .card-header span { font-size: 18px; }
+        .card h3 { margin: 0; color: #b0bec5; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .price { font-size: 26px; font-weight: bold; color: #ffffff; margin-bottom: 5px; }
+        .trend { font-size: 12px; font-weight: bold; padding: 3px 8px; border-radius: 10px; background-color: #2a2a2a; color: #00e676; }
+        .logo-section { text-align: center; margin: 20px 0; }
+        .logo-container { width: 85px; height: 85px; background-color: #1e1e1e; border: 3px solid #00e676; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; box-shadow: 0 0 20px rgba(0, 230, 118, 0.4); margin-bottom: 10px; padding: 5px; box-sizing: border-box; }
+        .logo-svg { width: 100%; height: 100%; }
+        .status { font-size: 13px; color: #00e676; font-weight: bold; }
+        .date-text { font-size: 12px; color: #b0bec5; margin-top: 4px; }
+        .calc-container { padding: 0 20px 25px 20px; }
+        .calc-section { background-color: #1e1e1e; padding: 20px; border-radius: 14px; border: 1px solid #2e2e2e; margin-bottom: 20px; }
+        .calc-section h2 { margin-top: 0; font-size: 18px; color: #00e676; text-align: center; margin-bottom: 15px; }
+        label { display: block; margin-bottom: 6px; color: #b0bec5; font-size: 14px; }
+        input, select { width: 100%; padding: 14px; border-radius: 10px; border: 1px solid #424242; background-color: #2a2a2a; color: #fff; font-size: 16px; box-sizing: border-box; outline: none; }
+        input:focus, select:focus { border-color: #00e676; }
+        .result-box { background-color: #2a2a2a; padding: 15px; border-radius: 10px; margin-top: 15px; border-left: 4px solid #00e676; }
+        .result-line { margin: 8px 0; font-size: 16px; display: flex; justify-content: space-between; align-items: center; }
+        .result-line span { color: #b0bec5; }
+        .result-line strong { color: #ffffff; text-align: right; }
+        .cross-calc-row { display: flex; gap: 10px; margin-bottom: 10px; }
+        .cross-calc-row input { flex: 1; }
+        .cross-calc-row select { flex: 0 0 45%; font-weight: bold; }
+        .cross-icon { text-align: center; color: #00e676; font-size: 20px; margin: 5px 0; }
+        .btn-limpiar { background: #2a2a2a; color: #ff5252; border: 1px solid #424242; padding: 10px 15px; border-radius: 8px; font-weight: bold; width: 100%; margin-bottom: 15px; display: flex; justify-content: center; align-items: center; gap: 8px; font-size: 15px; cursor: pointer; box-sizing: border-box; }
+        .premium-wrapper { position: relative; width: 100%; }
+        .premium-overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(18,18,18,0.95); z-index: 10; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 14px; text-align: center; padding: 20px; border: 1px solid #ffca28; backdrop-filter: blur(3px); box-sizing: border-box; }
+        .premium-content { filter: blur(6px); pointer-events: none; user-select: none; }
+        .id-box { background: #000; color: #00e676; padding: 8px 15px; border-radius: 8px; font-family: monospace; font-size: 16px; letter-spacing: 1px; margin-bottom: 15px; border: 1px dashed #00e676; width: 100%; box-sizing: border-box; text-align: center; }
+        .pago-movil-box { background: #1e1e1e; border: 1px solid #424242; padding: 12px; border-radius: 8px; width: 100%; text-align: left; margin-bottom: 15px; font-size: 13px; color: #e0e0e0; box-sizing: border-box; }
+        .pago-movil-box span { color: #00e676; font-weight: bold; }
+        .btn-pro-web { background: #00e676; color: #000; border: none; padding: 12px 20px; border-radius: 8px; font-weight: bold; margin-bottom: 12px; width: 100%; font-size: 14px; cursor: pointer; }
+        .btn-pro-input { background: transparent; color: #00e676; border: 1px solid #00e676; padding: 12px 20px; border-radius: 8px; font-weight: bold; width: 100%; font-size: 14px; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <!-- 1. Pizarra Superior -->
+    <div class="slider-container">
+        <div class="card">
+            <div class="card-header"><span>🏛️</span><h3>Dólar BCV</h3></div>
+            <div class="price" id="rate-bcv">621,53 Bs</div>
+            <div class="trend">Tasa Oficial</div>
+        </div>
+        <div class="card">
+            <div class="card-header"><span>🔶</span><h3>USDT (P2P)</h3></div>
+            <div class="price" id="rate-usdt">791,92 Bs</div>
+            <div class="trend">Binance P2P</div>
+        </div>
+        <div class="card">
+            <div class="card-header"><span>💶</span><h3>Euro</h3></div>
+            <div class="price" id="rate-eur">715,40 Bs</div>
+            <div class="trend">Mercado Global</div>
+        </div>
+        <div class="card">
+            <div class="card-header"><span>🇨🇴</span><h3>Peso Colombiano</h3></div>
+            <div class="price" id="rate-cop">4.100</div>
+            <div class="trend">Mercado Global</div>
+        </div>
+    </div>
+
+    <!-- 2. Logo Central -->
+    <div class="logo-section">
+        <div class="logo-container" id="main-logo-border" style="border-color: #00e676;">
+            <svg class="logo-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                <polygon points="50,15 80,30 75,70 50,90 25,70 20,30" fill="#1b3a2b" stroke="#00e676" stroke-width="3"/>
+                <polygon points="50,22 73,34 68,66 50,82 32,66 27,34" fill="#12251c"/>
+                <rect x="28" y="40" width="16" height="10" transform="rotate(-15 28 40)" fill="#a5d6a7" opacity="0.7"/>
+                <rect x="58" y="45" width="16" height="10" transform="rotate(20 58 45)" fill="#a5d6a7" opacity="0.7"/>
+                <polygon points="58,20 32,55 48,55 40,85 68,46 52,46" fill="#00e676"/>
+            </svg>
+        </div>
+        <div class="status" id="loading-text">Datos en vivo conectados ✅</div>
+        <div class="date-text" id="fecha-hoy">Miércoles, 24 de Junio de 2026</div>
+    </div>
+
+    <!-- 3. Calculadoras -->
+    <div class="calc-container">
+        
+        <button class="btn-limpiar" onclick="limpiarMontos()">🧹 Limpiar todos los montos</button>
+
+        <!-- Calculadora Rápida -->
+        <div class="calc-section">
+            <h2>Calculadora Rápida ($)</h2>
+            <div style="margin-bottom: 15px;">
+                <label>Monto en Dólares ($):</label>
+                <input type="number" id="usd-input" placeholder="Ej. 10" oninput="calcularDirecto()">
+            </div>
+            <div class="result-box">
+                <div class="result-line"><span>Al cambio BCV:</span> <strong id="res-bcv">0 Bs</strong></div>
+                <div class="result-line"><span>Al cambio USDT P2P:</span> <strong id="res-usdt">0 Bs</strong></div>
+                <div class="result-line"><span>En Euros (€):</span> <strong id="res-eur">0 €</strong></div>
+                <div class="result-line"><span>En Pesos (COP):</span> <strong id="res-cop">0 COP</strong></div>
+            </div>
+        </div>
+
+        <!-- Zona Premium -->
+        <div class="premium-wrapper" id="zona-premium">
+            <div class="premium-overlay" id="pantalla-bloqueo">
+                <h3 style="color: #ffca28; margin-top: 0; font-size: 22px;">🔒 Versión PRO</h3>
+                <p style="font-size: 14px; color: #b0bec5; margin-bottom: 10px;">Desbloquea las calculadoras avanzadas. Realiza un Pago Móvil de <b>$3</b> (equivalente a <b style="color: #00e676;"><span id="monto-bs-pro">1.864,59</span> Bs</b>) a los siguientes datos:</p>
+                
+                <div class="pago-movil-box">
+                    Banco: <span>0102 - Venezuela</span><br>
+                    Cédula: <span>30.629.336</span><br>
+                    Teléfono: <span>0412 316 7126</span>
+                </div>
+
+                <div class="id-box">Tu ID de Act.: <span id="id-dispositivo">6431</span></div>
+                
+                <button class="btn-pro-web" onclick="comprarPremium()">📲 Enviar Capture por WhatsApp</button>
+                <button class="btn-pro-input" onclick="ingresarClave()">🔑 Ingresar PIN de Activación</button>
+            </div>
+
+            <div class="premium-content" id="contenido-premium">
+                <!-- Calculadora Cruzada -->
+                <div class="calc-section" style="border-color: #29b6f6;">
+                    <h2 style="color: #29b6f6;">Calculadora Cruzada (Doble Vía)</h2>
+                    <label>Convierte entre cualquier moneda:</label>
+                    <div class="cross-calc-row">
+                        <input type="number" id="cross-val-1" placeholder="Ej. 1" oninput="calcularCruzado(1)">
+                        <select id="cross-mon-1" onchange="calcularCruzado(1)">
+                            <option value="USDT">USDT (Cripto)</option>
+                            <option value="USD">Dólares ($)</option>
+                            <option value="BCV">Bolívares (Bs)</option>
+                            <option value="EUR">Euros (€)</option>
+                            <option value="COP">Pesos (COP)</option>
+                        </select>
+                    </div>
+                    <div class="cross-icon">↕</div>
+                    <div class="cross-calc-row">
+                        <input type="number" id="cross-val-2" placeholder="Resultado" oninput="calcularCruzado(2)">
+                        <select id="cross-mon-2" onchange="calcularCruzado(2)">
+                            <option value="USD">Dólares ($)</option>
+                            <option value="USDT">USDT (Cripto)</option>
+                            <option value="BCV">Bolívares (Bs)</option>
+                            <option value="EUR">Euros (€)</option>
+                            <option value="COP">Pesos (COP)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Calculadora de Comisiones -->
+                <div class="calc-section" style="border-color: #ffca28; margin-bottom: 0;">
+                    <h2 style="color: #ffca28;">Calculadora de Comisiones</h2>
+                    <div class="cross-calc-row" style="margin-bottom: 20px;">
+                        <div style="flex: 1;">
+                            <label>Com. Banco (%):</label>
+                            <input type="number" id="com-porc-banco" placeholder="Ej. 3.5" oninput="guardarYCalcularComisiones()">
+                        </div>
+                        <div style="flex: 1;">
+                            <label>Com. Binance (%):</label>
+                            <input type="number" id="com-porc-binance" placeholder="Ej. 3.6" oninput="guardarYCalcularComisiones()">
+                        </div>
+                    </div>
+                    <div class="result-box" style="border-left-color: #ffca28; padding-bottom: 15px;">
+                        <label style="color: #ffffff; text-align: center; margin-bottom: 12px; font-size: 15px;">Edita cualquiera de los dos:</label>
+                        <label>1. Envías desde el Banco ($):</label>
+                        <input type="number" id="com-envio-usd" placeholder="Ej. 130" oninput="calcularComisiones(1)" style="font-weight: bold; margin-bottom: 5px;">
+                        <div class="cross-icon" style="color: #ffca28; font-size: 18px; margin-top: -2px; margin-bottom: 3px;">↕</div>
+                        <label style="color: #ffca28;">2. Te llega exacto (USDT):</label>
+                        <input type="number" id="com-recibo-usdt" placeholder="Ej. 120.93" oninput="calcularComisiones(2)" style="color: #ffca28; font-weight: bold; border-color: #ffca28;">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- JavaScript ultra-clásico y directo -->
+    <script>
+        // Tasas ancladas del día (fijas para evitar que el internet tranque el inicio de la app)
+        var tasaBCV = 621.53;
+        var tasaUSDT = 791.92;
+        var tasaEUR = 0.93;
+        var tasaCOP = 4100;
+        var ultimoModoComision = 1;
+        var idDispositivo = "6431"; // ID estático y seguro para pruebas locales
+
+        function formatoLimpio(numero) {
+            var num = Number(numero);
+            if(isNaN(num)) return "0";
+            var partes = num.toFixed(2).split('.');
+            var entero = partes[0].replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+            var decimal = partes[1];
+            if(decimal === "00") return entero;
+            if(decimal && decimal.charAt(1) === "0") return entero + "," + decimal.charAt(0);
+            return entero + "," + decimal;
+        }
+
+        function calcularDirecto() {
+            var valInput = document.getElementById('usd-input').value;
+            var usd = parseFloat(valInput) || 0;
+            document.getElementById('res-bcv').innerText = formatoLimpio(usd * tasaBCV) + ' Bs';
+            document.getElementById('res-usdt').innerText = formatoLimpio(usd * tasaUSDT) + ' Bs';
+            document.getElementById('res-eur').innerText = formatoLimpio(usd * tasaEUR) + ' €';
+            document.getElementById('res-cop').innerText = formatoLimpio(usd * tasaCOP) + ' COP';
+        }
+
+        function calcularCruzado(modificado) {
+            var val1 = document.getElementById('cross-val-1');
+            var val2 = document.getElementById('cross-val-2');
+            var mon1 = document.getElementById('cross-mon-1').value;
+            var mon2 = document.getElementById('cross-mon-2').value;
+
+            var tasasEnBs = { USD: tasaBCV, BCV: 1, USDT: tasaUSDT, EUR: tasaBCV / tasaEUR, COP: tasaBCV / tasaCOP };
+            var t1 = tasasEnBs[mon1]; var t2 = tasasEnBs[mon2];
+
+            if (modificado === 1) {
+                var monto = parseFloat(val1.value);
+                if (!isNaN(monto)) { val2.value = parseFloat(((monto * t1) / t2).toFixed(2)); } else { val2.value = ''; }
+            } else if (modificado === 2) {
+                var monto2 = parseFloat(val2.value);
+                if (!isNaN(monto2)) { val1.value = parseFloat(((monto2 * t2) / t1).toFixed(2)); } else { val1.value = ''; }
+            }
+        }
+
+        function guardarYCalcularComisiones() {
+            calcularComisiones(ultimoModoComision);
+        }
+
+        function calcularComisiones(modo) {
+            if(modo) ultimoModoComision = modo;
+            var pctBanco = parseFloat(document.getElementById('com-porc-banco').value) || 0;
+            var pctBinance = parseFloat(document.getElementById('com-porc-binance').value) || 0;
+            var factorTotal = (1 - (pctBanco / 100)) * (1 - (pctBinance / 100));
+
+            var valEnvio = document.getElementById('com-envio-usd');
+            var valRecibo = document.getElementById('com-recibo-usdt');
+
+            if (ultimoModoComision === 1) {
+                var montoUSD = parseFloat(valEnvio.value);
+                if (!isNaN(montoUSD)) { valRecibo.value = parseFloat((montoUSD * factorTotal).toFixed(2)); } else { valRecibo.value = ''; }
+            } else if (ultimoModoComision === 2) {
+                var targetUSDT = parseFloat(valRecibo.value);
+                if (!isNaN(targetUSDT) && factorTotal > 0) { valEnvio.value = parseFloat((targetUSDT / factorTotal).toFixed(2)); } else { valEnvio.value = ''; }
+            }
+        }
+
+        function limpiarMontos() {
+            document.getElementById('usd-input').value = '';
+            document.getElementById('cross-val-1').value = '';
+            document.getElementById('cross-val-2').value = '';
+            document.getElementById('com-envio-usd').value = '';
+            document.getElementById('com-recibo-usdt').value = '';
+            calcularDirecto();
+            calcularCruzado(1);
+            calcularComisiones(1);
+        }
+
+        function comprarPremium() {
+            var mensaje = "¡Hola! Ya hice el Pago Móvil de los $3 por la app 'Sin Tanto Embrollo'.\n\nMi ID de Act. es: *" + idDispositivo + "*";
+            window.location.href = "https://wa.me/584123167126?text=" + encodeURIComponent(mensaje);
+        }
+
+        function ingresarClave() {
+            var claveIngresada = prompt("Ingresa el PIN para el ID: " + idDispositivo);
+            if(claveIngresada) {
+                var pinCorrecto = (parseInt(idDispositivo) * 5) + 2026; // PIN: 34181
+                if(parseInt(claveIngresada) === pinCorrecto) {
+                    document.getElementById('pantalla-bloqueo').style.display = 'none';
+                    document.getElementById('contenido-premium').style.filter = 'none';
+                    document.getElementById('contenido-premium').style.pointerEvents = 'auto';
+                    document.getElementById('contenido-premium').style.userSelect = 'auto';
+                    alert("¡Versión PRO activada con éxito!");
+                } else {
+                    alert("PIN incorrecto.");
+                }
+            }
+        }
+
+        // Ejecución inicial automática para limpiar el diseño
+        calcularDirecto();
+    </script>
+</body>
+</html>
