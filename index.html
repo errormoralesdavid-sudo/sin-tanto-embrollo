@@ -157,11 +157,11 @@
                     <div class="cross-calc-row" style="margin-bottom: 20px;">
                         <div style="flex: 1;">
                             <label>Com. Banco (%):</label>
-                            <input type="number" id="com-porc-banco" placeholder="Ej. 0.5" value="0.5" oninput="actualizarComisionesManual(this.value, 'banco')">
+                            <input type="number" id="com-porc-banco" placeholder="Ej. 0.5" oninput="actualizarComisionesManual(this.value, 'banco')">
                         </div>
                         <div style="flex: 1;">
                             <label>Com. Binance (%):</label>
-                            <input type="number" id="com-porc-binance" placeholder="Ej. 4.1" value="4.1" oninput="actualizarComisionesManual(this.value, 'binance')">
+                            <input type="number" id="com-porc-binance" placeholder="Ej. 4.1" oninput="actualizarComisionesManual(this.value, 'binance')">
                         </div>
                     </div>
                     <div class="result-box" style="border-left-color: #ffca28; padding-bottom: 15px;">
@@ -211,9 +211,6 @@
         var ultimoModoComision = 1;
         var idDispositivo = "6431"; 
 
-        document.getElementById('arb-tasa-compra').value = tasaBCV;
-        document.getElementById('arb-tasa-venta').value = tasaUSDT;
-
         function formatoLimpio(numero) {
             var num = Number(numero);
             if(isNaN(num)) return "0";
@@ -252,7 +249,6 @@
             }
         }
 
-        // Nueva lógica para capturar y guardar las comisiones cuando las edites
         function actualizarComisionesManual(valor, tipo) {
             if(tipo === 'banco') {
                 localStorage.setItem('com_banco_saved', valor);
@@ -310,4 +306,12 @@
             document.getElementById('cross-val-2').value = '';
             document.getElementById('com-envio-usd').value = '';
             document.getElementById('com-recibo-usdt').value = '';
-            document.ge
+            document.getElementById('arb-bs-inicial').value = '';
+            calcularDirecto();
+            calcularCruzado(1);
+            calcularComisiones(1);
+            calcularArbitraje();
+        }
+
+        function comprarPremium() {
+            var mensa
