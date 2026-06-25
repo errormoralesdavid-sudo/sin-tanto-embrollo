@@ -174,7 +174,7 @@
                     </div>
                 </div>
 
-                <!-- NUEVA SECCIÓN: Calculadora de Arbitraje y Margen -->
+                <!-- Calculadora de Arbitraje y Margen -->
                 <div class="calc-section" style="border-color: #00e676; margin-bottom: 0;">
                     <h2 style="color: #00e676;">Calculadora de Arbitraje (Ganancias)</h2>
                     <div style="margin-bottom: 12px;">
@@ -204,15 +204,13 @@
 
     <!-- JavaScript ultra-clásico y directo -->
     <script>
-        // Tasas corregidas con los valores reales del mercado (2026)
         var tasaBCV = 621.53;
         var tasaUSDT = 791.92;
-        var tasaEUR = 707.43; // Expresado directamente en Bolívares por Euro
-        var tasaCOP = 3437;   // Pesos Colombianos por Dólar
+        var tasaEUR = 707.43; 
+        var tasaCOP = 3437;   
         var ultimoModoComision = 1;
         var idDispositivo = "6431"; 
 
-        // Inicializamos los valores por defecto en los inputs de Arbitraje para facilitarte la vida
         document.getElementById('arb-tasa-compra').value = tasaBCV;
         document.getElementById('arb-tasa-venta').value = tasaUSDT;
 
@@ -242,14 +240,7 @@
             var mon1 = document.getElementById('cross-mon-1').value;
             var mon2 = document.getElementById('cross-mon-2').value;
 
-            // Base de tasas referenciadas al valor en Bolívares (Bs)
-            var tasasEnBs = { 
-                USD: tasaBCV, 
-                BCV: 1, 
-                USDT: tasaUSDT, 
-                EUR: tasaEUR, 
-                COP: tasaBCV / tasaCOP 
-            };
+            var tasasEnBs = { USD: tasaBCV, BCV: 1, USDT: tasaUSDT, EUR: tasaEUR, COP: tasaBCV / tasaCOP };
             var t1 = tasasEnBs[mon1]; var t2 = tasasEnBs[mon2];
 
             if (modificado === 1) {
@@ -283,19 +274,16 @@
             }
         }
 
-        // Nueva función lógica para el cálculo de ganancias netas (Arbitraje)
         function calcularArbitraje() {
             var bsInicial = parseFloat(document.getElementById('arb-bs-inicial').value) || 0;
             var tasaCompra = parseFloat(document.getElementById('arb-tasa-compra').value) || tasaBCV;
             var tasaVenta = parseFloat(document.getElementById('arb-tasa-venta').value) || tasaUSDT;
 
-            // Comisiones activas desde la sección superior para que todo se conecte de forma inteligente
             var pctBanco = parseFloat(document.getElementById('com-porc-banco').value) || 0;
             var pctBinance = parseFloat(document.getElementById('com-porc-binance').value) || 0;
             var factorTotal = (1 - (pctBanco / 100)) * (1 - (pctBinance / 100));
 
             if (bsInicial > 0 && tasaCompra > 0) {
-                // Convertimos de Bs a Dólares, aplicamos comisiones de red y luego vendemos en P2P
                 var usdComprados = bsInicial / tasaCompra;
                 var usdtNetos = usdComprados * factorTotal;
                 var bsFinales = usdtNetos * tasaVenta;
@@ -327,15 +315,21 @@
             window.location.href = "https://wa.me/584123167126?text=" + encodeURIComponent(mensaje);
         }
 
+        // Modificamos esta función para que guarde la activación en el teléfono
+        function activarVistaPro() {
+            document.getElementById('pantalla-bloqueo').style.display = 'none';
+            document.getElementById('contenido-premium').style.filter = 'none';
+            document.getElementById('contenido-premium').style.pointerEvents = 'auto';
+            document.getElementById('contenido-premium').style.userSelect = 'auto';
+        }
+
         function ingresarClave() {
             var claveIngresada = prompt("Ingresa el PIN para el ID: " + idDispositivo);
             if(claveIngresada) {
                 var pinCorrecto = (parseInt(idDispositivo) * 5) + 2026; 
                 if(parseInt(claveIngresada) === pinCorrecto) {
-                    document.getElementById('pantalla-bloqueo').style.display = 'none';
-                    document.getElementById('contenido-premium').style.filter = 'none';
-                    document.getElementById('contenido-premium').style.pointerEvents = 'auto';
-                    document.getElementById('contenido-premium').style.userSelect = 'auto';
+                    localStorage.setItem('premium_activo', 'true'); // ¡Guardado permanente!
+                    activarVistaPro();
                     alert("¡Versión PRO activada con éxito!");
                 } else {
                     alert("PIN incorrecto.");
@@ -343,8 +337,13 @@
             }
         }
 
-        // Ejecución inicial automática
-        calcularDirecto();
+        // Al iniciar la app, revisa automáticamente si el usuario ya puso el PIN antes
+        window.onload = function() {
+            if (localStorage.getItem('premium_activo') === 'true') {
+                activarVistaPro();
+            }
+            calcularDirecto();
+        };
     </script>
 </body>
 </html>
