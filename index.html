@@ -46,7 +46,6 @@
 </head>
 <body>
 
-    <!-- 1. Pizarra Superior -->
     <div class="slider-container">
         <div class="card">
             <div class="card-header"><span>🏛️</span><h3>Dólar BCV</h3></div>
@@ -70,7 +69,6 @@
         </div>
     </div>
 
-    <!-- 2. Logo Central -->
     <div class="logo-section">
         <div class="logo-container" id="main-logo-border" style="border-color: #00e676;">
             <svg class="logo-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
@@ -85,12 +83,10 @@
         <div class="date-text" id="fecha-hoy">Miércoles, 24 de Junio de 2026</div>
     </div>
 
-    <!-- 3. Calculadoras -->
     <div class="calc-container">
         
         <button class="btn-limpiar" onclick="limpiarMontos()">🧹 Limpiar todos los montos</button>
 
-        <!-- Calculadora Rápida -->
         <div class="calc-section">
             <h2>Calculadora Rápida ($)</h2>
             <div style="margin-bottom: 15px;">
@@ -105,7 +101,6 @@
             </div>
         </div>
 
-        <!-- Zona Premium -->
         <div class="premium-wrapper" id="zona-premium">
             <div class="premium-overlay" id="pantalla-bloqueo">
                 <h3 style="color: #ffca28; margin-top: 0; font-size: 22px;">🔒 Versión PRO</h3>
@@ -124,7 +119,6 @@
             </div>
 
             <div class="premium-content" id="contenido-premium">
-                <!-- Calculadora Cruzada -->
                 <div class="calc-section" style="border-color: #29b6f6;">
                     <h2 style="color: #29b6f6;">Calculadora Cruzada (Doble Vía)</h2>
                     <label>Convierte entre cualquier moneda:</label>
@@ -151,17 +145,16 @@
                     </div>
                 </div>
 
-                <!-- Calculadora de Comisiones -->
                 <div class="calc-section" style="border-color: #ffca28; margin-bottom: 20px;">
                     <h2 style="color: #ffca28;">Calculadora de Comisiones</h2>
                     <div class="cross-calc-row" style="margin-bottom: 20px;">
                         <div style="flex: 1;">
                             <label>Com. Banco (%):</label>
-                            <input type="number" id="com-porc-banco" placeholder="Ej. 3.5" oninput="guardarYCalcularComisiones()">
+                            <input type="number" id="com-porc-banco" placeholder="Ej. 0.5" value="0.5" oninput="guardarYCalcularComisiones(); calcularArbitraje();">
                         </div>
                         <div style="flex: 1;">
                             <label>Com. Binance (%):</label>
-                            <input type="number" id="com-porc-binance" placeholder="Ej. 3.6" oninput="guardarYCalcularComisiones()">
+                            <input type="number" id="com-porc-binance" placeholder="Ej. 4.1" value="4.1" oninput="guardarYCalcularComisiones(); calcularArbitraje();">
                         </div>
                     </div>
                     <div class="result-box" style="border-left-color: #ffca28; padding-bottom: 15px;">
@@ -174,7 +167,6 @@
                     </div>
                 </div>
 
-                <!-- Calculadora de Arbitraje y Margen -->
                 <div class="calc-section" style="border-color: #00e676; margin-bottom: 0;">
                     <h2 style="color: #00e676;">Calculadora de Arbitraje (Ganancias)</h2>
                     <div style="margin-bottom: 12px;">
@@ -183,7 +175,7 @@
                     </div>
                     <div class="cross-calc-row" style="margin-bottom: 12px;">
                         <div style="flex: 1;">
-                            <label>Tasa Compra ($/Bs):</label>
+                            <label>Tasa Compra Banco ($/Bs):</label>
                             <input type="number" id="arb-tasa-compra" placeholder="Ej. 621.53" oninput="calcularArbitraje()">
                         </div>
                         <div style="flex: 1;">
@@ -193,7 +185,7 @@
                     </div>
                     <div class="result-box" style="border-left-color: #00e676;">
                         <div class="result-line"><span>Monto tras venta:</span> <strong id="arb-res-final" style="color: #00e676;">0 Bs</strong></div>
-                        <div class="result-line"><span>Ganancia Neta:</span> <strong id="arb-res-ganancia" style="color: #00e676; font-size: 18px;">0 Bs</strong></div>
+                        <div class="result-line"><span>Ganancia Neta (Comisiones Restadas):</span> <strong id="arb-res-ganancia" style="color: #00e676; font-size: 18px;">0 Bs</strong></div>
                     </div>
                 </div>
 
@@ -202,7 +194,6 @@
 
     </div>
 
-    <!-- JavaScript ultra-clásico y directo -->
     <script>
         var tasaBCV = 621.53;
         var tasaUSDT = 791.92;
@@ -279,13 +270,14 @@
             var tasaCompra = parseFloat(document.getElementById('arb-tasa-compra').value) || tasaBCV;
             var tasaVenta = parseFloat(document.getElementById('arb-tasa-venta').value) || tasaUSDT;
 
+            // Extrae los porcentajes dinámicos de las cajas superiores
             var pctBanco = parseFloat(document.getElementById('com-porc-banco').value) || 0;
             var pctBinance = parseFloat(document.getElementById('com-porc-binance').value) || 0;
             var factorTotal = (1 - (pctBanco / 100)) * (1 - (pctBinance / 100));
 
             if (bsInicial > 0 && tasaCompra > 0) {
                 var usdComprados = bsInicial / tasaCompra;
-                var usdtNetos = usdComprados * factorTotal;
+                var usdtNetos = usdComprados * factorTotal; // Descuenta las comisiones aquí automáticamente
                 var bsFinales = usdtNetos * tasaVenta;
                 var ganancia = bsFinales - bsInicial;
 
@@ -315,7 +307,6 @@
             window.location.href = "https://wa.me/584123167126?text=" + encodeURIComponent(mensaje);
         }
 
-        // Modificamos esta función para que guarde la activación en el teléfono
         function activarVistaPro() {
             document.getElementById('pantalla-bloqueo').style.display = 'none';
             document.getElementById('contenido-premium').style.filter = 'none';
@@ -328,7 +319,7 @@
             if(claveIngresada) {
                 var pinCorrecto = (parseInt(idDispositivo) * 5) + 2026; 
                 if(parseInt(claveIngresada) === pinCorrecto) {
-                    localStorage.setItem('premium_activo', 'true'); // ¡Guardado permanente!
+                    localStorage.setItem('premium_activo', 'true'); 
                     activarVistaPro();
                     alert("¡Versión PRO activada con éxito!");
                 } else {
@@ -337,7 +328,6 @@
             }
         }
 
-        // Al iniciar la app, revisa automáticamente si el usuario ya puso el PIN antes
         window.onload = function() {
             if (localStorage.getItem('premium_activo') === 'true') {
                 activarVistaPro();
