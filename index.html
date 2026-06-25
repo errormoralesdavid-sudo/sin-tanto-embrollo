@@ -6,7 +6,8 @@
     <title>Sin Tanto Embrollo</title>
     <style>
         body { background-color: #121212; color: #ffffff; font-family: Arial, sans-serif; margin: 0; padding: 0; overflow-x: hidden; }
-        .slider-container { display: flex; gap: 12px; overflow-x: auto; padding: 20px 15px 10px 15px; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; }
+        /* Slider corregido para mayor fluidez en móviles */
+        .slider-container { display: flex; gap: 12px; overflow-x: auto; padding: 20px 15px 10px 15px; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; scroll-behavior: smooth; }
         .slider-container::-webkit-scrollbar { display: none; }
         .card { flex: 0 0 78%; scroll-snap-align: center; background-color: #1e1e1e; padding: 15px; border-radius: 14px; border: 1px solid #2e2e2e; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.3); display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; }
         .card-header { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
@@ -18,7 +19,7 @@
         .logo-container { width: 85px; height: 85px; background-color: #1e1e1e; border: 3px solid #00e676; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; box-shadow: 0 0 20px rgba(0, 230, 118, 0.4); margin-bottom: 10px; padding: 5px; box-sizing: border-box; }
         .logo-svg { width: 100%; height: 100%; }
         .status { font-size: 13px; color: #00e676; font-weight: bold; }
-        .date-text { font-size: 12px; color: #b0bec5; margin-top: 4px; }
+        .date-text { font-size: 12px; color: #b0bec5; margin-top: 4px; text-transform: capitalize; }
         .calc-container { padding: 0 20px 25px 20px; }
         .calc-section { background-color: #1e1e1e; padding: 20px; border-radius: 14px; border: 1px solid #2e2e2e; margin-bottom: 20px; }
         .calc-section h2 { margin-top: 0; font-size: 18px; color: #00e676; text-align: center; margin-bottom: 15px; }
@@ -46,7 +47,6 @@
 </head>
 <body>
 
-    <!-- 1. Pizarra Superior -->
     <div class="slider-container">
         <div class="card">
             <div class="card-header"><span>🏛️</span><h3>Dólar BCV</h3></div>
@@ -70,7 +70,6 @@
         </div>
     </div>
 
-    <!-- 2. Logo Central -->
     <div class="logo-section">
         <div class="logo-container" id="main-logo-border" style="border-color: #00e676;">
             <svg class="logo-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
@@ -82,15 +81,13 @@
             </svg>
         </div>
         <div class="status" id="loading-text">Datos en vivo conectados ✅</div>
-        <div class="date-text" id="fecha-hoy">Miércoles, 24 de Junio de 2026</div>
+        <div class="date-text" id="fecha-hoy">Cargando fecha...</div>
     </div>
 
-    <!-- 3. Calculadoras -->
     <div class="calc-container">
         
         <button class="btn-limpiar" onclick="limpiarMontos()">🧹 Limpiar todos los montos</button>
 
-        <!-- Calculadora Rápida -->
         <div class="calc-section">
             <h2>Calculadora Rápida ($)</h2>
             <div style="margin-bottom: 15px;">
@@ -105,7 +102,6 @@
             </div>
         </div>
 
-        <!-- Zona Premium -->
         <div class="premium-wrapper" id="zona-premium">
             <div class="premium-overlay" id="pantalla-bloqueo">
                 <h3 style="color: #ffca28; margin-top: 0; font-size: 22px;">🔒 Versión PRO</h3>
@@ -124,7 +120,6 @@
             </div>
 
             <div class="premium-content" id="contenido-premium">
-                <!-- Calculadora Cruzada -->
                 <div class="calc-section" style="border-color: #29b6f6;">
                     <h2 style="color: #29b6f6;">Calculadora Cruzada (Doble Vía)</h2>
                     <label>Convierte entre cualquier moneda:</label>
@@ -151,7 +146,6 @@
                     </div>
                 </div>
 
-                <!-- Calculadora de Comisiones -->
                 <div class="calc-section" style="border-color: #ffca28; margin-bottom: 20px;">
                     <h2 style="color: #ffca28;">Calculadora de Comisiones</h2>
                     <div class="cross-calc-row" style="margin-bottom: 20px;">
@@ -174,7 +168,6 @@
                     </div>
                 </div>
 
-                <!-- Calculadora de Arbitraje y Margen -->
                 <div class="calc-section" style="border-color: #00e676; margin-bottom: 0;">
                     <h2 style="color: #00e676;">Calculadora de Arbitraje (Ganancias)</h2>
                     <div style="margin-bottom: 12px;">
@@ -202,7 +195,6 @@
 
     </div>
 
-    <!-- JavaScript ultra-clásico y directo -->
     <script>
         var tasaBCV = 621.53;
         var tasaUSDT = 791.92;
@@ -314,4 +306,60 @@
         }
 
         function comprarPremium() {
-            var mensa
+            var mensaje = "¡Hola! Ya hice el Pago Móvil de los $3 por la app 'Sin Tanto Embrollo'.\nMi ID de Act. es: *" + idDispositivo + "*";
+            window.location.href = "https://wa.me/584123167126?text=" + encodeURIComponent(mensaje);
+        }
+
+        function activarVistaPro() {
+            document.getElementById('pantalla-bloqueo').style.display = 'none';
+            document.getElementById('contenido-premium').style.filter = 'none';
+            document.getElementById('contenido-premium').style.pointerEvents = 'auto';
+            document.getElementById('contenido-premium').style.userSelect = 'auto';
+        }
+
+        function ingresarClave() {
+            var claveIngresada = prompt("Ingresa el PIN para el ID: " + idDispositivo);
+            if(claveIngresada) {
+                var pinCorrecto = (parseInt(idDispositivo) * 5) + 2026; 
+                if(parseInt(claveIngresada) === pinCorrecto) {
+                    localStorage.setItem('premium_activo', 'true'); 
+                    activarVistaPro();
+                    alert("¡Versión PRO activada con éxito!");
+                } else {
+                    alert("PIN incorrecto.");
+                }
+            }
+        }
+
+        // Script para calcular y escribir la fecha del sistema en vivo
+        function establecerFechaActual() {
+            var opciones = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            var fechaHoy = new Date();
+            var fechaTexto = fechaHoy.toLocaleDateString('es-ES', opciones);
+            document.getElementById('fecha-hoy').innerText = fechaTexto;
+        }
+
+        window.onload = function() {
+            // Cargar fecha automática
+            establecerFechaActual();
+
+            // Verificar estado Premium
+            if (localStorage.getItem('premium_activo') === 'true') {
+                activarVistaPro();
+            }
+            
+            // Cargar o asignar comisiones por defecto de forma segura
+            var savedBanco = localStorage.getItem('com_banco_saved');
+            var savedBinance = localStorage.getItem('com_binance_saved');
+            
+            document.getElementById('com-porc-banco').value = (savedBanco !== null) ? savedBanco : "0.5";
+            document.getElementById('com-porc-binance').value = (savedBinance !== null) ? savedBinance : "4.1";
+
+            document.getElementById('arb-tasa-compra').value = tasaBCV;
+            document.getElementById('arb-tasa-venta').value = tasaUSDT;
+
+            calcularDirecto();
+        };
+    </script>
+</body>
+</html>
