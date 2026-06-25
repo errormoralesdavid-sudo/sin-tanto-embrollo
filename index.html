@@ -60,13 +60,13 @@
         </div>
         <div class="card">
             <div class="card-header"><span>💶</span><h3>Euro</h3></div>
-            <div class="price" id="rate-eur">715,40 Bs</div>
-            <div class="trend">Mercado Global</div>
+            <div class="price" id="rate-eur">707,43 Bs</div>
+            <div class="trend">BCV Oficial</div>
         </div>
         <div class="card">
             <div class="card-header"><span>🇨🇴</span><h3>Peso Colombiano</h3></div>
-            <div class="price" id="rate-cop">4.100</div>
-            <div class="trend">Mercado Global</div>
+            <div class="price" id="rate-cop">3.437</div>
+            <div class="trend">XE Real</div>
         </div>
     </div>
 
@@ -152,7 +152,7 @@
                 </div>
 
                 <!-- Calculadora de Comisiones -->
-                <div class="calc-section" style="border-color: #ffca28; margin-bottom: 0;">
+                <div class="calc-section" style="border-color: #ffca28; margin-bottom: 20px;">
                     <h2 style="color: #ffca28;">Calculadora de Comisiones</h2>
                     <div class="cross-calc-row" style="margin-bottom: 20px;">
                         <div style="flex: 1;">
@@ -173,6 +173,30 @@
                         <input type="number" id="com-recibo-usdt" placeholder="Ej. 120.93" oninput="calcularComisiones(2)" style="color: #ffca28; font-weight: bold; border-color: #ffca28;">
                     </div>
                 </div>
+
+                <!-- NUEVA SECCIÓN: Calculadora de Arbitraje y Margen -->
+                <div class="calc-section" style="border-color: #00e676; margin-bottom: 0;">
+                    <h2 style="color: #00e676;">Calculadora de Arbitraje (Ganancias)</h2>
+                    <div style="margin-bottom: 12px;">
+                        <label>Monto Inicial en Banco (Bs):</label>
+                        <input type="number" id="arb-bs-inicial" placeholder="Ej. 5000" oninput="calcularArbitraje()">
+                    </div>
+                    <div class="cross-calc-row" style="margin-bottom: 12px;">
+                        <div style="flex: 1;">
+                            <label>Tasa Compra ($/Bs):</label>
+                            <input type="number" id="arb-tasa-compra" placeholder="Ej. 621.53" oninput="calcularArbitraje()">
+                        </div>
+                        <div style="flex: 1;">
+                            <label>Tasa Venta P2P:</label>
+                            <input type="number" id="arb-tasa-venta" placeholder="Ej. 791.92" oninput="calcularArbitraje()">
+                        </div>
+                    </div>
+                    <div class="result-box" style="border-left-color: #00e676;">
+                        <div class="result-line"><span>Monto tras venta:</span> <strong id="arb-res-final" style="color: #00e676;">0 Bs</strong></div>
+                        <div class="result-line"><span>Ganancia Neta:</span> <strong id="arb-res-ganancia" style="color: #00e676; font-size: 18px;">0 Bs</strong></div>
+                    </div>
+                </div>
+
             </div>
         </div>
 
@@ -180,13 +204,17 @@
 
     <!-- JavaScript ultra-clásico y directo -->
     <script>
-        // Tasas ancladas del día (fijas para evitar que el internet tranque el inicio de la app)
+        // Tasas corregidas con los valores reales del mercado (2026)
         var tasaBCV = 621.53;
         var tasaUSDT = 791.92;
-        var tasaEUR = 0.93;
-        var tasaCOP = 4100;
+        var tasaEUR = 707.43; // Expresado directamente en Bolívares por Euro
+        var tasaCOP = 3437;   // Pesos Colombianos por Dólar
         var ultimoModoComision = 1;
-        var idDispositivo = "6431"; // ID estático y seguro para pruebas locales
+        var idDispositivo = "6431"; 
+
+        // Inicializamos los valores por defecto en los inputs de Arbitraje para facilitarte la vida
+        document.getElementById('arb-tasa-compra').value = tasaBCV;
+        document.getElementById('arb-tasa-venta').value = tasaUSDT;
 
         function formatoLimpio(numero) {
             var num = Number(numero);
@@ -204,7 +232,7 @@
             var usd = parseFloat(valInput) || 0;
             document.getElementById('res-bcv').innerText = formatoLimpio(usd * tasaBCV) + ' Bs';
             document.getElementById('res-usdt').innerText = formatoLimpio(usd * tasaUSDT) + ' Bs';
-            document.getElementById('res-eur').innerText = formatoLimpio(usd * tasaEUR) + ' €';
+            document.getElementById('res-eur').innerText = formatoLimpio((usd * tasaBCV) / tasaEUR) + ' €';
             document.getElementById('res-cop').innerText = formatoLimpio(usd * tasaCOP) + ' COP';
         }
 
@@ -214,7 +242,14 @@
             var mon1 = document.getElementById('cross-mon-1').value;
             var mon2 = document.getElementById('cross-mon-2').value;
 
-            var tasasEnBs = { USD: tasaBCV, BCV: 1, USDT: tasaUSDT, EUR: tasaBCV / tasaEUR, COP: tasaBCV / tasaCOP };
+            // Base de tasas referenciadas al valor en Bolívares (Bs)
+            var tasasEnBs = { 
+                USD: tasaBCV, 
+                BCV: 1, 
+                USDT: tasaUSDT, 
+                EUR: tasaEUR, 
+                COP: tasaBCV / tasaCOP 
+            };
             var t1 = tasasEnBs[mon1]; var t2 = tasasEnBs[mon2];
 
             if (modificado === 1) {
@@ -248,15 +283,43 @@
             }
         }
 
+        // Nueva función lógica para el cálculo de ganancias netas (Arbitraje)
+        function calcularArbitraje() {
+            var bsInicial = parseFloat(document.getElementById('arb-bs-inicial').value) || 0;
+            var tasaCompra = parseFloat(document.getElementById('arb-tasa-compra').value) || tasaBCV;
+            var tasaVenta = parseFloat(document.getElementById('arb-tasa-venta').value) || tasaUSDT;
+
+            // Comisiones activas desde la sección superior para que todo se conecte de forma inteligente
+            var pctBanco = parseFloat(document.getElementById('com-porc-banco').value) || 0;
+            var pctBinance = parseFloat(document.getElementById('com-porc-binance').value) || 0;
+            var factorTotal = (1 - (pctBanco / 100)) * (1 - (pctBinance / 100));
+
+            if (bsInicial > 0 && tasaCompra > 0) {
+                // Convertimos de Bs a Dólares, aplicamos comisiones de red y luego vendemos en P2P
+                var usdComprados = bsInicial / tasaCompra;
+                var usdtNetos = usdComprados * factorTotal;
+                var bsFinales = usdtNetos * tasaVenta;
+                var ganancia = bsFinales - bsInicial;
+
+                document.getElementById('arb-res-final').innerText = formatoLimpio(bsFinales) + ' Bs';
+                document.getElementById('arb-res-ganancia').innerText = formatoLimpio(ganancia) + ' Bs';
+            } else {
+                document.getElementById('arb-res-final').innerText = '0 Bs';
+                document.getElementById('arb-res-ganancia').innerText = '0 Bs';
+            }
+        }
+
         function limpiarMontos() {
             document.getElementById('usd-input').value = '';
             document.getElementById('cross-val-1').value = '';
             document.getElementById('cross-val-2').value = '';
             document.getElementById('com-envio-usd').value = '';
             document.getElementById('com-recibo-usdt').value = '';
+            document.getElementById('arb-bs-inicial').value = '';
             calcularDirecto();
             calcularCruzado(1);
             calcularComisiones(1);
+            calcularArbitraje();
         }
 
         function comprarPremium() {
@@ -267,7 +330,7 @@
         function ingresarClave() {
             var claveIngresada = prompt("Ingresa el PIN para el ID: " + idDispositivo);
             if(claveIngresada) {
-                var pinCorrecto = (parseInt(idDispositivo) * 5) + 2026; // PIN: 34181
+                var pinCorrecto = (parseInt(idDispositivo) * 5) + 2026; 
                 if(parseInt(claveIngresada) === pinCorrecto) {
                     document.getElementById('pantalla-bloqueo').style.display = 'none';
                     document.getElementById('contenido-premium').style.filter = 'none';
@@ -280,7 +343,7 @@
             }
         }
 
-        // Ejecución inicial automática para limpiar el diseño
+        // Ejecución inicial automática
         calcularDirecto();
     </script>
 </body>
