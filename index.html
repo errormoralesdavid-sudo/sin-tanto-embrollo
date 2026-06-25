@@ -46,6 +46,7 @@
 </head>
 <body>
 
+    <!-- 1. Pizarra Superior -->
     <div class="slider-container">
         <div class="card">
             <div class="card-header"><span>🏛️</span><h3>Dólar BCV</h3></div>
@@ -69,6 +70,7 @@
         </div>
     </div>
 
+    <!-- 2. Logo Central -->
     <div class="logo-section">
         <div class="logo-container" id="main-logo-border" style="border-color: #00e676;">
             <svg class="logo-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
@@ -83,10 +85,12 @@
         <div class="date-text" id="fecha-hoy">Miércoles, 24 de Junio de 2026</div>
     </div>
 
+    <!-- 3. Calculadoras -->
     <div class="calc-container">
         
         <button class="btn-limpiar" onclick="limpiarMontos()">🧹 Limpiar todos los montos</button>
 
+        <!-- Calculadora Rápida -->
         <div class="calc-section">
             <h2>Calculadora Rápida ($)</h2>
             <div style="margin-bottom: 15px;">
@@ -101,6 +105,7 @@
             </div>
         </div>
 
+        <!-- Zona Premium -->
         <div class="premium-wrapper" id="zona-premium">
             <div class="premium-overlay" id="pantalla-bloqueo">
                 <h3 style="color: #ffca28; margin-top: 0; font-size: 22px;">🔒 Versión PRO</h3>
@@ -119,6 +124,7 @@
             </div>
 
             <div class="premium-content" id="contenido-premium">
+                <!-- Calculadora Cruzada -->
                 <div class="calc-section" style="border-color: #29b6f6;">
                     <h2 style="color: #29b6f6;">Calculadora Cruzada (Doble Vía)</h2>
                     <label>Convierte entre cualquier moneda:</label>
@@ -145,16 +151,17 @@
                     </div>
                 </div>
 
+                <!-- Calculadora de Comisiones -->
                 <div class="calc-section" style="border-color: #ffca28; margin-bottom: 20px;">
                     <h2 style="color: #ffca28;">Calculadora de Comisiones</h2>
                     <div class="cross-calc-row" style="margin-bottom: 20px;">
                         <div style="flex: 1;">
                             <label>Com. Banco (%):</label>
-                            <input type="number" id="com-porc-banco" placeholder="Ej. 0.5" value="0.5" oninput="guardarYCalcularComisiones(); calcularArbitraje();">
+                            <input type="number" id="com-porc-banco" placeholder="Ej. 0.5" value="0.5" oninput="actualizarComisionesManual(this.value, 'banco')">
                         </div>
                         <div style="flex: 1;">
                             <label>Com. Binance (%):</label>
-                            <input type="number" id="com-porc-binance" placeholder="Ej. 4.1" value="4.1" oninput="guardarYCalcularComisiones(); calcularArbitraje();">
+                            <input type="number" id="com-porc-binance" placeholder="Ej. 4.1" value="4.1" oninput="actualizarComisionesManual(this.value, 'binance')">
                         </div>
                     </div>
                     <div class="result-box" style="border-left-color: #ffca28; padding-bottom: 15px;">
@@ -167,6 +174,7 @@
                     </div>
                 </div>
 
+                <!-- Calculadora de Arbitraje y Margen -->
                 <div class="calc-section" style="border-color: #00e676; margin-bottom: 0;">
                     <h2 style="color: #00e676;">Calculadora de Arbitraje (Ganancias)</h2>
                     <div style="margin-bottom: 12px;">
@@ -194,6 +202,7 @@
 
     </div>
 
+    <!-- JavaScript ultra-clásico y directo -->
     <script>
         var tasaBCV = 621.53;
         var tasaUSDT = 791.92;
@@ -243,8 +252,15 @@
             }
         }
 
-        function guardarYCalcularComisiones() {
+        // Nueva lógica para capturar y guardar las comisiones cuando las edites
+        function actualizarComisionesManual(valor, tipo) {
+            if(tipo === 'banco') {
+                localStorage.setItem('com_banco_saved', valor);
+            } else if(tipo === 'binance') {
+                localStorage.setItem('com_binance_saved', valor);
+            }
             calcularComisiones(ultimoModoComision);
+            calcularArbitraje();
         }
 
         function calcularComisiones(modo) {
@@ -270,14 +286,13 @@
             var tasaCompra = parseFloat(document.getElementById('arb-tasa-compra').value) || tasaBCV;
             var tasaVenta = parseFloat(document.getElementById('arb-tasa-venta').value) || tasaUSDT;
 
-            // Extrae los porcentajes dinámicos de las cajas superiores
             var pctBanco = parseFloat(document.getElementById('com-porc-banco').value) || 0;
             var pctBinance = parseFloat(document.getElementById('com-porc-binance').value) || 0;
             var factorTotal = (1 - (pctBanco / 100)) * (1 - (pctBinance / 100));
 
             if (bsInicial > 0 && tasaCompra > 0) {
                 var usdComprados = bsInicial / tasaCompra;
-                var usdtNetos = usdComprados * factorTotal; // Descuenta las comisiones aquí automáticamente
+                var usdtNetos = usdComprados * factorTotal; 
                 var bsFinales = usdtNetos * tasaVenta;
                 var ganancia = bsFinales - bsInicial;
 
@@ -295,45 +310,4 @@
             document.getElementById('cross-val-2').value = '';
             document.getElementById('com-envio-usd').value = '';
             document.getElementById('com-recibo-usdt').value = '';
-            document.getElementById('arb-bs-inicial').value = '';
-            calcularDirecto();
-            calcularCruzado(1);
-            calcularComisiones(1);
-            calcularArbitraje();
-        }
-
-        function comprarPremium() {
-            var mensaje = "¡Hola! Ya hice el Pago Móvil de los $3 por la app 'Sin Tanto Embrollo'.\n\nMi ID de Act. es: *" + idDispositivo + "*";
-            window.location.href = "https://wa.me/584123167126?text=" + encodeURIComponent(mensaje);
-        }
-
-        function activarVistaPro() {
-            document.getElementById('pantalla-bloqueo').style.display = 'none';
-            document.getElementById('contenido-premium').style.filter = 'none';
-            document.getElementById('contenido-premium').style.pointerEvents = 'auto';
-            document.getElementById('contenido-premium').style.userSelect = 'auto';
-        }
-
-        function ingresarClave() {
-            var claveIngresada = prompt("Ingresa el PIN para el ID: " + idDispositivo);
-            if(claveIngresada) {
-                var pinCorrecto = (parseInt(idDispositivo) * 5) + 2026; 
-                if(parseInt(claveIngresada) === pinCorrecto) {
-                    localStorage.setItem('premium_activo', 'true'); 
-                    activarVistaPro();
-                    alert("¡Versión PRO activada con éxito!");
-                } else {
-                    alert("PIN incorrecto.");
-                }
-            }
-        }
-
-        window.onload = function() {
-            if (localStorage.getItem('premium_activo') === 'true') {
-                activarVistaPro();
-            }
-            calcularDirecto();
-        };
-    </script>
-</body>
-</html>
+            document.ge
