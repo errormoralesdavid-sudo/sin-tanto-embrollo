@@ -43,7 +43,7 @@
         .btn-pro-web { background: #00e676; color: #000; border: none; padding: 12px 20px; border-radius: 8px; font-weight: bold; margin-bottom: 12px; width: 100%; font-size: 14px; cursor: pointer; }
         .btn-pro-input { background: transparent; color: #00e676; border: 1px solid #00e676; padding: 12px 20px; border-radius: 8px; font-weight: bold; width: 100%; font-size: 14px; cursor: pointer; }
         
-        /* Estilos para el Historial Avanzado */
+        /* Estilos para el Historial */
         .btn-registrar { background: #00e676; color: #000000; border: none; padding: 12px; border-radius: 10px; font-weight: bold; width: 100%; margin-top: 15px; font-size: 15px; cursor: pointer; }
         .history-table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 12px; text-align: left; }
         .history-table th { color: #00e676; border-bottom: 1px solid #424242; padding: 8px 4px; }
@@ -281,22 +281,5 @@
 
         function calcularComisiones(modo) {
             if(modo) ultimoModoComision = modo;
-            var pctBanco = parseFloat(document.getElementById('com-porc-banco').value) || 0;
-            var pctBinance = parseFloat(document.getElementById('com-porc-binance').value) || 0;
-            var factorTotal = (1 - (pctBanco / 100)) * (1 - (pctBinance / 100));
-
-            var valEnvio = document.getElementById('com-envio-usd');
-            var valRecibo = document.getElementById('com-recibo-usdt');
-
-            if (ultimoModoComision === 1) {
-                var montoUSD = parseFloat(valEnvio.value);
-                if (!isNaN(montoUSD)) { valRecibo.value = parseFloat((montoUSD * factorTotal).toFixed(2)); } else { valRecibo.value = ''; }
-            } else if (ultimoModoComision === 2) {
-                var targetUSDT = parseFloat(valRecibo.value);
-                if (!isNaN(targetUSDT) && factorTotal > 0) { valEnvio.value = parseFloat((targetUSDT / factorTotal).toFixed(2)); } else { valEnvio.value = ''; }
-            }
-        }
-
-        function calcularArbitraje() {
-            var bsInicial = parseFloat(document.getElementById('arb-bs-inicial').value) || 0;
-            var tasaCompra = parseFloat(
+            var pctBanco = parseFloat(document
+    
