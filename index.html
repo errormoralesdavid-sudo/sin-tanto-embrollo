@@ -6,7 +6,6 @@
     <title>Sin Tanto Embrollo</title>
     <style>
         body { background-color: #121212; color: #ffffff; font-family: Arial, sans-serif; margin: 0; padding: 0; overflow-x: hidden; }
-        /* Slider corregido para mayor fluidez en móviles */
         .slider-container { display: flex; gap: 12px; overflow-x: auto; padding: 20px 15px 10px 15px; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; scroll-behavior: smooth; }
         .slider-container::-webkit-scrollbar { display: none; }
         .card { flex: 0 0 78%; scroll-snap-align: center; background-color: #1e1e1e; padding: 15px; border-radius: 14px; border: 1px solid #2e2e2e; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.3); display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; }
@@ -43,33 +42,42 @@
         .pago-movil-box span { color: #00e676; font-weight: bold; }
         .btn-pro-web { background: #00e676; color: #000; border: none; padding: 12px 20px; border-radius: 8px; font-weight: bold; margin-bottom: 12px; width: 100%; font-size: 14px; cursor: pointer; }
         .btn-pro-input { background: transparent; color: #00e676; border: 1px solid #00e676; padding: 12px 20px; border-radius: 8px; font-weight: bold; width: 100%; font-size: 14px; cursor: pointer; }
+        
+        /* Estilos para el nuevo Historial */
+        .btn-registrar { background: #00e676; color: #000000; border: none; padding: 12px; border-radius: 10px; font-weight: bold; width: 100%; margin-top: 15px; font-size: 15px; cursor: pointer; }
+        .history-table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 12px; text-align: left; }
+        .history-table th { color: #00e676; border-bottom: 1px solid #424242; padding: 8px 4px; }
+        .history-table td { padding: 8px 4px; border-bottom: 1px solid #2e2e2e; color: #e0e0e0; }
+        .btn-clear-hist { background: transparent; color: #ff5252; border: 1px dashed #ff5252; padding: 6px 12px; border-radius: 6px; font-size: 11px; cursor: pointer; margin-top: 12px; display: inline-block; }
     </style>
 </head>
 <body>
 
+    <!-- 1. Pizarra Superior -->
     <div class="slider-container">
         <div class="card">
             <div class="card-header"><span>🏛️</span><h3>Dólar BCV</h3></div>
-            <div class="price" id="rate-bcv">621,53 Bs</div>
+            <div class="price" id="rate-bcv">622,21 Bs</div>
             <div class="trend">Tasa Oficial</div>
         </div>
         <div class="card">
             <div class="card-header"><span>🔶</span><h3>USDT (P2P)</h3></div>
-            <div class="price" id="rate-usdt">791,92 Bs</div>
+            <div class="price" id="rate-usdt">774,10 Bs</div>
             <div class="trend">Binance P2P</div>
         </div>
         <div class="card">
             <div class="card-header"><span>💶</span><h3>Euro</h3></div>
-            <div class="price" id="rate-eur">707,43 Bs</div>
+            <div class="price" id="rate-eur">708,39 Bs</div>
             <div class="trend">BCV Oficial</div>
         </div>
         <div class="card">
             <div class="card-header"><span>🇨🇴</span><h3>Peso Colombiano</h3></div>
-            <div class="price" id="rate-cop">3.437</div>
+            <div class="price" id="rate-cop">3.447</div>
             <div class="trend">XE Real</div>
         </div>
     </div>
 
+    <!-- 2. Logo Central -->
     <div class="logo-section">
         <div class="logo-container" id="main-logo-border" style="border-color: #00e676;">
             <svg class="logo-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
@@ -84,10 +92,12 @@
         <div class="date-text" id="fecha-hoy">Cargando fecha...</div>
     </div>
 
+    <!-- 3. Calculadoras -->
     <div class="calc-container">
         
         <button class="btn-limpiar" onclick="limpiarMontos()">🧹 Limpiar todos los montos</button>
 
+        <!-- Calculadora Rápida -->
         <div class="calc-section">
             <h2>Calculadora Rápida ($)</h2>
             <div style="margin-bottom: 15px;">
@@ -102,6 +112,7 @@
             </div>
         </div>
 
+        <!-- Zona Premium -->
         <div class="premium-wrapper" id="zona-premium">
             <div class="premium-overlay" id="pantalla-bloqueo">
                 <h3 style="color: #ffca28; margin-top: 0; font-size: 22px;">🔒 Versión PRO</h3>
@@ -120,6 +131,7 @@
             </div>
 
             <div class="premium-content" id="contenido-premium">
+                <!-- Calculadora Cruzada -->
                 <div class="calc-section" style="border-color: #29b6f6;">
                     <h2 style="color: #29b6f6;">Calculadora Cruzada (Doble Vía)</h2>
                     <label>Convierte entre cualquier moneda:</label>
@@ -146,6 +158,7 @@
                     </div>
                 </div>
 
+                <!-- Calculadora de Comisiones -->
                 <div class="calc-section" style="border-color: #ffca28; margin-bottom: 20px;">
                     <h2 style="color: #ffca28;">Calculadora de Comisiones</h2>
                     <div class="cross-calc-row" style="margin-bottom: 20px;">
@@ -168,7 +181,8 @@
                     </div>
                 </div>
 
-                <div class="calc-section" style="border-color: #00e676; margin-bottom: 0;">
+                <!-- Calculadora de Arbitraje y Margen -->
+                <div class="calc-section" style="border-color: #00e676; margin-bottom: 20px;">
                     <h2 style="color: #00e676;">Calculadora de Arbitraje (Ganancias)</h2>
                     <div style="margin-bottom: 12px;">
                         <label>Monto Inicial en Banco (Bs):</label>
@@ -177,17 +191,39 @@
                     <div class="cross-calc-row" style="margin-bottom: 12px;">
                         <div style="flex: 1;">
                             <label>Tasa Compra Banco ($/Bs):</label>
-                            <input type="number" id="arb-tasa-compra" placeholder="Ej. 621.53" oninput="calcularArbitraje()">
+                            <input type="number" id="arb-tasa-compra" placeholder="Ej. 622.21" oninput="calcularArbitraje()">
                         </div>
                         <div style="flex: 1;">
                             <label>Tasa Venta P2P:</label>
-                            <input type="number" id="arb-tasa-venta" placeholder="Ej. 791.92" oninput="calcularArbitraje()">
+                            <input type="number" id="arb-tasa-venta" placeholder="Ej. 774.10" oninput="calcularArbitraje()">
                         </div>
                     </div>
                     <div class="result-box" style="border-left-color: #00e676;">
                         <div class="result-line"><span>Monto tras venta:</span> <strong id="arb-res-final" style="color: #00e676;">0 Bs</strong></div>
                         <div class="result-line"><span>Ganancia Neta (Comisiones Restadas):</span> <strong id="arb-res-ganancia" style="color: #00e676; font-size: 18px;">0 Bs</strong></div>
                     </div>
+                    <button class="btn-registrar" onclick="registrarOperacion()">💾 Registrar Operación en Historial</button>
+                </div>
+
+                <!-- NUEVA SECCIÓN: Historial en Pantalla -->
+                <div class="calc-section" style="border-color: #b0bec5;">
+                    <h2 style="color: #b0bec5;">Historial de Operaciones</h2>
+                    <div style="overflow-x: auto;">
+                        <table class="history-table">
+                            <thead>
+                                <tr>
+                                    <th>Fecha/Hora</th>
+                                    <th>Inversión</th>
+                                    <th>Tasa Venta</th>
+                                    <th>Ganancia</th>
+                                </tr>
+                            </thead>
+                            <tbody id="historial-rows">
+                                <!-- Filas dinámicas -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <button class="btn-clear-hist" onclick="borrarHistorialCompleto()">🗑️ Limpiar Historial</button>
                 </div>
 
             </div>
@@ -195,11 +231,13 @@
 
     </div>
 
+    <!-- JavaScript ultra-clásico y directo -->
     <script>
-        var tasaBCV = 621.53;
-        var tasaUSDT = 791.92;
-        var tasaEUR = 707.43; 
-        var tasaCOP = 3437;   
+        // AQUÍ ES DONDE EDITAS TUS PRECIOS BASE CUANDO QUIERAS (YA PUESTOS LOS DE HOY)
+        var tasaBCV = 622.21;
+        var tasaUSDT = 774.10;
+        var tasaEUR = 708.39; 
+        var tasaCOP = 3447;   
         var ultimoModoComision = 1;
         var idDispositivo = "6431"; 
 
@@ -265,101 +303,4 @@
                 if (!isNaN(montoUSD)) { valRecibo.value = parseFloat((montoUSD * factorTotal).toFixed(2)); } else { valRecibo.value = ''; }
             } else if (ultimoModoComision === 2) {
                 var targetUSDT = parseFloat(valRecibo.value);
-                if (!isNaN(targetUSDT) && factorTotal > 0) { valEnvio.value = parseFloat((targetUSDT / factorTotal).toFixed(2)); } else { valEnvio.value = ''; }
-            }
-        }
-
-        function calcularArbitraje() {
-            var bsInicial = parseFloat(document.getElementById('arb-bs-inicial').value) || 0;
-            var tasaCompra = parseFloat(document.getElementById('arb-tasa-compra').value) || tasaBCV;
-            var tasaVenta = parseFloat(document.getElementById('arb-tasa-venta').value) || tasaUSDT;
-
-            var pctBanco = parseFloat(document.getElementById('com-porc-banco').value) || 0;
-            var pctBinance = parseFloat(document.getElementById('com-porc-binance').value) || 0;
-            var factorTotal = (1 - (pctBanco / 100)) * (1 - (pctBinance / 100));
-
-            if (bsInicial > 0 && tasaCompra > 0) {
-                var usdComprados = bsInicial / tasaCompra;
-                var usdtNetos = usdComprados * factorTotal; 
-                var bsFinales = usdtNetos * tasaVenta;
-                var ganancia = bsFinales - bsInicial;
-
-                document.getElementById('arb-res-final').innerText = formatoLimpio(bsFinales) + ' Bs';
-                document.getElementById('arb-res-ganancia').innerText = formatoLimpio(ganancia) + ' Bs';
-            } else {
-                document.getElementById('arb-res-final').innerText = '0 Bs';
-                document.getElementById('arb-res-ganancia').innerText = '0 Bs';
-            }
-        }
-
-        function limpiarMontos() {
-            document.getElementById('usd-input').value = '';
-            document.getElementById('cross-val-1').value = '';
-            document.getElementById('cross-val-2').value = '';
-            document.getElementById('com-envio-usd').value = '';
-            document.getElementById('com-recibo-usdt').value = '';
-            document.getElementById('arb-bs-inicial').value = '';
-            calcularDirecto();
-            calcularCruzado(1);
-            calcularComisiones(1);
-            calcularArbitraje();
-        }
-
-        function comprarPremium() {
-            var mensaje = "¡Hola! Ya hice el Pago Móvil de los $3 por la app 'Sin Tanto Embrollo'.\nMi ID de Act. es: *" + idDispositivo + "*";
-            window.location.href = "https://wa.me/584123167126?text=" + encodeURIComponent(mensaje);
-        }
-
-        function activarVistaPro() {
-            document.getElementById('pantalla-bloqueo').style.display = 'none';
-            document.getElementById('contenido-premium').style.filter = 'none';
-            document.getElementById('contenido-premium').style.pointerEvents = 'auto';
-            document.getElementById('contenido-premium').style.userSelect = 'auto';
-        }
-
-        function ingresarClave() {
-            var claveIngresada = prompt("Ingresa el PIN para el ID: " + idDispositivo);
-            if(claveIngresada) {
-                var pinCorrecto = (parseInt(idDispositivo) * 5) + 2026; 
-                if(parseInt(claveIngresada) === pinCorrecto) {
-                    localStorage.setItem('premium_activo', 'true'); 
-                    activarVistaPro();
-                    alert("¡Versión PRO activada con éxito!");
-                } else {
-                    alert("PIN incorrecto.");
-                }
-            }
-        }
-
-        // Script para calcular y escribir la fecha del sistema en vivo
-        function establecerFechaActual() {
-            var opciones = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-            var fechaHoy = new Date();
-            var fechaTexto = fechaHoy.toLocaleDateString('es-ES', opciones);
-            document.getElementById('fecha-hoy').innerText = fechaTexto;
-        }
-
-        window.onload = function() {
-            // Cargar fecha automática
-            establecerFechaActual();
-
-            // Verificar estado Premium
-            if (localStorage.getItem('premium_activo') === 'true') {
-                activarVistaPro();
-            }
-            
-            // Cargar o asignar comisiones por defecto de forma segura
-            var savedBanco = localStorage.getItem('com_banco_saved');
-            var savedBinance = localStorage.getItem('com_binance_saved');
-            
-            document.getElementById('com-porc-banco').value = (savedBanco !== null) ? savedBanco : "0.5";
-            document.getElementById('com-porc-binance').value = (savedBinance !== null) ? savedBinance : "4.1";
-
-            document.getElementById('arb-tasa-compra').value = tasaBCV;
-            document.getElementById('arb-tasa-venta').value = tasaUSDT;
-
-            calcularDirecto();
-        };
-    </script>
-</body>
-</html>
+                if (!isNaN(t
