@@ -53,7 +53,6 @@
 </head>
 <body>
 
-    <!-- 1. Pizarra Superior Automatizada -->
     <div class="slider-container">
         <div class="card">
             <div class="card-header"><span>🏛️</span><h3>Dólar BCV</h3></div>
@@ -77,7 +76,6 @@
         </div>
     </div>
 
-    <!-- 2. Logo Central -->
     <div class="logo-section">
         <div class="logo-container" id="main-logo-border" style="border-color: #00e676;">
             <svg class="logo-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
@@ -92,12 +90,10 @@
         <div class="date-text" id="fecha-hoy">Cargando fecha...</div>
     </div>
 
-    <!-- 3. Calculadoras -->
     <div class="calc-container">
         
         <button class="btn-limpiar" onclick="limpiarMontos()">🧹 Limpiar todos los montos</button>
 
-        <!-- Calculadora Rápida -->
         <div class="calc-section">
             <h2>Calculadora Rápida ($)</h2>
             <div style="margin-bottom: 15px;">
@@ -112,7 +108,6 @@
             </div>
         </div>
 
-        <!-- Zona Premium -->
         <div class="premium-wrapper" id="zona-premium">
             <div class="premium-overlay" id="pantalla-bloqueo">
                 <h3 style="color: #ffca28; margin-top: 0; font-size: 22px;">🔒 Versión PRO</h3>
@@ -131,7 +126,6 @@
             </div>
 
             <div class="premium-content" id="contenido-premium">
-                <!-- Calculadora Cruzada -->
                 <div class="calc-section" style="border-color: #29b6f6;">
                     <h2 style="color: #29b6f6;">Calculadora Cruzada (Doble Vía)</h2>
                     <label>Convierte entre cualquier moneda:</label>
@@ -158,7 +152,6 @@
                     </div>
                 </div>
 
-                <!-- Calculadora de Comisiones -->
                 <div class="calc-section" style="border-color: #ffca28; margin-bottom: 20px;">
                     <h2 style="color: #ffca28;">Calculadora de Comisiones</h2>
                     <div class="cross-calc-row" style="margin-bottom: 20px;">
@@ -181,7 +174,6 @@
                     </div>
                 </div>
 
-                <!-- Calculadora de Arbitraje y Margen -->
                 <div class="calc-section" style="border-color: #00e676; margin-bottom: 20px;">
                     <h2 style="color: #00e676;">Calculadora de Arbitraje (Ganancias)</h2>
                     <div style="margin-bottom: 12px;">
@@ -195,7 +187,7 @@
                         </div>
                         <div style="flex: 1;">
                             <label>Tasa Venta P2P:</label>
-                            <input type="number" id="arb-tasa-venta" placeholder="Ej. 774.10" oninput="alwaysCalcularArbitraje()">
+                            <input type="number" id="arb-tasa-venta" placeholder="Ej. 774.10" oninput="calcularArbitraje()">
                         </div>
                     </div>
                     <div class="result-box" style="border-left-color: #00e676;">
@@ -205,7 +197,6 @@
                     <button class="btn-registrar" onclick="registrarOperacion()">💾 Registrar Operación en Historial</button>
                 </div>
 
-                <!-- Historial en Pantalla Avanzado -->
                 <div class="calc-section" style="border-color: #b0bec5;">
                     <h2 style="color: #b0bec5;">Historial de Operaciones</h2>
                     <div style="overflow-x: auto;">
@@ -220,8 +211,7 @@
                                 </tr>
                             </thead>
                             <tbody id="historial-rows">
-                                <!-- Filas dinámicas -->
-                            </tbody>
+                                </tbody>
                         </table>
                     </div>
                     <button class="btn-clear-hist" onclick="borrarHistorialCompleto()">🗑️ Limpiar Todo el Historial</button>
@@ -232,9 +222,7 @@
 
     </div>
 
-    <!-- JavaScript ultra-clásico y directo -->
     <script>
-        // MODIFICA ESTAS TASAS CUANDO QUIERAS ACTUALIZAR EL INICIO
         var tasaBCV = 623.02;
         var tasaUSDT = 774.10;
         var tasaEUR = 710.10; 
@@ -304,4 +292,86 @@
 
         function calcularComisiones(modo) {
             if(modo) ultimoModoComision = modo;
-            var pctBanco = parseFloat(document.getElementById('com-
+            var pctBanco = parseFloat(document.getElementById('com-porc-banco').value) || 0;
+            var pctBinance = parseFloat(document.getElementById('com-porc-binance').value) || 0;
+            var factorTotal = (1 - (pctBanco / 100)) * (1 - (pctBinance / 100));
+
+            var valEnvio = document.getElementById('com-envio-usd');
+            var valRecibo = document.getElementById('com-recibo-usdt');
+
+            if (ultimoModoComision === 1) {
+                var montoUSD = parseFloat(valEnvio.value);
+                if (!isNaN(montoUSD)) { valRecibo.value = parseFloat((montoUSD * factorTotal).toFixed(2)); } else { valRecibo.value = ''; }
+            } else if (ultimoModoComision === 2) {
+                var targetUSDT = parseFloat(valRecibo.value);
+                if (!isNaN(targetUSDT) && factorTotal > 0) { valEnvio.value = parseFloat((targetUSDT / factorTotal).toFixed(2)); } else { valEnvio.value = ''; }
+            }
+        }
+
+        function calcularArbitraje() {
+            var bsInicial = parseFloat(document.getElementById('arb-bs-inicial').value) || 0;
+            var tasaCompra = parseFloat(document.getElementById('arb-tasa-compra').value) || tasaBCV;
+            var tasaVenta = parseFloat(document.getElementById('arb-tasa-venta').value) || tasaUSDT;
+
+            var pctBanco = parseFloat(document.getElementById('com-porc-banco').value) || 0;
+            var pctBinance = parseFloat(document.getElementById('com-porc-binance').value) || 0;
+            var factorTotal = (1 - (pctBanco / 100)) * (1 - (pctBinance / 100));
+
+            if (bsInicial > 0 && tasaCompra > 0) {
+                var usdComprados = bsInicial / tasaCompra;
+                var usdtNetos = usdComprados * factorTotal; 
+                var bsFinales = usdtNetos * tasaVenta;
+                var ganancia = bsFinales - bsInicial;
+
+                document.getElementById('arb-res-final').innerText = formatoLimpio(bsFinales) + ' Bs';
+                document.getElementById('arb-res-ganancia').innerText = formatoLimpio(ganancia) + ' Bs';
+            } else {
+                document.getElementById('arb-res-final').innerText = '0 Bs';
+                document.getElementById('arb-res-ganancia').innerText = '0 Bs';
+            }
+        }
+
+        function registrarOperacion() {
+            var bsInicial = parseFloat(document.getElementById('arb-bs-inicial').value) || 0;
+            var montoFinalTexto = document.getElementById('arb-res-final').innerText;
+            var gananciaTexto = document.getElementById('arb-res-ganancia').innerText;
+
+            if (bsInicial <= 0 || gananciaTexto === "0 Bs" || gananciaTexto === "0") {
+                alert("Por favor, ingresa una operación válida con ganancias antes de registrar.");
+                return;
+            }
+
+            var ahora = new Date();
+            var tiempoStr = ahora.getDate() + '/' + (ahora.getMonth() + 1) + ' ' + ahora.getHours() + ':' + (ahora.getMinutes() < 10 ? '0' : '') + ahora.getMinutes();
+
+            var nuevaOperacion = {
+                id: Date.now(), 
+                fecha: tiempoStr,
+                inversion: formatoLimpio(bsInicial) + ' Bs',
+                montoP2P: montoFinalTexto,
+                ganancia: gananciaTexto
+            };
+
+            var historial = [];
+            try {
+                var datosGuardados = localStorage.getItem('historial_arbitraje');
+                if (datosGuardados) { historial = JSON.parse(datosGuardados); }
+            } catch(e) { historial = []; }
+
+            if (!Array.isArray(historial)) { historial = []; }
+
+            historial.unshift(nuevaOperacion);
+            localStorage.setItem('historial_arbitraje', JSON.stringify(historial));
+
+            renderizarHistorial();
+            alert("Operación guardada en el historial con éxito.");
+        }
+
+        function renderizarHistorial() {
+            var tbody = document.getElementById('historial-rows');
+            if(!tbody) return;
+            
+            var historial = [];
+            try {
+                var datosGuardados = localStorage.getItem('historial_arbitraje');
+                if (datosGuardados) { historial = JSON.parse(datosGuardados);
