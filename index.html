@@ -43,7 +43,6 @@
         .btn-pro-web { background: #00e676; color: #000; border: none; padding: 12px 20px; border-radius: 8px; font-weight: bold; margin-bottom: 12px; width: 100%; font-size: 14px; cursor: pointer; }
         .btn-pro-input { background: transparent; color: #00e676; border: 1px solid #00e676; padding: 12px 20px; border-radius: 8px; font-weight: bold; width: 100%; font-size: 14px; cursor: pointer; }
         
-        /* Estilos para el Historial */
         .btn-registrar { background: #00e676; color: #000000; border: none; padding: 12px; border-radius: 10px; font-weight: bold; width: 100%; margin-top: 15px; font-size: 15px; cursor: pointer; }
         .history-table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 12px; text-align: left; }
         .history-table th { color: #00e676; border-bottom: 1px solid #424242; padding: 8px 4px; }
@@ -54,29 +53,31 @@
 </head>
 <body>
 
+    <!-- 1. Pizarra Superior Automatizada -->
     <div class="slider-container">
         <div class="card">
-            <div class="card-header"><span>🏛️</span><h2>Dólar BCV</h2></div>
-            <div class="price" id="rate-bcv">0 Bs</div>
+            <div class="card-header"><span>🏛️</span><h3>Dólar BCV</h3></div>
+            <div class="price" id="rate-bcv">... Bs</div>
             <div class="trend">Tasa Oficial</div>
         </div>
         <div class="card">
-            <div class="card-header"><span>🔶</span><h2>USDT (P2P)</h2></div>
-            <div class="price" id="rate-usdt">0 Bs</div>
+            <div class="card-header"><span>🔶</span><h3>USDT (P2P)</h3></div>
+            <div class="price" id="rate-usdt">... Bs</div>
             <div class="trend">Binance P2P</div>
         </div>
         <div class="card">
-            <div class="card-header"><span>💶</span><h2>Euro</h2></div>
-            <div class="price" id="rate-eur">0 Bs</div>
+            <div class="card-header"><span>💶</span><h3>Euro</h3></div>
+            <div class="price" id="rate-eur">... Bs</div>
             <div class="trend">BCV Oficial</div>
         </div>
         <div class="card">
-            <div class="card-header"><span>🇨🇴</span><h2>Peso Colombiano</h2></div>
-            <div class="price" id="rate-cop">0</div>
+            <div class="card-header"><span>🇨🇴</span><h3>Peso Colombiano</h3></div>
+            <div class="price" id="rate-cop">...</div>
             <div class="trend">XE Real</div>
         </div>
     </div>
 
+    <!-- 2. Logo Central -->
     <div class="logo-section">
         <div class="logo-container" id="main-logo-border" style="border-color: #00e676;">
             <svg class="logo-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
@@ -91,10 +92,12 @@
         <div class="date-text" id="fecha-hoy">Cargando fecha...</div>
     </div>
 
+    <!-- 3. Calculadoras -->
     <div class="calc-container">
         
         <button class="btn-limpiar" onclick="limpiarMontos()">🧹 Limpiar todos los montos</button>
 
+        <!-- Calculadora Rápida -->
         <div class="calc-section">
             <h2>Calculadora Rápida ($)</h2>
             <div style="margin-bottom: 15px;">
@@ -109,6 +112,7 @@
             </div>
         </div>
 
+        <!-- Zona Premium -->
         <div class="premium-wrapper" id="zona-premium">
             <div class="premium-overlay" id="pantalla-bloqueo">
                 <h3 style="color: #ffca28; margin-top: 0; font-size: 22px;">🔒 Versión PRO</h3>
@@ -127,6 +131,7 @@
             </div>
 
             <div class="premium-content" id="contenido-premium">
+                <!-- Calculadora Cruzada -->
                 <div class="calc-section" style="border-color: #29b6f6;">
                     <h2 style="color: #29b6f6;">Calculadora Cruzada (Doble Vía)</h2>
                     <label>Convierte entre cualquier moneda:</label>
@@ -153,6 +158,7 @@
                     </div>
                 </div>
 
+                <!-- Calculadora de Comisiones -->
                 <div class="calc-section" style="border-color: #ffca28; margin-bottom: 20px;">
                     <h2 style="color: #ffca28;">Calculadora de Comisiones</h2>
                     <div class="cross-calc-row" style="margin-bottom: 20px;">
@@ -175,6 +181,7 @@
                     </div>
                 </div>
 
+                <!-- Calculadora de Arbitraje y Margen -->
                 <div class="calc-section" style="border-color: #00e676; margin-bottom: 20px;">
                     <h2 style="color: #00e676;">Calculadora de Arbitraje (Ganancias)</h2>
                     <div style="margin-bottom: 12px;">
@@ -188,7 +195,7 @@
                         </div>
                         <div style="flex: 1;">
                             <label>Tasa Venta P2P:</label>
-                            <input type="number" id="arb-tasa-venta" placeholder="Ej. 774.10" oninput="calcularArbitraje()">
+                            <input type="number" id="arb-tasa-venta" placeholder="Ej. 774.10" oninput="alwaysCalcularArbitraje()">
                         </div>
                     </div>
                     <div class="result-box" style="border-left-color: #00e676;">
@@ -198,6 +205,7 @@
                     <button class="btn-registrar" onclick="registrarOperacion()">💾 Registrar Operación en Historial</button>
                 </div>
 
+                <!-- Historial en Pantalla Avanzado -->
                 <div class="calc-section" style="border-color: #b0bec5;">
                     <h2 style="color: #b0bec5;">Historial de Operaciones</h2>
                     <div style="overflow-x: auto;">
@@ -212,7 +220,8 @@
                                 </tr>
                             </thead>
                             <tbody id="historial-rows">
-                                </tbody>
+                                <!-- Filas dinámicas -->
+                            </tbody>
                         </table>
                     </div>
                     <button class="btn-clear-hist" onclick="borrarHistorialCompleto()">🗑️ Limpiar Todo el Historial</button>
@@ -223,8 +232,9 @@
 
     </div>
 
+    <!-- JavaScript ultra-clásico y directo -->
     <script>
-        // VARIABLES DE TASAS BASE
+        // MODIFICA ESTAS TASAS CUANDO QUIERAS ACTUALIZAR EL INICIO
         var tasaBCV = 623.02;
         var tasaUSDT = 774.10;
         var tasaEUR = 710.10; 
@@ -244,10 +254,15 @@
         }
 
         function pintarPizarrasFlotantes() {
-            document.getElementById('rate-bcv').innerText = formatoLimpio(tasaBCV) + ' Bs';
-            document.getElementById('rate-usdt').innerText = formatoLimpio(tasaUSDT) + ' Bs';
-            document.getElementById('rate-eur').innerText = formatoLimpio(tasaEUR) + ' Bs';
-            document.getElementById('rate-cop').innerText = formatoLimpio(tasaCOP);
+            var eBcv = document.getElementById('rate-bcv');
+            var eUsdt = document.getElementById('rate-usdt');
+            var eEur = document.getElementById('rate-eur');
+            var eCop = document.getElementById('rate-cop');
+            
+            if(eBcv) eBcv.innerText = formatoLimpio(tasaBCV) + ' Bs';
+            if(eUsdt) eUsdt.innerText = formatoLimpio(tasaUSDT) + ' Bs';
+            if(eEur) eEur.innerText = formatoLimpio(tasaEUR) + ' Bs';
+            if(eCop) eCop.innerText = formatoLimpio(tasaCOP);
         }
 
         function calcularDirecto() {
@@ -289,15 +304,4 @@
 
         function calcularComisiones(modo) {
             if(modo) ultimoModoComision = modo;
-            var pctBanco = parseFloat(document.getElementById('com-porc-banco').value) || 0;
-            var pctBinance = parseFloat(document.getElementById('com-porc-binance').value) || 0;
-            var factorTotal = (1 - (pctBanco / 100)) * (1 - (pctBinance / 100));
-
-            var valEnvio = document.getElementById('com-envio-usd');
-            var valRecibo = document.getElementById('com-recibo-usdt');
-
-            if (ultimoModoComision === 1) {
-                var montoUSD = parseFloat(valEnvio.value);
-                if (!isNaN(montoUSD)) { valRecibo.value = parseFloat((montoUSD * factorTotal).toFixed(2)); } else { valRecibo.value = ''; }
-            } else if (ultimoModoComision === 2) {
-                
+            var pctBanco = parseFloat(document.getElementById('com-
