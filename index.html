@@ -42,7 +42,6 @@
         .pago-movil-box span { color: #00e676; font-weight: bold; }
         .btn-pro-web { background: #00e676; color: #000; border: none; padding: 12px 20px; border-radius: 8px; font-weight: bold; margin-bottom: 12px; width: 100%; font-size: 14px; cursor: pointer; }
         .btn-pro-input { background: transparent; color: #00e676; border: 1px solid #00e676; padding: 12px 20px; border-radius: 8px; font-weight: bold; width: 100%; font-size: 14px; cursor: pointer; }
-        
         .btn-registrar { background: #00e676; color: #000000; border: none; padding: 12px; border-radius: 10px; font-weight: bold; width: 100%; margin-top: 15px; font-size: 15px; cursor: pointer; }
         .history-table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 12px; text-align: left; }
         .history-table th { color: #00e676; border-bottom: 1px solid #424242; padding: 8px 4px; }
@@ -210,8 +209,7 @@
                                     <th></th>
                                 </tr>
                             </thead>
-                            <tbody id="historial-rows">
-                                </tbody>
+                            <tbody id="historial-rows"></tbody>
                         </table>
                     </div>
                     <button class="btn-clear-hist" onclick="borrarHistorialCompleto()">🗑️ Limpiar Todo el Historial</button>
@@ -219,159 +217,21 @@
 
             </div>
         </div>
-
     </div>
 
     <script>
+        // ----------------------------------------------------
+        // EDITAR SOLO ESTOS 4 NÚMEROS
         var tasaBCV = 623.02;
         var tasaUSDT = 774.10;
         var tasaEUR = 710.10; 
         var tasaCOP = 3438;   
+        // ----------------------------------------------------
         
         var ultimoModoComision = 1;
 
-        function formatoLimpio(numero) {
-            var num = Number(numero);
-            if(isNaN(num)) return "0";
-            var partes = num.toFixed(2).split('.');
-            var entero = partes[0].replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-            var decimal = partes[1];
-            if(decimal === "00") return entero;
-            if(decimal && decimal.charAt(1) === "0") return entero + "," + decimal.charAt(0);
-            return entero + "," + decimal;
-        }
-
-        function pintarPizarrasFlotantes() {
-            var eBcv = document.getElementById('rate-bcv');
-            var eUsdt = document.getElementById('rate-usdt');
-            var eEur = document.getElementById('rate-eur');
-            var eCop = document.getElementById('rate-cop');
-            
-            if(eBcv) eBcv.innerText = formatoLimpio(tasaBCV) + ' Bs';
-            if(eUsdt) eUsdt.innerText = formatoLimpio(tasaUSDT) + ' Bs';
-            if(eEur) eEur.innerText = formatoLimpio(tasaEUR) + ' Bs';
-            if(eCop) eCop.innerText = formatoLimpio(tasaCOP);
-        }
-
-        function calcularDirecto() {
-            var valInput = document.getElementById('usd-input').value;
-            var usd = parseFloat(valInput) || 0;
-            document.getElementById('res-bcv').innerText = formatoLimpio(usd * tasaBCV) + ' Bs';
-            document.getElementById('res-usdt').innerText = formatoLimpio(usd * tasaUSDT) + ' Bs';
-            document.getElementById('res-eur').innerText = formatoLimpio((usd * tasaBCV) / tasaEUR) + ' €';
-            document.getElementById('res-cop').innerText = formatoLimpio(usd * tasaCOP) + ' COP';
-        }
-
-        function calcularCruzado(modificado) {
-            var val1 = document.getElementById('cross-val-1');
-            var val2 = document.getElementById('cross-val-2');
-            var mon1 = document.getElementById('cross-mon-1').value;
-            var mon2 = document.getElementById('cross-mon-2').value;
-
-            var tasasEnBs = { USD: tasaBCV, BCV: 1, USDT: tasaUSDT, EUR: tasaEUR, COP: tasaBCV / tasaCOP };
-            var t1 = tasasEnBs[mon1]; var t2 = tasasEnBs[mon2];
-
-            if (modificado === 1) {
-                var monto = parseFloat(val1.value);
-                if (!isNaN(monto)) { val2.value = parseFloat(((monto * t1) / t2).toFixed(2)); } else { val2.value = ''; }
-            } else if (modificado === 2) {
-                var monto2 = parseFloat(val2.value);
-                if (!isNaN(monto2)) { val1.value = parseFloat(((monto2 * t2) / t1).toFixed(2)); } else { val1.value = ''; }
-            }
-        }
-
-        function actualizarComisionesManual(valor, tipo) {
-            if(tipo === 'banco') {
-                localStorage.setItem('com_banco_saved', valor);
-            } else if(tipo === 'binance') {
-                localStorage.setItem('com_binance_saved', valor);
-            }
-            calcularComisiones(ultimoModoComision);
-            calcularArbitraje();
-        }
-
-        function calcularComisiones(modo) {
-            if(modo) ultimoModoComision = modo;
-            var pctBanco = parseFloat(document.getElementById('com-porc-banco').value) || 0;
-            var pctBinance = parseFloat(document.getElementById('com-porc-binance').value) || 0;
-            var factorTotal = (1 - (pctBanco / 100)) * (1 - (pctBinance / 100));
-
-            var valEnvio = document.getElementById('com-envio-usd');
-            var valRecibo = document.getElementById('com-recibo-usdt');
-
-            if (ultimoModoComision === 1) {
-                var montoUSD = parseFloat(valEnvio.value);
-                if (!isNaN(montoUSD)) { valRecibo.value = parseFloat((montoUSD * factorTotal).toFixed(2)); } else { valRecibo.value = ''; }
-            } else if (ultimoModoComision === 2) {
-                var targetUSDT = parseFloat(valRecibo.value);
-                if (!isNaN(targetUSDT) && factorTotal > 0) { valEnvio.value = parseFloat((targetUSDT / factorTotal).toFixed(2)); } else { valEnvio.value = ''; }
-            }
-        }
-
-        function calcularArbitraje() {
-            var bsInicial = parseFloat(document.getElementById('arb-bs-inicial').value) || 0;
-            var tasaCompra = parseFloat(document.getElementById('arb-tasa-compra').value) || tasaBCV;
-            var tasaVenta = parseFloat(document.getElementById('arb-tasa-venta').value) || tasaUSDT;
-
-            var pctBanco = parseFloat(document.getElementById('com-porc-banco').value) || 0;
-            var pctBinance = parseFloat(document.getElementById('com-porc-binance').value) || 0;
-            var factorTotal = (1 - (pctBanco / 100)) * (1 - (pctBinance / 100));
-
-            if (bsInicial > 0 && tasaCompra > 0) {
-                var usdComprados = bsInicial / tasaCompra;
-                var usdtNetos = usdComprados * factorTotal; 
-                var bsFinales = usdtNetos * tasaVenta;
-                var ganancia = bsFinales - bsInicial;
-
-                document.getElementById('arb-res-final').innerText = formatoLimpio(bsFinales) + ' Bs';
-                document.getElementById('arb-res-ganancia').innerText = formatoLimpio(ganancia) + ' Bs';
-            } else {
-                document.getElementById('arb-res-final').innerText = '0 Bs';
-                document.getElementById('arb-res-ganancia').innerText = '0 Bs';
-            }
-        }
-
-        function registrarOperacion() {
-            var bsInicial = parseFloat(document.getElementById('arb-bs-inicial').value) || 0;
-            var montoFinalTexto = document.getElementById('arb-res-final').innerText;
-            var gananciaTexto = document.getElementById('arb-res-ganancia').innerText;
-
-            if (bsInicial <= 0 || gananciaTexto === "0 Bs" || gananciaTexto === "0") {
-                alert("Por favor, ingresa una operación válida con ganancias antes de registrar.");
-                return;
-            }
-
-            var ahora = new Date();
-            var tiempoStr = ahora.getDate() + '/' + (ahora.getMonth() + 1) + ' ' + ahora.getHours() + ':' + (ahora.getMinutes() < 10 ? '0' : '') + ahora.getMinutes();
-
-            var nuevaOperacion = {
-                id: Date.now(), 
-                fecha: tiempoStr,
-                inversion: formatoLimpio(bsInicial) + ' Bs',
-                montoP2P: montoFinalTexto,
-                ganancia: gananciaTexto
-            };
-
-            var historial = [];
-            try {
-                var datosGuardados = localStorage.getItem('historial_arbitraje');
-                if (datosGuardados) { historial = JSON.parse(datosGuardados); }
-            } catch(e) { historial = []; }
-
-            if (!Array.isArray(historial)) { historial = []; }
-
-            historial.unshift(nuevaOperacion);
-            localStorage.setItem('historial_arbitraje', JSON.stringify(historial));
-
-            renderizarHistorial();
-            alert("Operación guardada en el historial con éxito.");
-        }
-
-        function renderizarHistorial() {
-            var tbody = document.getElementById('historial-rows');
-            if(!tbody) return;
-            
-            var historial = [];
-            try {
-                var datosGuardados = localStorage.getItem('historial_arbitraje');
-                if (datosGuardados) { historial = JSON.parse(datosGuardados);
+        // Escudo de Memoria (Para que jamás se congele)
+        var safeStorage = {
+            getItem: function(key) { try { return localStorage.getItem(key); } catch(e) { return null; } },
+            setItem: function(key, val) { try {
+        
