@@ -56,23 +56,23 @@
 
     <div class="slider-container">
         <div class="card">
-            <div class="card-header"><span>🏛️</span><h3>Dólar BCV</h3></div>
-            <div class="price" id="rate-bcv">622,21 Bs</div>
+            <div class="card-header"><span>🏛️</span><h2>Dólar BCV</h2></div>
+            <div class="price" id="rate-bcv">0 Bs</div>
             <div class="trend">Tasa Oficial</div>
         </div>
         <div class="card">
-            <div class="card-header"><span>🔶</span><h3>USDT (P2P)</h3></div>
-            <div class="price" id="rate-usdt">774,10 Bs</div>
+            <div class="card-header"><span>🔶</span><h2>USDT (P2P)</h2></div>
+            <div class="price" id="rate-usdt">0 Bs</div>
             <div class="trend">Binance P2P</div>
         </div>
         <div class="card">
-            <div class="card-header"><span>💶</span><h3>Euro</h3></div>
-            <div class="price" id="rate-eur">708,39 Bs</div>
+            <div class="card-header"><span>💶</span><h2>Euro</h2></div>
+            <div class="price" id="rate-eur">0 Bs</div>
             <div class="trend">BCV Oficial</div>
         </div>
         <div class="card">
-            <div class="card-header"><span>🇨🇴</span><h3>Peso Colombiano</h3></div>
-            <div class="price" id="rate-cop">3.447</div>
+            <div class="card-header"><span>🇨🇴</span><h2>Peso Colombiano</h2></div>
+            <div class="price" id="rate-cop">0</div>
             <div class="trend">XE Real</div>
         </div>
     </div>
@@ -120,7 +120,7 @@
                     Teléfono: <span>0412 316 7126</span>
                 </div>
 
-                <div class="id-box">Tu ID de Act.: <span id="id-dispositivo">6431</span></div>
+                <div class="id-box">Tu ID de Act.: <span id="id-dispositivo">Generando...</span></div>
                 
                 <button class="btn-pro-web" onclick="comprarPremium()">📲 Enviar Capture por WhatsApp</button>
                 <button class="btn-pro-input" onclick="ingresarClave()">🔑 Ingresar PIN de Activación</button>
@@ -184,7 +184,7 @@
                     <div class="cross-calc-row" style="margin-bottom: 12px;">
                         <div style="flex: 1;">
                             <label>Tasa Compra Banco ($/Bs):</label>
-                            <input type="number" id="arb-tasa-compra" placeholder="Ej. 622.21" oninput="calcularArbitraje()">
+                            <input type="number" id="arb-tasa-compra" placeholder="Ej. 623.02" oninput="calcularArbitraje()">
                         </div>
                         <div style="flex: 1;">
                             <label>Tasa Venta P2P:</label>
@@ -224,12 +224,13 @@
     </div>
 
     <script>
-         var tasaBCV = 623.02;
+        // VARIABLES DE TASAS BASE
+        var tasaBCV = 623.02;
         var tasaUSDT = 774.10;
         var tasaEUR = 710.10; 
-        var tasaCOP = 3438; 
+        var tasaCOP = 3438;   
+        
         var ultimoModoComision = 1;
-        var idDispositivo = "6431"; 
 
         function formatoLimpio(numero) {
             var num = Number(numero);
@@ -240,6 +241,13 @@
             if(decimal === "00") return entero;
             if(decimal && decimal.charAt(1) === "0") return entero + "," + decimal.charAt(0);
             return entero + "," + decimal;
+        }
+
+        function pintarPizarrasFlotantes() {
+            document.getElementById('rate-bcv').innerText = formatoLimpio(tasaBCV) + ' Bs';
+            document.getElementById('rate-usdt').innerText = formatoLimpio(tasaUSDT) + ' Bs';
+            document.getElementById('rate-eur').innerText = formatoLimpio(tasaEUR) + ' Bs';
+            document.getElementById('rate-cop').innerText = formatoLimpio(tasaCOP);
         }
 
         function calcularDirecto() {
@@ -292,213 +300,4 @@
                 var montoUSD = parseFloat(valEnvio.value);
                 if (!isNaN(montoUSD)) { valRecibo.value = parseFloat((montoUSD * factorTotal).toFixed(2)); } else { valRecibo.value = ''; }
             } else if (ultimoModoComision === 2) {
-                var targetUSDT = parseFloat(valRecibo.value);
-                if (!isNaN(targetUSDT) && factorTotal > 0) { valEnvio.value = parseFloat((targetUSDT / factorTotal).toFixed(2)); } else { valEnvio.value = ''; }
-            }
-        }
-
-        function calcularArbitraje() {
-            var bsInicial = parseFloat(document.getElementById('arb-bs-inicial').value) || 0;
-            var tasaCompra = parseFloat(document.getElementById('arb-tasa-compra').value) || tasaBCV;
-            var tasaVenta = parseFloat(document.getElementById('arb-tasa-venta').value) || tasaUSDT;
-
-            var pctBanco = parseFloat(document.getElementById('com-porc-banco').value) || 0;
-            var pctBinance = parseFloat(document.getElementById('com-porc-binance').value) || 0;
-            var factorTotal = (1 - (pctBanco / 100)) * (1 - (pctBinance / 100));
-
-            if (bsInicial > 0 && tasaCompra > 0) {
-                var usdComprados = bsInicial / tasaCompra;
-                var usdtNetos = usdComprados * factorTotal; 
-                var bsFinales = usdtNetos * tasaVenta;
-                var ganancia = bsFinales - bsInicial;
-
-                document.getElementById('arb-res-final').innerText = formatoLimpio(bsFinales) + ' Bs';
-                document.getElementById('arb-res-ganancia').innerText = formatoLimpio(ganancia) + ' Bs';
-            } else {
-                document.getElementById('arb-res-final').innerText = '0 Bs';
-                document.getElementById('arb-res-ganancia').innerText = '0 Bs';
-            }
-        }
-
-        function registrarOperacion() {
-            var bsInicial = parseFloat(document.getElementById('arb-bs-inicial').value) || 0;
-            var montoFinalTexto = document.getElementById('arb-res-final').innerText;
-            var gananciaTexto = document.getElementById('arb-res-ganancia').innerText;
-
-            if (bsInicial <= 0 || gananciaTexto === "0 Bs" || gananciaTexto === "0") {
-                alert("Por favor, ingresa una operación válida con ganancias antes de registrar.");
-                return;
-            }
-
-            var ahora = new Date();
-            var tiempoStr = ahora.getDate() + '/' + (ahora.getMonth() + 1) + ' ' + ahora.getHours() + ':' + (ahora.getMinutes() < 10 ? '0' : '') + ahora.getMinutes();
-
-            var nuevaOperacion = {
-                id: Date.now(), 
-                fecha: tiempoStr,
-                inversion: formatoLimpio(bsInicial) + ' Bs',
-                montoP2P: montoFinalTexto,
-                ganancia: gananciaTexto
-            };
-
-            var historial = [];
-            try {
-                var datosGuardados = localStorage.getItem('historial_arbitraje');
-                if (datosGuardados) { historial = JSON.parse(datosGuardados); }
-            } catch(e) { historial = []; }
-
-            if (!Array.isArray(historial)) { historial = []; }
-
-            historial.unshift(nuevaOperacion);
-            localStorage.setItem('historial_arbitraje', JSON.stringify(historial));
-
-            renderizarHistorial();
-            alert("Operación guardada en el historial con éxito.");
-        }
-
-        function renderizarHistorial() {
-            var tbody = document.getElementById('historial-rows');
-            if(!tbody) return;
-            
-            var historial = [];
-            try {
-                var datosGuardados = localStorage.getItem('historial_arbitraje');
-                if (datosGuardados) { historial = JSON.parse(datosGuardados); }
-            } catch(e) { historial = []; }
-
-            tbody.innerHTML = '';
-
-            if (!Array.isArray(historial) || historial.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#b0bec5;">No hay registros grabados aún</td></tr>';
-                return;
-            }
-
-            for (var i = 0; i < historial.length; i++) {
-                var item = historial[i];
-                if (!item) continue;
-
-                var inversion = item.inversion || '-';
-                var montoP2P = item.montoP2P || item.ganancia || '-'; 
-                var ganancia = item.ganancia || '-';
-                var idItem = item.id || Date.now() + i;
-
-                var fila = '<tr>' +
-                    '<td>' + (item.fecha || '-') + '</td>' +
-                    '<td>' + inversion + '</td>' +
-                    '<td style="font-weight:bold;">' + montoP2P + '</td>' +
-                    '<td style="color:#00e676; font-weight:bold;">' + ganancia + '</td>' +
-                    '<td><button class="btn-delete-row" onclick="eliminarRegistroIndividual(' + idItem + ')">❌</button></td>' +
-                    '</tr>';
-                tbody.innerHTML += fila;
-            }
-        }
-
-        function eliminarRegistroIndividual(idSeleccionado) {
-            if(confirm("¿Deseas eliminar este registro del historial?")) {
-                var historial = [];
-                try {
-                    var datosGuardados = localStorage.getItem('historial_arbitraje');
-                    if (datosGuardados) { historial = JSON.parse(datosGuardados); }
-                } catch(e) { historial = []; }
-
-                if (!Array.isArray(historial)) { historial = []; }
-
-                var historialFiltrado = historial.filter(function(item) {
-                    return item && item.id !== idSeleccionado;
-                });
-
-                localStorage.setItem('historial_arbitraje', JSON.stringify(historialFiltrado));
-                renderizarHistorial();
-            }
-        }
-
-        function borrarHistorialCompleto() {
-            if(confirm("¿Estás seguro de que deseas borrar todo tu historial de ganancias de la app?")) {
-                localStorage.removeItem('historial_arbitraje');
-                renderizarHistorial();
-            }
-        }
-
-        function limpiarMontos() {
-            document.getElementById('usd-input').value = '';
-            document.getElementById('cross-val-1').value = '';
-            document.getElementById('cross-val-2').value = '';
-            document.getElementById('com-envio-usd').value = '';
-            document.getElementById('com-recibo-usdt').value = '';
-            document.getElementById('arb-bs-inicial').value = '';
-            calcularDirecto();
-            calcularCruzado(1);
-            calcularComisiones(1);
-            calcularArbitraje();
-        }
-
-        function comprarPremium() {
-            var mensaje = "¡Hola! Ya hice el Pago Móvil de los $3 por la app 'Sin Tanto Embrollo'.\nMi ID de Act. es: *" + idDispositivo + "*";
-            window.location.href = "https://wa.me/584123167126?text=" + encodeURIComponent(mensaje);
-        }
-
-        function activarVistaPro() {
-            document.getElementById('pantalla-bloqueo').style.display = 'none';
-            document.getElementById('contenido-premium').style.filter = 'none';
-            document.getElementById('contenido-premium').style.pointerEvents = 'auto';
-            document.getElementById('contenido-premium').style.userSelect = 'auto';
-        }
-
-        function ingresarClave() {
-            var claveIngresada = prompt("Ingresa el PIN para el ID: " + idDispositivo);
-            if(claveIngresada) {
-                var pinCorrecto = (parseInt(idDispositivo) * 5) + 2026; 
-                if(parseInt(claveIngresada) === pinCorrecto) {
-                    localStorage.setItem('premium_activo', 'true'); 
-                    activarVistaPro();
-                    alert("¡Versión PRO activada con éxito!");
-                } else {
-                    alert("PIN incorrecto.");
-                }
-            }
-        }
-
-        function establecerFechaActual() {
-            var opciones = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-            var fechaHoy = new Date();
-            var fechaTexto = fechaHoy.toLocaleDateString('es-ES', opciones);
-            document.getElementById('fecha-hoy').innerText = fechaTexto;
-        }
-
-        // FUNCIÓN CLAVE: Se ejecuta al cargar la ventana de forma 100% aislada y segura
-        window.onload = function() {
-            try {
-                establecerFechaActual();
-            } catch(e) { console.log(e); }
-
-            try {
-                if (localStorage.getItem('premium_activo') === 'true') {
-                    activarVistaPro();
-                }
-            } catch(e) { console.log(e); }
-            
-            try {
-                var savedBanco = localStorage.getItem('com_banco_saved');
-                var savedBinance = localStorage.getItem('com_binance_saved');
-                document.getElementById('com-porc-banco').value = (savedBanco !== null) ? savedBanco : "0.5";
-                document.getElementById('com-porc-binance').value = (savedBinance !== null) ? savedBinance : "4.1";
-            } catch(e) { console.log(e); }
-
-            document.getElementById('arb-tasa-compra').value = tasaBCV;
-            document.getElementById('arb-tasa-venta').value = tasaUSDT;
-
-            // Renderizar historial protegido por su propio try/catch aislado
-            try {
-                renderizarHistorial();
-            } catch(e) { 
-                console.log(e);
-                localStorage.removeItem('historial_arbitraje'); // Si está muy corrupto lo limpia solo para no trabar
-            }
-
-            try {
-                calcularDirecto();
-            } catch(e) { console.log(e); }
-        };
-    </script>
-</body>
-</html>
+                
