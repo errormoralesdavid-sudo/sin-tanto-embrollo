@@ -1,0 +1,16 @@
+{
+  "short_name": "EmbrolloPRO",
+  "name": "Sin Tanto Embrollo PRO",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/2489/2489756.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": "./index.html",
+  "background_color": "#121212",
+  "theme_color": "#00e676",
+  "display": "standalone",
+  "orientation": "portrait"
+}
