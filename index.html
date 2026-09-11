@@ -45,7 +45,7 @@
     .result-line strong { color: #fff; }
 
     /* GRID DE BANCOS */
-    .bank-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 12px; max-height: 200px; overflow-y: auto; padding-right: 5px; }
+    .bank-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 12px; max-height: 220px; overflow-y: auto; padding-right: 5px; }
     .bank-btn { background-color: var(--input-bg); border: 1px solid var(--border-color); color: #fff; padding: 10px; border-radius: 8px; font-size: 12px; cursor: pointer; text-align: left; display: flex; justify-content: space-between; align-items: center; }
     .bank-btn:hover, .bank-btn.active { border-color: var(--neon-green); background-color: #1b3a2b; }
     .bank-badge { background: var(--neon-green); color: #000; padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 10px; }
@@ -56,7 +56,7 @@
     /* TAB NAVEGACION */
     .tab-content { display: none; }
     .tab-content.active { display: block; }
-    .nav-bar { position: fixed; bottom: 0; width: 100%; background-color: var(--card-bg); border-top: 1px solid var(--border-color); display: flex; justify-content: space-around; padding: 10px 0; }
+    .nav-bar { position: fixed; bottom: 0; width: 100%; background-color: var(--card-bg); border-top: 1px solid var(--border-color); display: flex; justify-content: space-around; padding: 10px 0; z-index: 100; }
     .nav-item { color: var(--text-muted); font-size: 11px; text-align: center; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px; }
     .nav-item.active { color: var(--neon-green); font-weight: bold; }
 
@@ -73,7 +73,7 @@
 
   <!-- SLIDER DE TASAS -->
   <div class="slider-container">
-    <div class="card-rate"><h3>🏛️ BCV</h3><div class="price" id="rate-bcv">773,31 Bs</div><div class="trend">Oficial</div></div>
+    <div class="card-rate"><h3>🏛️ BCV</h3><div class="price" id="rate-bcv">832,48 Bs</div><div class="trend">Oficial</div></div>
     <div class="card-rate"><h3>🔶 USDT P2P</h3><div class="price" id="rate-usdt">885,10 Bs</div><div class="trend">Binance</div></div>
     <div class="card-rate"><h3>💶 Euro</h3><div class="price" id="rate-eur">896,02 Bs</div><div class="trend">BCV</div></div>
     <div class="card-rate"><h3>🇨🇴 Pesos</h3><div class="price" id="rate-cop">3134</div><div class="trend">XE</div></div>
@@ -144,11 +144,29 @@
       </div>
     </div>
 
-    <!-- PESTAÑA 3: COMISIONES -->
+    <!-- PESTAÑA 3: COMISIONES CON LISTA DE BANCOS INCLUIDA -->
     <div id="tab-comisiones" class="tab-content">
       <div class="calc-section">
         <h2>Calculadora de Comisiones</h2>
-        <div style="display:flex; gap:10px;">
+        
+        <label>Selecciona un Banco:</label>
+        <div class="bank-grid">
+          <div class="bank-btn" onclick="seleccionarBancoComision(2.5, this)"><span>🏛️ BdV</span><span class="bank-badge">2.5%</span></div>
+          <div class="bank-btn" onclick="seleccionarBancoComision(1.5, this)"><span>👷 BDT</span><span class="bank-badge">1.5%</span></div>
+          <div class="bank-btn" onclick="seleccionarBancoComision(2.5, this)"><span>😇 B. Tesoro</span><span class="bank-badge">2.5%</span></div>
+          <div class="bank-btn" onclick="seleccionarBancoComision(1.5, this)"><span>🔥 Banesco</span><span class="bank-badge">1.5%</span></div>
+          <div class="bank-btn" onclick="seleccionarBancoComision(1.5, this)"><span>🔵 Provincial</span><span class="bank-badge">1.5%</span></div>
+          <div class="bank-btn" onclick="seleccionarBancoComision(1.5, this)"><span>😁 BNC</span><span class="bank-badge">1.5%</span></div>
+          <div class="bank-btn" onclick="seleccionarBancoComision(5.0, this)"><span>🟢 Bancamiga</span><span class="bank-badge">5.0%</span></div>
+          <div class="bank-btn" onclick="seleccionarBancoComision(1.5, this)"><span>🌊 Bancaribe</span><span class="bank-badge">1.5%</span></div>
+          <div class="bank-btn" onclick="seleccionarBancoComision(3.0, this)"><span>🗣️ B. Activo</span><span class="bank-badge">3.0%</span></div>
+          <div class="bank-btn" onclick="seleccionarBancoComision(1.5, this)"><span>😴 Exterior</span><span class="bank-badge">1.5%</span></div>
+          <div class="bank-btn" onclick="seleccionarBancoComision(1.5, this)"><span>🤓 B. Plaza</span><span class="bank-badge">1.5%</span></div>
+          <div class="bank-btn" onclick="seleccionarBancoComision(1.5, this)"><span>😌 Banplus</span><span class="bank-badge">1.5%</span></div>
+          <div class="bank-btn" onclick="seleccionarBancoComision(3.0, this)"><span>😳 100% Banco</span><span class="bank-badge">3.0%</span></div>
+        </div>
+
+        <div style="display:flex; gap:10px; margin-top: 10px;">
           <div style="flex:1;">
             <label>Com. Banco (%):</label>
             <input type="number" id="com-porc-banco" value="2.5" oninput="calcularComisiones(1)">
@@ -178,7 +196,7 @@
         <div style="display:flex; gap:10px;">
           <div style="flex:1;">
             <label>Tasa Compra Banco:</label>
-            <input type="number" id="arb-tasa-compra" value="773.31" oninput="calcularArbitraje()">
+            <input type="number" id="arb-tasa-compra" value="832.48" oninput="calcularArbitraje()">
           </div>
           <div style="flex:1;">
             <label>Tasa Venta P2P:</label>
@@ -220,7 +238,7 @@
   </nav>
 
   <script>
-    var tasaBCV = 773.31;
+    var tasaBCV = 832.48;
     var tasaUSDT = 885.10;
     var tasaEUR = 896.02;
     var tasaCOP = 3134;
@@ -242,6 +260,13 @@
       document.getElementById('com-porc-banco').value = comision;
       calcularComisiones(1);
       switchTab('comisiones', document.querySelectorAll('.nav-item')[2]);
+    }
+
+    function seleccionarBancoComision(comision, el) {
+      document.querySelectorAll('#tab-comisiones .bank-btn').forEach(b => b.classList.remove('active'));
+      el.classList.add('active');
+      document.getElementById('com-porc-banco').value = comision;
+      calcularComisiones(1);
     }
 
     function calcularDirecto() {
