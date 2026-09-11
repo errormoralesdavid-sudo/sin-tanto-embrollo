@@ -1,534 +1,331 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sin Tanto Embrollo</title>
-    <style>
-        body { background-color: #121212; color: #ffffff; font-family: Arial, sans-serif; margin: 0; padding: 0; overflow-x: hidden; }
-        .slider-container { display: flex; gap: 12px; overflow-x: auto; padding: 20px 15px 10px 15px; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; scroll-behavior: smooth; }
-        .slider-container::-webkit-scrollbar { display: none; }
-        .card { flex: 0 0 78%; scroll-snap-align: center; background-color: #1e1e1e; padding: 15px; border-radius: 14px; border: 1px solid #2e2e2e; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.3); display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; }
-        .card-header { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
-        .card-header span { font-size: 18px; }
-        .card h3 { margin: 0; color: #b0bec5; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; }
-        .price { font-size: 26px; font-weight: bold; color: #ffffff; margin-bottom: 5px; }
-        .trend { font-size: 12px; font-weight: bold; padding: 3px 8px; border-radius: 10px; background-color: #2a2a2a; color: #00e676; }
-        .logo-section { text-align: center; margin: 20px 0; }
-        .logo-container { width: 85px; height: 85px; background-color: #1e1e1e; border: 3px solid #00e676; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; box-shadow: 0 0 20px rgba(0, 230, 118, 0.4); margin-bottom: 10px; padding: 5px; box-sizing: border-box; }
-        .logo-svg { width: 100%; height: 100%; }
-        .status { font-size: 13px; color: #00e676; font-weight: bold; }
-        .date-text { font-size: 12px; color: #b0bec5; margin-top: 4px; text-transform: capitalize; }
-        .calc-container { padding: 0 20px 25px 20px; }
-        .calc-section { background-color: #1e1e1e; padding: 20px; border-radius: 14px; border: 1px solid #2e2e2e; margin-bottom: 20px; }
-        .calc-section h2 { margin-top: 0; font-size: 18px; color: #00e676; text-align: center; margin-bottom: 15px; }
-        label { display: block; margin-bottom: 6px; color: #b0bec5; font-size: 14px; }
-        input, select { width: 100%; padding: 14px; border-radius: 10px; border: 1px solid #424242; background-color: #2a2a2a; color: #fff; font-size: 16px; box-sizing: border-box; outline: none; }
-        input:focus, select:focus { border-color: #00e676; }
-        .result-box { background-color: #2a2a2a; padding: 15px; border-radius: 10px; margin-top: 15px; border-left: 4px solid #00e676; }
-        .result-line { margin: 8px 0; font-size: 16px; display: flex; justify-content: space-between; align-items: center; }
-        .result-line span { color: #b0bec5; }
-        .result-line strong { color: #ffffff; text-align: right; }
-        .cross-calc-row { display: flex; gap: 10px; margin-bottom: 10px; }
-        .cross-calc-row input { flex: 1; }
-        .cross-calc-row select { flex: 0 0 45%; font-weight: bold; }
-        .cross-icon { text-align: center; color: #00e676; font-size: 20px; margin: 5px 0; }
-        .btn-limpiar { background: #2a2a2a; color: #ff5252; border: 1px solid #424242; padding: 10px 15px; border-radius: 8px; font-weight: bold; width: 100%; margin-bottom: 15px; display: flex; justify-content: center; align-items: center; gap: 8px; font-size: 15px; cursor: pointer; box-sizing: border-box; }
-        .premium-wrapper { position: relative; width: 100%; }
-        .premium-overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(18,18,18,0.95); z-index: 10; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 14px; text-align: center; padding: 20px; border: 1px solid #ffca28; backdrop-filter: blur(3px); box-sizing: border-box; }
-        .premium-content { filter: blur(6px); pointer-events: none; user-select: none; }
-        .id-box { background: #000; color: #00e676; padding: 8px 15px; border-radius: 8px; font-family: monospace; font-size: 16px; letter-spacing: 1px; margin-bottom: 15px; border: 1px dashed #00e676; width: 100%; box-sizing: border-box; text-align: center; }
-        .pago-movil-box { background: #1e1e1e; border: 1px solid #424242; padding: 12px; border-radius: 8px; width: 100%; text-align: left; margin-bottom: 15px; font-size: 13px; color: #e0e0e0; box-sizing: border-box; }
-        .pago-movil-box span { color: #00e676; font-weight: bold; }
-        .btn-pro-web { background: #00e676; color: #000; border: none; padding: 12px 20px; border-radius: 8px; font-weight: bold; margin-bottom: 12px; width: 100%; font-size: 14px; cursor: pointer; }
-        .btn-pro-input { background: transparent; color: #00e676; border: 1px solid #00e676; padding: 12px 20px; border-radius: 8px; font-weight: bold; width: 100%; font-size: 14px; cursor: pointer; }
-        
-        .btn-registrar { background: #00e676; color: #000000; border: none; padding: 12px; border-radius: 10px; font-weight: bold; width: 100%; margin-top: 15px; font-size: 15px; cursor: pointer; }
-        .history-table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 12px; text-align: left; }
-        .history-table th { color: #00e676; border-bottom: 1px solid #424242; padding: 8px 4px; }
-        .history-table td { padding: 8px 4px; border-bottom: 1px solid #2e2e2e; color: #e0e0e0; vertical-align: middle; }
-        .btn-delete-row { background: transparent; color: #ff5252; border: none; font-size: 14px; cursor: pointer; padding: 0 5px; font-weight: bold; }
-        .btn-clear-hist { background: transparent; color: #ff5252; border: 1px dashed #ff5252; padding: 6px 12px; border-radius: 6px; font-size: 11px; cursor: pointer; margin-top: 15px; display: inline-block; }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sin Tanto Embrollo PRO</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#00e676">
+  <style>
+    :root {
+      --bg-color: #121212;
+      --card-bg: #1e1e1e;
+      --input-bg: #2a2a2a;
+      --neon-green: #00e676;
+      --text-color: #ffffff;
+      --text-muted: #b0bec5;
+      --border-color: #2e2e2e;
+      --danger-color: #ff5252;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; }
+    body { background-color: var(--bg-color); color: var(--text-color); padding-bottom: 75px; overflow-x: hidden; }
+
+    header { background-color: var(--card-bg); border-bottom: 2px solid var(--neon-green); padding: 15px; text-align: center; }
+    h1 { color: var(--neon-green); font-size: 1.2rem; text-transform: uppercase; letter-spacing: 1px; }
+
+    .slider-container { display: flex; gap: 10px; overflow-x: auto; padding: 15px; scroll-snap-type: x mandatory; }
+    .slider-container::-webkit-scrollbar { display: none; }
+    .card-rate { flex: 0 0 70%; scroll-snap-align: center; background-color: var(--card-bg); padding: 12px; border-radius: 12px; border: 1px solid var(--border-color); text-align: center; }
+    .card-rate h3 { font-size: 12px; color: var(--text-muted); text-transform: uppercase; }
+    .price { font-size: 22px; font-weight: bold; margin: 4px 0; }
+    .trend { font-size: 11px; padding: 2px 8px; border-radius: 8px; background: #2a2a2a; color: var(--neon-green); display: inline-block; }
+
+    .container { padding: 15px; max-width: 600px; margin: 0 auto; }
+    .calc-section { background-color: var(--card-bg); padding: 18px; border-radius: 14px; border: 1px solid var(--border-color); margin-bottom: 15px; }
+    .calc-section h2 { font-size: 16px; color: var(--neon-green); text-align: center; margin-bottom: 12px; }
+
+    label { display: block; margin-bottom: 5px; color: var(--text-muted); font-size: 13px; }
+    input, select { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #424242; background-color: var(--input-bg); color: #fff; font-size: 15px; outline: none; margin-bottom: 10px; }
+    input:focus, select:focus { border-color: var(--neon-green); }
+
+    .result-box { background-color: var(--input-bg); padding: 12px; border-radius: 8px; border-left: 4px solid var(--neon-green); margin-top: 10px; }
+    .result-line { margin: 6px 0; font-size: 14px; display: flex; justify-content: space-between; }
+    .result-line span { color: var(--text-muted); }
+    .result-line strong { color: #fff; }
+
+    /* GRID DE BANCOS */
+    .bank-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 12px; max-height: 200px; overflow-y: auto; padding-right: 5px; }
+    .bank-btn { background-color: var(--input-bg); border: 1px solid var(--border-color); color: #fff; padding: 10px; border-radius: 8px; font-size: 12px; cursor: pointer; text-align: left; display: flex; justify-content: space-between; align-items: center; }
+    .bank-btn:hover, .bank-btn.active { border-color: var(--neon-green); background-color: #1b3a2b; }
+    .bank-badge { background: var(--neon-green); color: #000; padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 10px; }
+
+    .btn-action { background: var(--neon-green); color: #000; border: none; padding: 12px; border-radius: 8px; font-weight: bold; width: 100%; cursor: pointer; font-size: 14px; }
+    .btn-limpiar { background: transparent; color: var(--danger-color); border: 1px solid var(--danger-color); padding: 8px; border-radius: 8px; width: 100%; margin-bottom: 15px; cursor: pointer; font-size: 13px; }
+
+    /* TAB NAVEGACION */
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    .nav-bar { position: fixed; bottom: 0; width: 100%; background-color: var(--card-bg); border-top: 1px solid var(--border-color); display: flex; justify-content: space-around; padding: 10px 0; }
+    .nav-item { color: var(--text-muted); font-size: 11px; text-align: center; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+    .nav-item.active { color: var(--neon-green); font-weight: bold; }
+
+    .history-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 11px; }
+    .history-table th { color: var(--neon-green); border-bottom: 1px solid #424242; padding: 6px; text-align: left; }
+    .history-table td { padding: 6px; border-bottom: 1px solid var(--border-color); }
+  </style>
 </head>
 <body>
 
-    <div class="slider-container">
-        <div class="card">
-            <div class="card-header"><span>🏛️</span><h3>Dólar BCV</h3></div>
-            <div class="price" id="rate-bcv">... Bs</div>
-            <div class="trend">Tasa Oficial</div>
-        </div>
-        <div class="card">
-            <div class="card-header"><span>🔶</span><h3>USDT (P2P)</h3></div>
-            <div class="price" id="rate-usdt">... Bs</div>
-            <div class="trend">Binance P2P</div>
-        </div>
-        <div class="card">
-            <div class="card-header"><span>💶</span><h3>Euro</h3></div>
-            <div class="price" id="rate-eur">... Bs</div>
-            <div class="trend">BCV Oficial</div>
-        </div>
-        <div class="card">
-            <div class="card-header"><span>🇨🇴</span><h3>Peso Colombiano</h3></div>
-            <div class="price" id="rate-cop">...</div>
-            <div class="trend">XE Real</div>
-        </div>
-    </div>
+  <header>
+    <h1>💸 SIN TANTO EMBROLLO PRO</h1>
+  </header>
 
-    <div class="logo-section">
-        <div class="logo-container" id="main-logo-border" style="border-color: #00e676;">
-            <svg class="logo-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-                <polygon points="50,15 80,30 75,70 50,90 25,70 20,30" fill="#1b3a2b" stroke="#00e676" stroke-width="3"/>
-                <polygon points="50,22 73,34 68,66 50,82 32,66 27,34" fill="#12251c"/>
-                <rect x="28" y="40" width="16" height="10" transform="rotate(-15 28 40)" fill="#a5d6a7" opacity="0.7"/>
-                <rect x="58" y="45" width="16" height="10" transform="rotate(20 58 45)" fill="#a5d6a7" opacity="0.7"/>
-                <polygon points="58,20 32,55 48,55 40,85 68,46 52,46" fill="#00e676"/>
-            </svg>
-        </div>
-        <div class="status" id="loading-text">Datos en vivo conectados ✅</div>
-        <div class="date-text" id="fecha-hoy">Cargando fecha...</div>
-    </div>
+  <!-- SLIDER DE TASAS -->
+  <div class="slider-container">
+    <div class="card-rate"><h3>🏛️ BCV</h3><div class="price" id="rate-bcv">773,31 Bs</div><div class="trend">Oficial</div></div>
+    <div class="card-rate"><h3>🔶 USDT P2P</h3><div class="price" id="rate-usdt">885,10 Bs</div><div class="trend">Binance</div></div>
+    <div class="card-rate"><h3>💶 Euro</h3><div class="price" id="rate-eur">896,02 Bs</div><div class="trend">BCV</div></div>
+    <div class="card-rate"><h3>🇨🇴 Pesos</h3><div class="price" id="rate-cop">3134</div><div class="trend">XE</div></div>
+  </div>
 
-    <div class="calc-container">
+  <div class="container">
+    <button class="btn-limpiar" onclick="limpiarTodo()">🧹 Limpiar Todos los Campos</button>
+
+    <!-- PESTAÑA 1: INICIO Y BANCOS -->
+    <div id="tab-inicio" class="tab-content active">
+      <div class="calc-section">
+        <h2>Calculadora Rápida ($)</h2>
+        <label>Monto en Dólares ($):</label>
+        <input type="number" id="usd-input" placeholder="Ej. 10" oninput="calcularDirecto()">
         
-        <button class="btn-limpiar" onclick="limpiarMontos()">🧹 Limpiar todos los montos</button>
-
-        <div class="calc-section">
-            <h2>Calculadora Rápida ($)</h2>
-            <div style="margin-bottom: 15px;">
-                <label>Monto en Dólares ($):</label>
-                <input type="number" id="usd-input" placeholder="Ej. 10" oninput="calcularDirecto()">
-            </div>
-            <div class="result-box">
-                <div class="result-line"><span>Al cambio BCV:</span> <strong id="res-bcv">0 Bs</strong></div>
-                <div class="result-line"><span>Al cambio USDT P2P:</span> <strong id="res-usdt">0 Bs</strong></div>
-                <div class="result-line"><span>En Euros (€):</span> <strong id="res-eur">0 €</strong></div>
-                <div class="result-line"><span>En Pesos (COP):</span> <strong id="res-cop">0 COP</strong></div>
-            </div>
+        <div class="result-box">
+          <div class="result-line"><span>Al cambio BCV:</span> <strong id="res-bcv">0 Bs</strong></div>
+          <div class="result-line"><span>Al cambio USDT P2P:</span> <strong id="res-usdt">0 Bs</strong></div>
+          <div class="result-line"><span>En Euros (€):</span> <strong id="res-eur">0 €</strong></div>
+          <div class="result-line"><span>En Pesos (COP):</span> <strong id="res-cop">0 COP</strong></div>
         </div>
+      </div>
 
-        <div class="premium-wrapper" id="zona-premium">
-            <div class="premium-overlay" id="pantalla-bloqueo">
-                <h3 style="color: #ffca28; margin-top: 0; font-size: 22px;">🔒 Versión PRO</h3>
-                <p style="font-size: 14px; color: #b0bec5; margin-bottom: 10px;">Desbloquea las calculadoras avanzadas. Realiza un Pago Móvil de <b>$3</b> (equivalente a <b style="color: #00e676;"><span id="monto-bs-pro">1.864,59</span> Bs</b>) a los siguientes datos:</p>
-                
-                <div class="pago-movil-box">
-                    Banco: <span>0102 - Venezuela</span><br>
-                    Cédula: <span>30.629.336</span><br>
-                    Teléfono: <span>0412 316 7126</span>
-                </div>
-
-                <div class="id-box">Tu ID de Act.: <span id="id-dispositivo">Generando...</span></div>
-                
-                <button class="btn-pro-web" onclick="comprarPremium()">📲 Enviar Capture por WhatsApp</button>
-                <button class="btn-pro-input" onclick="ingresarClave()">🔑 Ingresar PIN de Activación</button>
-            </div>
-
-            <div class="premium-content" id="contenido-premium">
-                <div class="calc-section" style="border-color: #29b6f6;">
-                    <h2 style="color: #29b6f6;">Calculadora Cruzada (Doble Vía)</h2>
-                    <label>Convierte entre cualquier moneda:</label>
-                    <div class="cross-calc-row">
-                        <input type="number" id="cross-val-1" placeholder="Ej. 1" oninput="calcularCruzado(1)">
-                        <select id="cross-mon-1" onchange="calcularCruzado(1)">
-                            <option value="USDT">USDT (Cripto)</option>
-                            <option value="USD">Dólares ($)</option>
-                            <option value="BCV">Bolívares (Bs)</option>
-                            <option value="EUR">Euros (€)</option>
-                            <option value="COP">Pesos (COP)</option>
-                        </select>
-                    </div>
-                    <div class="cross-icon">↕</div>
-                    <div class="cross-calc-row">
-                        <input type="number" id="cross-val-2" placeholder="Resultado" oninput="calcularCruzado(2)">
-                        <select id="cross-mon-2" onchange="calcularCruzado(2)">
-                            <option value="USD">Dólares ($)</option>
-                            <option value="USDT">USDT (Cripto)</option>
-                            <option value="BCV">Bolívares (Bs)</option>
-                            <option value="EUR">Euros (€)</option>
-                            <option value="COP">Pesos (COP)</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="calc-section" style="border-color: #ffca28; margin-bottom: 20px;">
-                    <h2 style="color: #ffca28;">Calculadora de Comisiones</h2>
-                    <div class="cross-calc-row" style="margin-bottom: 20px;">
-                        <div style="flex: 1;">
-                            <label>Com. Banco (%):</label>
-                            <input type="number" id="com-porc-banco" placeholder="Ej. 0.5" oninput="actualizarComisionesManual(this.value, 'banco')">
-                        </div>
-                        <div style="flex: 1;">
-                            <label>Com. Binance (%):</label>
-                            <input type="number" id="com-porc-binance" placeholder="Ej. 4.1" oninput="actualizarComisionesManual(this.value, 'binance')">
-                        </div>
-                    </div>
-                    <div class="result-box" style="border-left-color: #ffca28; padding-bottom: 15px;">
-                        <label style="color: #ffffff; text-align: center; margin-bottom: 12px; font-size: 15px;">Edita cualquiera de los dos:</label>
-                        <label>1. Envías desde el Banco ($):</label>
-                        <input type="number" id="com-envio-usd" placeholder="Ej. 130" oninput="calcularComisiones(1)" style="font-weight: bold; margin-bottom: 5px;">
-                        <div class="cross-icon" style="color: #ffca28; font-size: 18px; margin-top: -2px; margin-bottom: 3px;">↕</div>
-                        <label style="color: #ffca28;">2. Te llega exacto (USDT):</label>
-                        <input type="number" id="com-recibo-usdt" placeholder="Ej. 120.93" oninput="calcularComisiones(2)" style="color: #ffca28; font-weight: bold; border-color: #ffca28;">
-                    </div>
-                </div>
-
-                <div class="calc-section" style="border-color: #00e676; margin-bottom: 20px;">
-                    <h2 style="color: #00e676;">Calculadora de Arbitraje (Ganancias)</h2>
-                    <div style="margin-bottom: 12px;">
-                        <label>Monto Inicial en Banco (Bs):</label>
-                        <input type="number" id="arb-bs-inicial" placeholder="Ej. 5000" oninput="calcularArbitraje()">
-                    </div>
-                    <div class="cross-calc-row" style="margin-bottom: 12px;">
-                        <div style="flex: 1;">
-                            <label>Tasa Compra Banco ($/Bs):</label>
-                            <input type="number" id="arb-tasa-compra" placeholder="Ej. 623.02" oninput="calcularArbitraje()">
-                        </div>
-                        <div style="flex: 1;">
-                            <label>Tasa Venta P2P:</label>
-                            <input type="number" id="arb-tasa-venta" placeholder="Ej. 774.10" oninput="calcularArbitraje()">
-                        </div>
-                    </div>
-                    <div class="result-box" style="border-left-color: #00e676;">
-                        <div class="result-line"><span>Monto tras venta:</span> <strong id="arb-res-final" style="color: #00e676;">0 Bs</strong></div>
-                        <div class="result-line"><span>Ganancia Neta (Comisiones Restadas):</span> <strong id="arb-res-ganancia" style="color: #00e676; font-size: 18px;">0 Bs</strong></div>
-                    </div>
-                    <button class="btn-registrar" onclick="registrarOperacion()">💾 Registrar Operación en Historial</button>
-                </div>
-
-                <div class="calc-section" style="border-color: #b0bec5;">
-                    <h2 style="color: #b0bec5;">Historial de Operaciones</h2>
-                    <div style="overflow-x: auto;">
-                        <table class="history-table">
-                            <thead>
-                                <tr>
-                                    <th>Fecha/Hora</th>
-                                    <th>Inversión</th>
-                                    <th>Monto P2P</th>
-                                    <th>Ganancia</th>
-                                    <th></th>
-                                </tr>
-                            </thead>
-                            <tbody id="historial-rows">
-                                </tbody>
-                        </table>
-                    </div>
-                    <button class="btn-clear-hist" onclick="borrarHistorialCompleto()">🗑️ Limpiar Todo el Historial</button>
-                </div>
-
-            </div>
+      <div class="calc-section">
+        <h2>🏦 Selección Rápida de Banco</h2>
+        <label>Toca un banco para cargar su comisión:</label>
+        <div class="bank-grid">
+          <div class="bank-btn" onclick="seleccionarBanco(2.5, this)"><span>🏛️ BdV</span><span class="bank-badge">2.5%</span></div>
+          <div class="bank-btn" onclick="seleccionarBanco(1.5, this)"><span>👷 BDT</span><span class="bank-badge">1.5%</span></div>
+          <div class="bank-btn" onclick="seleccionarBanco(2.5, this)"><span>😇 B. Tesoro</span><span class="bank-badge">2.5%</span></div>
+          <div class="bank-btn" onclick="seleccionarBanco(1.5, this)"><span>🔥 Banesco</span><span class="bank-badge">1.5%</span></div>
+          <div class="bank-btn" onclick="seleccionarBanco(1.5, this)"><span>🔵 Provincial</span><span class="bank-badge">1.5%</span></div>
+          <div class="bank-btn" onclick="seleccionarBanco(1.5, this)"><span>😁 BNC</span><span class="bank-badge">1.5%</span></div>
+          <div class="bank-btn" onclick="seleccionarBanco(5.0, this)"><span>🟢 Bancamiga</span><span class="bank-badge">5.0%</span></div>
+          <div class="bank-btn" onclick="seleccionarBanco(1.5, this)"><span>🌊 Bancaribe</span><span class="bank-badge">1.5%</span></div>
+          <div class="bank-btn" onclick="seleccionarBanco(3.0, this)"><span>🗣️ B. Activo</span><span class="bank-badge">3.0%</span></div>
+          <div class="bank-btn" onclick="seleccionarBanco(1.5, this)"><span>😴 Exterior</span><span class="bank-badge">1.5%</span></div>
+          <div class="bank-btn" onclick="seleccionarBanco(1.5, this)"><span>🤓 B. Plaza</span><span class="bank-badge">1.5%</span></div>
+          <div class="bank-btn" onclick="seleccionarBanco(1.5, this)"><span>😌 Banplus</span><span class="bank-badge">1.5%</span></div>
+          <div class="bank-btn" onclick="seleccionarBanco(3.0, this)"><span>😳 100% Banco</span><span class="bank-badge">3.0%</span></div>
         </div>
-
+      </div>
     </div>
 
-    <script>
-        // TASAS DEL DÍA
-        var tasaBCV = 773.31;
-        var tasaUSDT = 885.10;
-        var tasaEUR = 896.02; 
-        var tasaCOP = 3134;   
-        var ultimoModoComision = 1;
+    <!-- PESTAÑA 2: CALCULADORA CRUZADA -->
+    <div id="tab-cruzada" class="tab-content">
+      <div class="calc-section">
+        <h2>Calculadora Cruzada</h2>
+        <label>De:</label>
+        <input type="number" id="cross-val-1" placeholder="Monto" oninput="calcularCruzado(1)">
+        <select id="cross-mon-1" onchange="calcularCruzado(1)">
+          <option value="USD">Dólares ($)</option>
+          <option value="USDT">USDT (Cripto)</option>
+          <option value="BCV">Bolívares (Bs)</option>
+          <option value="EUR">Euros (€)</option>
+          <option value="COP">Pesos (COP)</option>
+        </select>
+        
+        <label>A:</label>
+        <input type="number" id="cross-val-2" placeholder="Resultado" oninput="calcularCruzado(2)">
+        <select id="cross-mon-2" onchange="calcularCruzado(2)">
+          <option value="USDT">USDT (Cripto)</option>
+          <option value="USD">Dólares ($)</option>
+          <option value="BCV">Bolívares (Bs)</option>
+          <option value="EUR">Euros (€)</option>
+          <option value="COP">Pesos (COP)</option>
+        </select>
+      </div>
+    </div>
 
-        // ESCUDO DE MEMORIA: Previene errores si el teléfono bloquea localStorage
-        function seguroGet(key) {
-            try { return localStorage.getItem(key); } catch(e) { return null; }
-        }
-        function seguroSet(key, value) {
-            try { localStorage.setItem(key, value); } catch(e) { console.log('Error de memoria'); }
-        }
-        function seguroRemove(key) {
-            try { localStorage.removeItem(key); } catch(e) { console.log('Error de memoria'); }
-        }
+    <!-- PESTAÑA 3: COMISIONES -->
+    <div id="tab-comisiones" class="tab-content">
+      <div class="calc-section">
+        <h2>Calculadora de Comisiones</h2>
+        <div style="display:flex; gap:10px;">
+          <div style="flex:1;">
+            <label>Com. Banco (%):</label>
+            <input type="number" id="com-porc-banco" value="2.5" oninput="calcularComisiones(1)">
+          </div>
+          <div style="flex:1;">
+            <label>Com. Binance (%):</label>
+            <input type="number" id="com-porc-binance" value="0.0" oninput="calcularComisiones(1)">
+          </div>
+        </div>
+        
+        <div class="result-box">
+          <label>Envías desde el Banco ($):</label>
+          <input type="number" id="com-envio-usd" placeholder="Ej. 100" oninput="calcularComisiones(1)">
+          <label>Te llega en USDT:</label>
+          <input type="number" id="com-recibo-usdt" placeholder="Ej. 97.5" oninput="calcularComisiones(2)" style="color:var(--neon-green);">
+        </div>
+      </div>
+    </div>
 
-        function formatoLimpio(numero) {
-            var num = Number(numero);
-            if(isNaN(num)) return "0";
-            var partes = num.toFixed(2).split('.');
-            var entero = partes[0].replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-            var decimal = partes[1];
-            if(decimal === "00") return entero;
-            if(decimal && decimal.charAt(1) === "0") return entero + "," + decimal.charAt(0);
-            return entero + "," + decimal;
-        }
+    <!-- PESTAÑA 4: ARBITRAJE Y GANANCIAS MULTIDIVISA -->
+    <div id="tab-arbitraje" class="tab-content">
+      <div class="calc-section">
+        <h2>Arbitraje y Ganancias Multidivisa</h2>
+        <label>Monto Inicial en Banco (Bs):</label>
+        <input type="number" id="arb-bs-inicial" placeholder="Ej. 5000" oninput="calcularArbitraje()">
+        
+        <div style="display:flex; gap:10px;">
+          <div style="flex:1;">
+            <label>Tasa Compra Banco:</label>
+            <input type="number" id="arb-tasa-compra" value="773.31" oninput="calcularArbitraje()">
+          </div>
+          <div style="flex:1;">
+            <label>Tasa Venta P2P:</label>
+            <input type="number" id="arb-tasa-venta" value="885.10" oninput="calcularArbitraje()">
+          </div>
+        </div>
 
-        function pintarPizarrasFlotantes() {
-            var eBcv = document.getElementById('rate-bcv');
-            var eUsdt = document.getElementById('rate-usdt');
-            var eEur = document.getElementById('rate-eur');
-            var eCop = document.getElementById('rate-cop');
-            
-            if(eBcv) eBcv.innerText = formatoLimpio(tasaBCV) + ' Bs';
-            if(eUsdt) eUsdt.innerText = formatoLimpio(tasaUSDT) + ' Bs';
-            if(eEur) eEur.innerText = formatoLimpio(tasaEUR) + ' Bs';
-            if(eCop) eCop.innerText = formatoLimpio(tasaCOP);
-        }
+        <div class="result-box">
+          <div class="result-line"><span>Monto Final Venta:</span> <strong id="arb-res-final">0 Bs</strong></div>
+          <div class="result-line"><span>Ganancia Neta (Bs):</span> <strong id="arb-res-ganancia-bs" style="color:var(--neon-green);">0 Bs</strong></div>
+          <div class="result-line"><span>Ganancia Neta (USDT):</span> <strong id="arb-res-ganancia-usdt" style="color:var(--neon-green);">0 USDT</strong></div>
+          <div class="result-line"><span>Ganancia Neta ($):</span> <strong id="arb-res-ganancia-usd" style="color:var(--neon-green);">0 $</strong></div>
+        </div>
 
-        function calcularDirecto() {
-            var valInput = document.getElementById('usd-input').value;
-            var usd = parseFloat(valInput) || 0;
-            document.getElementById('res-bcv').innerText = formatoLimpio(usd * tasaBCV) + ' Bs';
-            document.getElementById('res-usdt').innerText = formatoLimpio(usd * tasaUSDT) + ' Bs';
-            document.getElementById('res-eur').innerText = formatoLimpio((usd * tasaBCV) / tasaEUR) + ' €';
-            document.getElementById('res-cop').innerText = formatoLimpio(usd * tasaCOP) + ' COP';
-        }
+        <button class="btn-action" style="margin-top:10px;" onclick="registrarOperacion()">💾 Registrar Operación</button>
+      </div>
 
-        function calcularCruzado(modificado) {
-            var val1 = document.getElementById('cross-val-1');
-            var val2 = document.getElementById('cross-val-2');
-            var mon1 = document.getElementById('cross-mon-1').value;
-            var mon2 = document.getElementById('cross-mon-2').value;
+      <div class="calc-section">
+        <h2>Historial de Operaciones</h2>
+        <div style="overflow-x:auto;">
+          <table class="history-table">
+            <thead>
+              <tr><th>Fecha</th><th>Inversión</th><th>Ganancia Bs</th><th>Ganancia USDT</th></tr>
+            </thead>
+            <tbody id="historial-rows"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
 
-            var tasasEnBs = { USD: tasaBCV, BCV: 1, USDT: tasaUSDT, EUR: tasaEUR, COP: tasaBCV / tasaCOP };
-            var t1 = tasasEnBs[mon1]; var t2 = tasasEnBs[mon2];
+  </div>
 
-            if (modificado === 1) {
-                var monto = parseFloat(val1.value);
-                if (!isNaN(monto)) { val2.value = parseFloat(((monto * t1) / t2).toFixed(2)); } else { val2.value = ''; }
-            } else if (modificado === 2) {
-                var monto2 = parseFloat(val2.value);
-                if (!isNaN(monto2)) { val1.value = parseFloat(((monto2 * t2) / t1).toFixed(2)); } else { val1.value = ''; }
-            }
-        }
+  <!-- NAVEGACIÓN INFERIOR -->
+  <nav class="nav-bar">
+    <div class="nav-item active" onclick="switchTab('inicio', this)"><span>🏠</span><span>Inicio</span></div>
+    <div class="nav-item" onclick="switchTab('cruzada', this)"><span>↕️</span><span>Cruzada</span></div>
+    <div class="nav-item" onclick="switchTab('comisiones', this)"><span>⚙️</span><span>Comisión</span></div>
+    <div class="nav-item" onclick="switchTab('arbitraje', this)"><span>📈</span><span>Arbitraje</span></div>
+  </nav>
 
-        function actualizarComisionesManual(valor, tipo) {
-            if(tipo === 'banco') { seguroSet('com_banco_saved', valor); } 
-            else if(tipo === 'binance') { seguroSet('com_binance_saved', valor); }
-            calcularComisiones(ultimoModoComision);
-            calcularArbitraje();
-        }
+  <script>
+    var tasaBCV = 773.31;
+    var tasaUSDT = 885.10;
+    var tasaEUR = 896.02;
+    var tasaCOP = 3134;
 
-        function calcularComisiones(modo) {
-            if(modo) ultimoModoComision = modo;
-            var pctBanco = parseFloat(document.getElementById('com-porc-banco').value) || 0;
-            var pctBinance = parseFloat(document.getElementById('com-porc-binance').value) || 0;
-            var factorTotal = (1 - (pctBanco / 100)) * (1 - (pctBinance / 100));
+    function formato(num) {
+      return Number(num).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
 
-            var valEnvio = document.getElementById('com-envio-usd');
-            var valRecibo = document.getElementById('com-recibo-usdt');
+    function switchTab(tabId, el) {
+      document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+      document.getElementById('tab-' + tabId).classList.add('active');
+      el.classList.add('active');
+    }
 
-            if (ultimoModoComision === 1) {
-                var montoUSD = parseFloat(valEnvio.value);
-                if (!isNaN(montoUSD)) { valRecibo.value = parseFloat((montoUSD * factorTotal).toFixed(2)); } else { valRecibo.value = ''; }
-            } else if (ultimoModoComision === 2) {
-                var targetUSDT = parseFloat(valRecibo.value);
-                if (!isNaN(targetUSDT) && factorTotal > 0) { valEnvio.value = parseFloat((targetUSDT / factorTotal).toFixed(2)); } else { valEnvio.value = ''; }
-            }
-        }
+    function seleccionarBanco(comision, el) {
+      document.querySelectorAll('.bank-btn').forEach(b => b.classList.remove('active'));
+      el.classList.add('active');
+      document.getElementById('com-porc-banco').value = comision;
+      calcularComisiones(1);
+      switchTab('comisiones', document.querySelectorAll('.nav-item')[2]);
+    }
 
-        function calcularArbitraje() {
-            var bsInicial = parseFloat(document.getElementById('arb-bs-inicial').value) || 0;
-            var tasaCompra = parseFloat(document.getElementById('arb-tasa-compra').value) || tasaBCV;
-            var tasaVenta = parseFloat(document.getElementById('arb-tasa-venta').value) || tasaUSDT;
+    function calcularDirecto() {
+      var usd = parseFloat(document.getElementById('usd-input').value) || 0;
+      document.getElementById('res-bcv').innerText = formato(usd * tasaBCV) + ' Bs';
+      document.getElementById('res-usdt').innerText = formato(usd * tasaUSDT) + ' Bs';
+      document.getElementById('res-eur').innerText = formato((usd * tasaBCV) / tasaEUR) + ' €';
+      document.getElementById('res-cop').innerText = formato(usd * tasaCOP) + ' COP';
+    }
 
-            var pctBanco = parseFloat(document.getElementById('com-porc-banco').value) || 0;
-            var pctBinance = parseFloat(document.getElementById('com-porc-binance').value) || 0;
-            var factorTotal = (1 - (pctBanco / 100)) * (1 - (pctBinance / 100));
+    function calcularCruzado(modo) {
+      var v1 = document.getElementById('cross-val-1');
+      var v2 = document.getElementById('cross-val-2');
+      var m1 = document.getElementById('cross-mon-1').value;
+      var m2 = document.getElementById('cross-mon-2').value;
+      var tasas = { USD: tasaBCV, BCV: 1, USDT: tasaUSDT, EUR: tasaEUR, COP: tasaBCV / tasaCOP };
 
-            if (bsInicial > 0 && tasaCompra > 0) {
-                var usdComprados = bsInicial / tasaCompra;
-                var usdtNetos = usdComprados * factorTotal; 
-                var bsFinales = usdtNetos * tasaVenta;
-                var ganancia = bsFinales - bsInicial;
+      if (modo === 1) {
+        var val = parseFloat(v1.value) || 0;
+        v2.value = ((val * tasas[m1]) / tasas[m2]).toFixed(2);
+      } else {
+        var val = parseFloat(v2.value) || 0;
+        v1.value = ((val * tasas[m2]) / tasas[m1]).toFixed(2);
+      }
+    }
 
-                document.getElementById('arb-res-final').innerText = formatoLimpio(bsFinales) + ' Bs';
-                document.getElementById('arb-res-ganancia').innerText = formatoLimpio(ganancia) + ' Bs';
-            } else {
-                document.getElementById('arb-res-final').innerText = '0 Bs';
-                document.getElementById('arb-res-ganancia').innerText = '0 Bs';
-            }
-        }
+    function calcularComisiones(modo) {
+      var pBanco = parseFloat(document.getElementById('com-porc-banco').value) || 0;
+      var pBinance = parseFloat(document.getElementById('com-porc-binance').value) || 0;
+      var factor = (1 - (pBanco / 100)) * (1 - (pBinance / 100));
 
-        function registrarOperacion() {
-            var bsInicial = parseFloat(document.getElementById('arb-bs-inicial').value) || 0;
-            var montoFinalTexto = document.getElementById('arb-res-final').innerText;
-            var gananciaTexto = document.getElementById('arb-res-ganancia').innerText;
+      var env = document.getElementById('com-envio-usd');
+      var rec = document.getElementById('com-recibo-usdt');
 
-            if (bsInicial <= 0 || gananciaTexto === "0 Bs" || gananciaTexto === "0") {
-                alert("Por favor, ingresa una operación válida.");
-                return;
-            }
+      if (modo === 1) {
+        var v = parseFloat(env.value) || 0;
+        rec.value = (v * factor).toFixed(2);
+      } else {
+        var v = parseFloat(rec.value) || 0;
+        env.value = factor > 0 ? (v / factor).toFixed(2) : 0;
+      }
+    }
 
-            var ahora = new Date();
-            var tiempoStr = ahora.getDate() + '/' + (ahora.getMonth() + 1) + ' ' + ahora.getHours() + ':' + (ahora.getMinutes() < 10 ? '0' : '') + ahora.getMinutes();
+    function calcularArbitraje() {
+      var bs = parseFloat(document.getElementById('arb-bs-inicial').value) || 0;
+      var tCompra = parseFloat(document.getElementById('arb-tasa-compra').value) || tasaBCV;
+      var tVenta = parseFloat(document.getElementById('arb-tasa-venta').value) || tasaUSDT;
+      var pBanco = parseFloat(document.getElementById('com-porc-banco').value) || 0;
 
-            var nuevaOperacion = {
-                id: Date.now(), 
-                fecha: tiempoStr,
-                inversion: formatoLimpio(bsInicial) + ' Bs',
-                montoP2P: montoFinalTexto,
-                ganancia: gananciaTexto
-            };
+      if (bs > 0 && tCompra > 0) {
+        var usdBrutos = bs / tCompra;
+        var usdtNetos = usdBrutos * (1 - (pBanco / 100));
+        var bsFinales = usdtNetos * tVenta;
+        var gananciaBs = bsFinales - bs;
+        var gananciaUSDT = gananciaBs / tVenta;
+        var gananciaUSD = gananciaBs / tCompra;
 
-            var historial = [];
-            var datosGuardados = seguroGet('historial_arbitraje');
-            if (datosGuardados) {
-                try { historial = JSON.parse(datosGuardados); } catch(e) { historial = []; }
-            }
-            if (!Array.isArray(historial)) { historial = []; }
+        document.getElementById('arb-res-final').innerText = formato(bsFinales) + ' Bs';
+        document.getElementById('arb-res-ganancia-bs').innerText = formato(gananciaBs) + ' Bs';
+        document.getElementById('arb-res-ganancia-usdt').innerText = formato(gananciaUSDT) + ' USDT';
+        document.getElementById('arb-res-ganancia-usd').innerText = formato(gananciaUSD) + ' $';
+      }
+    }
 
-            historial.unshift(nuevaOperacion);
-            seguroSet('historial_arbitraje', JSON.stringify(historial));
+    function registrarOperacion() {
+      var bs = document.getElementById('arb-bs-inicial').value;
+      var ganBs = document.getElementById('arb-res-ganancia-bs').innerText;
+      var ganUSDT = document.getElementById('arb-res-ganancia-usdt').innerText;
 
-            renderizarHistorial();
-            alert("Operación guardada.");
-        }
+      if (!bs || ganBs === '0,00 Bs') return;
 
-        function renderizarHistorial() {
-            var tbody = document.getElementById('historial-rows');
-            if(!tbody) return;
-            
-            var historial = [];
-            var datosGuardados = seguroGet('historial_arbitraje');
-            if (datosGuardados) {
-                try { historial = JSON.parse(datosGuardados); } catch(e) { historial = []; }
-            }
-            if (!Array.isArray(historial)) { historial = []; }
+      var tbody = document.getElementById('historial-rows');
+      var row = `<tr><td>${new Date().toLocaleDateString()}</td><td>${bs} Bs</td><td>${ganBs}</td><td>${ganUSDT}</td></tr>`;
+      tbody.innerHTML = row + tbody.innerHTML;
+    }
 
-            tbody.innerHTML = '';
-
-            if (historial.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#b0bec5;">No hay registros grabados aún</td></tr>';
-                return;
-            }
-
-            for (var i = 0; i < historial.length; i++) {
-                var item = historial[i];
-                if (!item) continue;
-                var idItem = item.id || Date.now() + i;
-                var fila = '<tr>' +
-                    '<td>' + (item.fecha || '-') + '</td>' +
-                    '<td>' + (item.inversion || '-') + '</td>' +
-                    '<td style="font-weight:bold;">' + (item.montoP2P || item.ganancia || '-') + '</td>' +
-                    '<td style="color:#00e676; font-weight:bold;">' + (item.ganancia || '-') + '</td>' +
-                    '<td><button class="btn-delete-row" onclick="eliminarRegistroIndividual(' + idItem + ')">❌</button></td>' +
-                    '</tr>';
-                tbody.innerHTML += fila;
-            }
-        }
-
-        function eliminarRegistroIndividual(idSeleccionado) {
-            if(confirm("¿Deseas eliminar este registro del historial?")) {
-                var historial = [];
-                var datosGuardados = seguroGet('historial_arbitraje');
-                if (datosGuardados) {
-                    try { historial = JSON.parse(datosGuardados); } catch(e) { historial = []; }
-                }
-                if (!Array.isArray(historial)) { historial = []; }
-
-                var historialFiltrado = historial.filter(function(item) {
-                    return item && item.id !== idSeleccionado;
-                });
-
-                seguroSet('historial_arbitraje', JSON.stringify(historialFiltrado));
-                renderizarHistorial();
-            }
-        }
-
-        function borrarHistorialCompleto() {
-            if(confirm("¿Seguro de borrar todo el historial?")) {
-                seguroRemove('historial_arbitraje');
-                renderizarHistorial();
-            }
-        }
-
-        function limpiarMontos() {
-            document.getElementById('usd-input').value = '';
-            document.getElementById('cross-val-1').value = '';
-            document.getElementById('cross-val-2').value = '';
-            document.getElementById('com-envio-usd').value = '';
-            document.getElementById('com-recibo-usdt').value = '';
-            document.getElementById('arb-bs-inicial').value = '';
-            calcularDirecto();
-            calcularCruzado(1);
-            calcularComisiones(1);
-            calcularArbitraje();
-        }
-
-        function comprarPremium() {
-            var idActual = seguroGet('id_dispositivo_unico') || "0000";
-            var mensaje = "¡Hola! Ya hice el Pago Móvil de los $3 por la app 'Sin Tanto Embrollo'.\nMi ID de Act. es: *" + idActual + "*";
-            window.location.href = "https://wa.me/584123167126?text=" + encodeURIComponent(mensaje);
-        }
-
-        function activarVistaPro() {
-            var overlay = document.getElementById('pantalla-bloqueo');
-            var content = document.getElementById('contenido-premium');
-            if(overlay) overlay.style.display = 'none';
-            if(content) {
-                content.style.filter = 'none';
-                content.style.pointerEvents = 'auto';
-                content.style.userSelect = 'auto';
-            }
-        }
-
-        function ingresarClave() {
-            var idActual = parseInt(seguroGet('id_dispositivo_unico')) || 0;
-            var claveIngresada = prompt("Ingresa el PIN para el ID: " + idActual);
-            
-            if(claveIngresada) {
-                var pinCorrecto = (idActual * 5) + 2026; 
-                if(parseInt(claveIngresada) === pinCorrecto) {
-                    seguroSet('premium_activo', 'true'); 
-                    activarVistaPro();
-                    alert("¡Versión PRO activada con éxito!");
-                } else {
-                    alert("PIN incorrecto.");
-                }
-            }
-        }
-
-        function establecerFechaActual() {
-            var opciones = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-            var fechaHoy = new Date();
-            var fechaTexto = fechaHoy.toLocaleDateString('es-ES', opciones);
-            var element = document.getElementById('fecha-hoy');
-            if(element) element.innerText = fechaTexto;
-        }
-
-        function gestionarIdDispositivo() {
-            var idGuardado = seguroGet('id_dispositivo_unico');
-            if (!idGuardado) {
-                idGuardado = Math.floor(1000 + Math.random() * 9000).toString();
-                seguroSet('id_dispositivo_unico', idGuardado);
-            }
-            var element = document.getElementById('id-dispositivo');
-            if(element) element.innerText = idGuardado;
-        }
-
-        // ==========================================
-        // ARRANQUE FORZADO (Evita que WebIntoApp lo bloquee)
-        // ==========================================
-        function arrancarAplicacion() {
-            try { establecerFechaActual(); } catch(e) {}
-            try { pintarPizarrasFlotantes(); } catch(e) {}
-            try { gestionarIdDispositivo(); } catch(e) {}
-
-            var eTasaCompra = document.getElementById('arb-tasa-compra');
-            var eTasaVenta = document.getElementById('arb-tasa-venta');
-            if(eTasaCompra) eTasaCompra.value = tasaBCV;
-            if(eTasaVenta) eTasaVenta.value = tasaUSDT;
-
-            try {
-                var savedBanco = seguroGet('com_banco_saved');
-                var savedBinance = seguroGet('com_binance_saved');
-                var ePorcBanco = document.getElementById('com-porc-banco');
-                var ePorcBinance = document.getElementById('com-porc-binance');
-                if(ePorcBanco) ePorcBanco.value = (savedBanco !== null) ? savedBanco : "0.5";
-                if(ePorcBinance) ePorcBinance.value = (savedBinance !== null) ? savedBinance : "4.1";
-            } catch(e) {}
-
-            try {
-                if (seguroGet('premium_activo') === 'true') { activarVistaPro(); }
-            } catch(e) {}
-
-            try { renderizarHistorial(); } catch(e) { seguroRemove('historial_arbitraje'); }
-            try { calcularDirecto(); } catch(e) {}
-        }
-
-        // Ejecutar de inmediato sin esperar permiso del navegador
-        arrancarAplicacion();
-
-    </script>
+    function limpiarTodo() {
+      document.querySelectorAll('input').forEach(i => i.value = '');
+      document.getElementById('com-porc-banco').value = '2.5';
+      document.getElementById('arb-tasa-compra').value = tasaBCV;
+      document.getElementById('arb-tasa-venta').value = tasaUSDT;
+      calcularDirecto();
+      calcularArbitraje();
+    }
+  </script>
 </body>
 </html>
