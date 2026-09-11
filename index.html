@@ -19,45 +19,50 @@
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; }
-    body { background-color: var(--bg-color); color: var(--text-color); padding-bottom: 75px; overflow-x: hidden; }
+    body { background-color: var(--bg-color); color: var(--text-color); padding-bottom: 80px; overflow-x: hidden; }
 
     header { background-color: var(--card-bg); border-bottom: 2px solid var(--neon-green); padding: 15px; text-align: center; }
     h1 { color: var(--neon-green); font-size: 1.2rem; text-transform: uppercase; letter-spacing: 1px; }
 
+    /* SLIDER TASAS Y BRECHA */
     .slider-container { display: flex; gap: 10px; overflow-x: auto; padding: 15px; scroll-snap-type: x mandatory; }
     .slider-container::-webkit-scrollbar { display: none; }
-    .card-rate { flex: 0 0 70%; scroll-snap-align: center; background-color: var(--card-bg); padding: 12px; border-radius: 12px; border: 1px solid var(--border-color); text-align: center; }
-    .card-rate h3 { font-size: 12px; color: var(--text-muted); text-transform: uppercase; }
-    .price { font-size: 22px; font-weight: bold; margin: 4px 0; }
-    .trend { font-size: 11px; padding: 2px 8px; border-radius: 8px; background: #2a2a2a; color: var(--neon-green); display: inline-block; }
+    .card-rate { flex: 0 0 65%; scroll-snap-align: center; background-color: var(--card-bg); padding: 12px; border-radius: 12px; border: 1px solid var(--border-color); text-align: center; }
+    .card-rate h3 { font-size: 11px; color: var(--text-muted); text-transform: uppercase; }
+    .price { font-size: 20px; font-weight: bold; margin: 4px 0; }
+    .trend { font-size: 10px; padding: 2px 8px; border-radius: 8px; background: #2a2a2a; color: var(--neon-green); display: inline-block; }
 
     .container { padding: 15px; max-width: 600px; margin: 0 auto; }
     .calc-section { background-color: var(--card-bg); padding: 18px; border-radius: 14px; border: 1px solid var(--border-color); margin-bottom: 15px; }
-    .calc-section h2 { font-size: 16px; color: var(--neon-green); text-align: center; margin-bottom: 12px; }
+    .calc-section h2 { font-size: 15px; color: var(--neon-green); text-align: center; margin-bottom: 12px; }
 
-    label { display: block; margin-bottom: 5px; color: var(--text-muted); font-size: 13px; }
+    label { display: block; margin-bottom: 5px; color: var(--text-muted); font-size: 12px; }
     input, select { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #424242; background-color: var(--input-bg); color: #fff; font-size: 15px; outline: none; margin-bottom: 10px; }
     input:focus, select:focus { border-color: var(--neon-green); }
 
     .result-box { background-color: var(--input-bg); padding: 12px; border-radius: 8px; border-left: 4px solid var(--neon-green); margin-top: 10px; }
-    .result-line { margin: 6px 0; font-size: 14px; display: flex; justify-content: space-between; }
+    .result-line { margin: 6px 0; font-size: 13px; display: flex; justify-content: space-between; }
     .result-line span { color: var(--text-muted); }
     .result-line strong { color: #fff; }
 
-    /* GRID DE BANCOS */
-    .bank-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 12px; max-height: 220px; overflow-y: auto; padding-right: 5px; }
+    /* BANCOS GRID */
+    .bank-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 12px; max-height: 200px; overflow-y: auto; padding-right: 5px; }
     .bank-btn { background-color: var(--input-bg); border: 1px solid var(--border-color); color: #fff; padding: 10px; border-radius: 8px; font-size: 12px; cursor: pointer; text-align: left; display: flex; justify-content: space-between; align-items: center; }
     .bank-btn:hover, .bank-btn.active { border-color: var(--neon-green); background-color: #1b3a2b; }
     .bank-badge { background: var(--neon-green); color: #000; padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 10px; }
 
     .btn-action { background: var(--neon-green); color: #000; border: none; padding: 12px; border-radius: 8px; font-weight: bold; width: 100%; cursor: pointer; font-size: 14px; }
-    .btn-limpiar { background: transparent; color: var(--danger-color); border: 1px solid var(--danger-color); padding: 8px; border-radius: 8px; width: 100%; margin-bottom: 15px; cursor: pointer; font-size: 13px; }
+    .btn-limpiar { background: transparent; color: var(--danger-color); border: 1px solid var(--danger-color); padding: 8px; border-radius: 8px; width: 100%; margin-bottom: 15px; cursor: pointer; font-size: 12px; }
 
-    /* TAB NAVEGACION */
+    /* BANNER IPHONE */
+    .ios-banner { display: none; background: #2d3748; border: 1px solid #4a5568; padding: 12px; border-radius: 10px; margin-bottom: 15px; font-size: 12px; color: #e2e8f0; }
+    .ios-banner strong { color: var(--neon-green); }
+
+    /* NAVEGACIÓN */
     .tab-content { display: none; }
     .tab-content.active { display: block; }
     .nav-bar { position: fixed; bottom: 0; width: 100%; background-color: var(--card-bg); border-top: 1px solid var(--border-color); display: flex; justify-content: space-around; padding: 10px 0; z-index: 100; }
-    .nav-item { color: var(--text-muted); font-size: 11px; text-align: center; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+    .nav-item { color: var(--text-muted); font-size: 10px; text-align: center; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 3px; }
     .nav-item.active { color: var(--neon-green); font-weight: bold; }
 
     .history-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 11px; }
@@ -71,18 +76,24 @@
     <h1>💸 SIN TANTO EMBROLLO PRO</h1>
   </header>
 
-  <!-- SLIDER DE TASAS -->
+  <!-- SLIDER CON TASAS Y BRECHA CAMBIARIA -->
   <div class="slider-container">
     <div class="card-rate"><h3>🏛️ BCV</h3><div class="price" id="rate-bcv">832,48 Bs</div><div class="trend">Oficial</div></div>
     <div class="card-rate"><h3>🔶 USDT P2P</h3><div class="price" id="rate-usdt">885,10 Bs</div><div class="trend">Binance</div></div>
+    <div class="card-rate"><h3>📊 Brecha Cambiaria</h3><div class="price" id="rate-spread" style="color:var(--neon-green);">6.32%</div><div class="trend">Diferencia</div></div>
     <div class="card-rate"><h3>💶 Euro</h3><div class="price" id="rate-eur">896,02 Bs</div><div class="trend">BCV</div></div>
     <div class="card-rate"><h3>🇨🇴 Pesos</h3><div class="price" id="rate-cop">3134</div><div class="trend">XE</div></div>
   </div>
 
   <div class="container">
+    <!-- BANNER INSTALACION IPHONE -->
+    <div id="ios-prompt" class="ios-banner">
+      📲 <strong>Instalar en iPhone:</strong> Toca el botón <strong>Compartir</strong> (icono de cuadrado con flecha abajo) y selecciona <strong>"Agregar a inicio"</strong>.
+    </div>
+
     <button class="btn-limpiar" onclick="limpiarTodo()">🧹 Limpiar Todos los Campos</button>
 
-    <!-- PESTAÑA 1: INICIO Y BANCOS -->
+    <!-- PESTAÑA 1: INICIO -->
     <div id="tab-inicio" class="tab-content active">
       <div class="calc-section">
         <h2>Calculadora Rápida ($)</h2>
@@ -118,7 +129,7 @@
       </div>
     </div>
 
-    <!-- PESTAÑA 2: CALCULADORA CRUZADA -->
+    <!-- PESTAÑA 2: CRUZADA Y IMPUESTOS (IGTF) -->
     <div id="tab-cruzada" class="tab-content">
       <div class="calc-section">
         <h2>Calculadora Cruzada</h2>
@@ -142,9 +153,20 @@
           <option value="COP">Pesos (COP)</option>
         </select>
       </div>
+
+      <div class="calc-section">
+        <h2>🧾 Creador de Pagos / IGTF (3%)</h2>
+        <label>Precio del Producto ($):</label>
+        <input type="number" id="igtf-monto-usd" placeholder="Ej. 50" oninput="calcularIGTF()">
+        <div class="result-box">
+          <div class="result-line"><span>Monto Base en Bs (BCV):</span> <strong id="igtf-res-base">0 Bs</strong></div>
+          <div class="result-line"><span>IGTF 3% (Divisa):</span> <strong id="igtf-res-3pct">0 $ (0 Bs)</strong></div>
+          <div class="result-line"><span>Total a Cobrar/Pagar:</span> <strong id="igtf-res-total" style="color:var(--neon-green);">0 $ / 0 Bs</strong></div>
+        </div>
+      </div>
     </div>
 
-    <!-- PESTAÑA 3: COMISIONES CON LISTA DE BANCOS INCLUIDA -->
+    <!-- PESTAÑA 3: COMISIONES CON LISTA DE BANCOS -->
     <div id="tab-comisiones" class="tab-content">
       <div class="calc-section">
         <h2>Calculadora de Comisiones</h2>
@@ -205,10 +227,11 @@
         </div>
 
         <div class="result-box">
+          <div class="result-line"><span>Punto de Equilibrio (Tasa Mínima):</span> <strong id="arb-res-breakeven">0 Bs</strong></div>
           <div class="result-line"><span>Monto Final Venta:</span> <strong id="arb-res-final">0 Bs</strong></div>
-          <div class="result-line"><span>Ganancia Neta (Bs):</span> <strong id="arb-res-ganancia-bs" style="color:var(--neon-green);">0 Bs</strong></div>
-          <div class="result-line"><span>Ganancia Neta (USDT):</span> <strong id="arb-res-ganancia-usdt" style="color:var(--neon-green);">0 USDT</strong></div>
-          <div class="result-line"><span>Ganancia Neta ($):</span> <strong id="arb-res-ganancia-usd" style="color:var(--neon-green);">0 $</strong></div>
+          <div class="result-line"><span>Ganancia Neta (Bs):</span> <strong id="arb-res-ganancia-bs">0 Bs</strong></div>
+          <div class="result-line"><span>Ganancia Neta (USDT):</span> <strong id="arb-res-ganancia-usdt">0 USDT</strong></div>
+          <div class="result-line"><span>Ganancia Neta ($):</span> <strong id="arb-res-ganancia-usd">0 $</strong></div>
         </div>
 
         <button class="btn-action" style="margin-top:10px;" onclick="registrarOperacion()">💾 Registrar Operación</button>
@@ -243,8 +266,23 @@
     var tasaEUR = 896.02;
     var tasaCOP = 3134;
 
+    window.onload = function() {
+      // Detección de iPhone para mostrar aviso de instalación
+      var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+      var isStandalone = window.navigator.standalone;
+      if (isIOS && !isStandalone) {
+        document.getElementById('ios-prompt').style.display = 'block';
+      }
+      calcularBrecha();
+    };
+
     function formato(num) {
       return Number(num).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function calcularBrecha() {
+      var spread = ((tasaUSDT - tasaBCV) / tasaBCV) * 100;
+      document.getElementById('rate-spread').innerText = spread.toFixed(2) + '%';
     }
 
     function switchTab(tabId, el) {
@@ -293,6 +331,19 @@
       }
     }
 
+    function calcularIGTF() {
+      var usd = parseFloat(document.getElementById('igtf-monto-usd').value) || 0;
+      var baseBs = usd * tasaBCV;
+      var igtfUsd = usd * 0.03;
+      var igtfBs = igtfUsd * tasaBCV;
+      var totalUsd = usd + igtfUsd;
+      var totalBs = baseBs + igtfBs;
+
+      document.getElementById('igtf-res-base').innerText = formato(baseBs) + ' Bs';
+      document.getElementById('igtf-res-3pct').innerText = formato(igtfUsd) + ' $ (' + formato(igtfBs) + ' Bs)';
+      document.getElementById('igtf-res-total').innerText = formato(totalUsd) + ' $ / ' + formato(totalBs) + ' Bs';
+    }
+
     function calcularComisiones(modo) {
       var pBanco = parseFloat(document.getElementById('com-porc-banco').value) || 0;
       var pBinance = parseFloat(document.getElementById('com-porc-binance').value) || 0;
@@ -316,6 +367,10 @@
       var tVenta = parseFloat(document.getElementById('arb-tasa-venta').value) || tasaUSDT;
       var pBanco = parseFloat(document.getElementById('com-porc-banco').value) || 0;
 
+      // Breakeven (Punto de Equilibrio)
+      var tasaMinima = tCompra / (1 - (pBanco / 100));
+      document.getElementById('arb-res-breakeven').innerText = formato(tasaMinima) + ' Bs';
+
       if (bs > 0 && tCompra > 0) {
         var usdBrutos = bs / tCompra;
         var usdtNetos = usdBrutos * (1 - (pBanco / 100));
@@ -324,10 +379,21 @@
         var gananciaUSDT = gananciaBs / tVenta;
         var gananciaUSD = gananciaBs / tCompra;
 
+        var colorRes = gananciaBs >= 0 ? 'var(--neon-green)' : 'var(--danger-color)';
+
         document.getElementById('arb-res-final').innerText = formato(bsFinales) + ' Bs';
-        document.getElementById('arb-res-ganancia-bs').innerText = formato(gananciaBs) + ' Bs';
-        document.getElementById('arb-res-ganancia-usdt').innerText = formato(gananciaUSDT) + ' USDT';
-        document.getElementById('arb-res-ganancia-usd').innerText = formato(gananciaUSD) + ' $';
+        
+        var elBs = document.getElementById('arb-res-ganancia-bs');
+        elBs.innerText = formato(gananciaBs) + ' Bs';
+        elBs.style.color = colorRes;
+
+        var elUsdt = document.getElementById('arb-res-ganancia-usdt');
+        elUsdt.innerText = formato(gananciaUSDT) + ' USDT';
+        elUsdt.style.color = colorRes;
+
+        var elUsd = document.getElementById('arb-res-ganancia-usd');
+        elUsd.innerText = formato(gananciaUSD) + ' $';
+        elUsd.style.color = colorRes;
       }
     }
 
@@ -350,6 +416,7 @@
       document.getElementById('arb-tasa-venta').value = tasaUSDT;
       calcularDirecto();
       calcularArbitraje();
+      calcularIGTF();
     }
   </script>
 </body>
