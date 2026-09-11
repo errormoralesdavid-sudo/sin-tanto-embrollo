@@ -24,7 +24,6 @@
     header { background-color: var(--card-bg); border-bottom: 2px solid var(--neon-green); padding: 15px; text-align: center; }
     h1 { color: var(--neon-green); font-size: 1.2rem; text-transform: uppercase; letter-spacing: 1px; }
 
-    /* SLIDER TASAS */
     .slider-container { display: flex; gap: 10px; overflow-x: auto; padding: 15px; scroll-snap-type: x mandatory; }
     .slider-container::-webkit-scrollbar { display: none; }
     .card-rate { flex: 0 0 65%; scroll-snap-align: center; background-color: var(--card-bg); padding: 12px; border-radius: 12px; border: 1px solid var(--border-color); text-align: center; }
@@ -43,7 +42,7 @@
     input:focus, select:focus { border-color: var(--neon-green); }
 
     .result-box { background-color: var(--input-bg); padding: 12px; border-radius: 8px; border-left: 4px solid var(--neon-green); margin-top: 10px; }
-    .result-line { margin: 6px 0; font-size: 13px; display: flex; justify-content: space-between; }
+    .result-line { margin: 6px 0; font-size: 13px; display: flex; justify-content: space-between; align-items: center; }
     .result-line span { color: var(--text-muted); }
     .result-line strong { color: #fff; }
 
@@ -53,6 +52,7 @@
     .bank-badge { background: var(--neon-green); color: #000; padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 10px; }
 
     .btn-action { background: var(--neon-green); color: #000; border: none; padding: 12px; border-radius: 8px; font-weight: bold; width: 100%; cursor: pointer; font-size: 14px; }
+    .btn-copy { background: #2e2e2e; color: var(--neon-green); border: 1px solid var(--neon-green); padding: 4px 8px; border-radius: 6px; font-size: 11px; cursor: pointer; margin-top: 8px; width: 100%; }
     .btn-limpiar { background: transparent; color: var(--danger-color); border: 1px solid var(--danger-color); padding: 8px; border-radius: 8px; width: 100%; margin-bottom: 15px; cursor: pointer; font-size: 12px; }
     .btn-delete { background: transparent; color: var(--danger-color); border: none; cursor: pointer; font-weight: bold; font-size: 14px; }
 
@@ -73,7 +73,6 @@
     <h1>💸 SIN TANTO EMBROLLO PRO</h1>
   </header>
 
-  <!-- SLIDER CON TODAS LAS TASAS -->
   <div class="slider-container">
     <div class="card-rate">
       <h3>🏛️ BCV (Oficial)</h3>
@@ -104,7 +103,6 @@
 
   <div class="container">
 
-    <!-- PANEL COMPLETO PARA CONFIGURAR TASAS DEL DÍA -->
     <details class="calc-section" style="cursor:pointer;">
       <summary style="color:var(--neon-green); font-weight:bold; font-size:13px; text-align:center;">⚙️ Actualizar Tasas del Día (Manual)</summary>
       <div style="margin-top:12px;">
@@ -155,6 +153,7 @@
           <div class="result-line"><span>Al cambio USDT P2P:</span> <strong id="res-usdt">0,00 Bs</strong></div>
           <div class="result-line"><span>En Euros (€):</span> <strong id="res-eur">0,00 €</strong></div>
           <div class="result-line"><span>En Pesos (COP):</span> <strong id="res-cop">0 COP</strong></div>
+          <button class="btn-copy" onclick="copiarTexto('resumen-rapido')">📋 Copiar Resumen</button>
         </div>
       </div>
     </div>
@@ -196,10 +195,10 @@
       </div>
     </div>
 
-    <!-- PESTAÑA 3: COMISIONES (BANCOS / INTERBANCARIAS) -->
+    <!-- PESTAÑA 3: COMISIONES & META NETA -->
     <div id="tab-comisiones" class="tab-content">
       <div class="calc-section">
-        <h2>Comisiones Banco a Banco / Interbancarias</h2>
+        <h2>Comisiones Interbancarias (0.3%)</h2>
         <label>Monto a Transferir o Pago Móvil (Bs):</label>
         <input type="number" id="transf-monto-bs" placeholder="Ej. 58700" oninput="calcularComisionTransf()">
         
@@ -213,6 +212,18 @@
         <div class="result-box">
           <div class="result-line"><span>Comisión a Cobrar:</span> <strong id="transf-res-comision" style="color:var(--danger-color);">0,00 Bs</strong></div>
           <div class="result-line"><span>Total Debitado de la Cuenta:</span> <strong id="transf-res-total" style="color:var(--neon-green);">0,00 Bs</strong></div>
+        </div>
+      </div>
+
+      <!-- CALCULADORA DE META NETA -->
+      <div class="calc-section">
+        <h2>🎯 Meta Neta (¿Cuánto enviar para recibir X?)</h2>
+        <label>Monto Neto Deseado a Recibir ($):</label>
+        <input type="number" id="meta-usd" placeholder="Ej. 50" oninput="calcularMetaNeta()">
+        
+        <div class="result-box">
+          <div class="result-line"><span>Monto a Transferir en Bs (con comisiones):</span> <strong id="meta-res-bs" style="color:var(--neon-green);">0,00 Bs</strong></div>
+          <button class="btn-copy" onclick="copiarTexto('meta-neta')">📋 Copiar para Enviar</button>
         </div>
       </div>
 
@@ -274,15 +285,19 @@
           <div class="result-line"><span>Ganancia Neta ($):</span> <strong id="arb-res-ganancia-usd">0,00 $</strong></div>
         </div>
 
-        <button class="btn-action" style="margin-top:10px;" onclick="registrarOperacion()">💾 Registrar Operación</button>
+        <label style="margin-top:10px;">Nota / Descripción de la operación:</label>
+        <input type="text" id="arb-nota" placeholder="Ej. Arbitraje BDV - Provincial">
+
+        <button class="btn-action" style="margin-top:5px;" onclick="registrarOperacion()">💾 Registrar Operación</button>
       </div>
 
       <div class="calc-section">
         <h2>Historial de Operaciones</h2>
+        <input type="text" id="buscar-historial" placeholder="🔍 Filtrar por nota..." oninput="filtrarHistorial()">
         <div style="overflow-x:auto;">
           <table class="history-table">
             <thead>
-              <tr><th>Fecha</th><th>Inversión</th><th>Ganancia Bs</th><th>Acción</th></tr>
+              <tr><th>Fecha</th><th>Nota</th><th>Inversión</th><th>Ganancia</th><th>Acción</th></tr>
             </thead>
             <tbody id="historial-rows"></tbody>
           </table>
@@ -304,13 +319,44 @@
     var tasaUSDT = 885.10;
     var tasaEUR = 968.06;
     var tasaCOP = 0.21;
+    var historial = [];
 
     window.onload = function() {
+      cargarDatosGuardados();
       actualizarTasasManuales();
     };
 
     function formato(num) {
       return Number(num).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function guardarDatos() {
+      var datos = {
+        bcv: document.getElementById('input-tasa-bcv').value,
+        usdt: document.getElementById('input-tasa-usdt').value,
+        eur: document.getElementById('input-tasa-eur').value,
+        cop: document.getElementById('input-tasa-cop').value,
+        prevBcv: document.getElementById('input-prev-bcv').value,
+        prevUsdt: document.getElementById('input-prev-usdt').value,
+        historial: historial
+      };
+      localStorage.setItem('embrollo_data', JSON.stringify(datos));
+    }
+
+    function cargarDatosGuardados() {
+      var datos = JSON.parse(localStorage.getItem('embrollo_data'));
+      if (datos) {
+        if(datos.bcv) document.getElementById('input-tasa-bcv').value = datos.bcv;
+        if(datos.usdt) document.getElementById('input-tasa-usdt').value = datos.usdt;
+        if(datos.eur) document.getElementById('input-tasa-eur').value = datos.eur;
+        if(datos.cop) document.getElementById('input-tasa-cop').value = datos.cop;
+        if(datos.prevBcv) document.getElementById('input-prev-bcv').value = datos.prevBcv;
+        if(datos.prevUsdt) document.getElementById('input-prev-usdt').value = datos.prevUsdt;
+        if(datos.historial) {
+          historial = datos.historial;
+          renderHistorial();
+        }
+      }
     }
 
     function actualizarTasasManuales() {
@@ -343,8 +389,11 @@
 
       document.getElementById('arb-tasa-compra').value = tasaBCV;
       document.getElementById('arb-tasa-venta').value = tasaUSDT;
+      
       calcularDirecto();
       calcularArbitraje();
+      calcularMetaNeta();
+      guardarDatos();
     }
 
     function switchTab(tabId, el) {
@@ -394,6 +443,17 @@
 
       document.getElementById('transf-res-comision').innerText = formato(comision) + ' Bs';
       document.getElementById('transf-res-total').innerText = formato(total) + ' Bs';
+    }
+
+    function calcularMetaNeta() {
+      var metaUsd = parseFloat(document.getElementById('meta-usd').value) || 0;
+      var pBanco = parseFloat(document.getElementById('com-porc-banco').value) || 2.5;
+      // Calcula los Bolívares necesarios sumando comisión de compra y la transferencia del 0.3%
+      var usdNecesarios = metaUsd / (1 - (pBanco / 100));
+      var bsBase = usdNecesarios * tasaBCV;
+      var bsTotalConTransf = bsBase * 1.003; 
+
+      document.getElementById('meta-res-bs').innerText = formato(bsTotalConTransf) + ' Bs';
     }
 
     function calcularIGTF() {
@@ -464,22 +524,64 @@
     function registrarOperacion() {
       var bs = document.getElementById('arb-bs-inicial').value;
       var ganBs = document.getElementById('arb-res-ganancia-bs').innerText;
+      var nota = document.getElementById('arb-nota').value || 'Sin nota';
 
       if (!bs || ganBs === '0,00 Bs') return;
 
-      var tbody = document.getElementById('historial-rows');
-      var tr = document.createElement('tr');
-      tr.innerHTML = `<td>${new Date().toLocaleDateString()}</td><td>${bs} Bs</td><td>${ganBs}</td><td><button class="btn-delete" onclick="eliminarFila(this)">🗑️</button></td>`;
-      tbody.prepend(tr);
+      var item = {
+        id: Date.now(),
+        fecha: new Date().toLocaleDateString(),
+        nota: nota,
+        inversion: bs + ' Bs',
+        ganancia: ganBs
+      };
+
+      historial.unshift(item);
+      document.getElementById('arb-nota').value = '';
+      renderHistorial();
+      guardarDatos();
     }
 
-    function eliminarFila(btn) {
-      var fila = btn.parentElement.parentElement;
-      fila.remove();
+    function renderHistorial(filtro = '') {
+      var tbody = document.getElementById('historial-rows');
+      tbody.innerHTML = '';
+      historial.filter(h => h.nota.toLowerCase().includes(filtro.toLowerCase())).forEach(h => {
+        var tr = document.createElement('tr');
+        tr.innerHTML = `<td>${h.fecha}</td><td>${h.nota}</td><td>${h.inversion}</td><td style="color:var(--neon-green);">${h.ganancia}</td><td><button class="btn-delete" onclick="eliminarHistorial(${h.id})">🗑️</button></td>`;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function eliminarHistorial(id) {
+      historial = historial.filter(h => h.id !== id);
+      renderHistorial();
+      guardarDatos();
+    }
+
+    function filtrarHistorial() {
+      var query = document.getElementById('buscar-historial').value;
+      renderHistorial(query);
+    }
+
+    function copiarTexto(tipo) {
+      var texto = '';
+      if (tipo === 'resumen-rapido') {
+        var usd = document.getElementById('usd-input').value || '0';
+        texto = `💵 *Cotización $${usd}:*\n• BCV: ${document.getElementById('res-bcv').innerText}\n• USDT: ${document.getElementById('res-usdt').innerText}\n• EUR: ${document.getElementById('res-eur').innerText}\n• COP: ${document.getElementById('res-cop').innerText}`;
+      } else if (tipo === 'meta-neta') {
+        var meta = document.getElementById('meta-usd').value || '0';
+        texto = `📌 Para recibir *${meta} $ netos*, debes transferir un total de *${document.getElementById('meta-res-bs').innerText}* (incluye comisiones bancarias).`;
+      }
+      navigator.clipboard.writeText(texto);
+      alert('¡Copiado al portapapeles!');
     }
 
     function limpiarTodo() {
-      document.querySelectorAll('input').forEach(i => i.value = '');
+      document.querySelectorAll('input').forEach(i => {
+        if(i.id !== 'input-tasa-bcv' && i.id !== 'input-tasa-usdt' && i.id !== 'input-tasa-eur' && i.id !== 'input-tasa-cop') {
+          i.value = '';
+        }
+      });
       document.getElementById('com-porc-banco').value = '2.5';
       actualizarTasasManuales();
     }
