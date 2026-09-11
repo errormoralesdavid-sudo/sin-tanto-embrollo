@@ -27,9 +27,9 @@
     /* SLIDER TASAS */
     .slider-container { display: flex; gap: 10px; overflow-x: auto; padding: 15px; scroll-snap-type: x mandatory; }
     .slider-container::-webkit-scrollbar { display: none; }
-    .card-rate { flex: 0 0 70%; scroll-snap-align: center; background-color: var(--card-bg); padding: 12px; border-radius: 12px; border: 1px solid var(--border-color); text-align: center; }
+    .card-rate { flex: 0 0 65%; scroll-snap-align: center; background-color: var(--card-bg); padding: 12px; border-radius: 12px; border: 1px solid var(--border-color); text-align: center; }
     .card-rate h3 { font-size: 11px; color: var(--text-muted); text-transform: uppercase; }
-    .price { font-size: 20px; font-weight: bold; margin: 4px 0; }
+    .price { font-size: 18px; font-weight: bold; margin: 4px 0; }
     .trend { font-size: 11px; font-weight: bold; }
     .trend.up { color: var(--neon-green); }
     .trend.down { color: var(--danger-color); }
@@ -56,10 +56,6 @@
     .btn-limpiar { background: transparent; color: var(--danger-color); border: 1px solid var(--danger-color); padding: 8px; border-radius: 8px; width: 100%; margin-bottom: 15px; cursor: pointer; font-size: 12px; }
     .btn-delete { background: transparent; color: var(--danger-color); border: none; cursor: pointer; font-weight: bold; font-size: 14px; }
 
-    .ios-banner { display: none; background: #2d3748; border: 1px solid #4a5568; padding: 12px; border-radius: 10px; margin-bottom: 15px; font-size: 12px; color: #e2e8f0; }
-    .ios-banner strong { color: var(--neon-green); }
-
-    /* NAVEGACIÓN */
     .tab-content { display: none; }
     .tab-content.active { display: block; }
     .nav-bar { position: fixed; bottom: 0; width: 100%; background-color: var(--card-bg); border-top: 1px solid var(--border-color); display: flex; justify-content: space-around; padding: 10px 0; z-index: 100; }
@@ -77,7 +73,7 @@
     <h1>💸 SIN TANTO EMBROLLO PRO</h1>
   </header>
 
-  <!-- SLIDER CON TASAS, VARIACIÓN DIARIA Y BRECHA ESPECÍFICA -->
+  <!-- SLIDER CON TODAS LAS TASAS -->
   <div class="slider-container">
     <div class="card-rate">
       <h3>🏛️ BCV (Oficial)</h3>
@@ -90,50 +86,60 @@
       <div class="trend up" id="var-usdt">▲ +0,00%</div>
     </div>
     <div class="card-rate">
-      <h3>📊 Brecha (BCV vs P2P)</h3>
+      <h3>📊 Brecha (BCV/USDT)</h3>
       <div class="price" id="rate-spread" style="color:var(--neon-green);">6,32%</div>
-      <div class="trend" style="color:var(--text-muted);">Diferencia de Precio</div>
+      <div class="trend" style="color:var(--text-muted);">Diferencia</div>
     </div>
     <div class="card-rate">
-      <h3>💶 Euro (BCV)</h3>
+      <h3>💶 Euro (€)</h3>
       <div class="price" id="rate-eur">968,06 Bs</div>
-      <div class="trend" style="color:var(--text-muted);">Oficial</div>
+      <div class="trend" style="color:var(--text-muted);">Oficial BCV</div>
+    </div>
+    <div class="card-rate">
+      <h3>🇨🇴 Peso Col. (COP)</h3>
+      <div class="price" id="rate-cop">0,21 Bs</div>
+      <div class="trend" style="color:var(--text-muted);">Por 1 COP</div>
     </div>
   </div>
 
   <div class="container">
 
-    <!-- PANEL PARA INGRESAR LAS TASAS DEL DÍA MANULMENTE -->
+    <!-- PANEL COMPLETO PARA CONFIGURAR TASAS DEL DÍA -->
     <details class="calc-section" style="cursor:pointer;">
       <summary style="color:var(--neon-green); font-weight:bold; font-size:13px; text-align:center;">⚙️ Actualizar Tasas del Día (Manual)</summary>
       <div style="margin-top:12px;">
         <div style="display:flex; gap:10px;">
           <div style="flex:1;">
             <label>Tasa BCV (Bs):</label>
-            <input type="number" id="input-tasa-bcv" value="832.48" oninput="actualizarTasasManuales()">
+            <input type="number" id="input-tasa-bcv" value="832.48" step="0.01" oninput="actualizarTasasManuales()">
           </div>
           <div style="flex:1;">
             <label>Tasa USDT (Bs):</label>
-            <input type="number" id="input-tasa-usdt" value="885.10" oninput="actualizarTasasManuales()">
+            <input type="number" id="input-tasa-usdt" value="885.10" step="0.01" oninput="actualizarTasasManuales()">
           </div>
         </div>
         <div style="display:flex; gap:10px;">
           <div style="flex:1;">
-            <label>Tasa Anterior BCV:</label>
+            <label>Tasa Euro (€):</label>
+            <input type="number" id="input-tasa-eur" value="968.06" step="0.01" oninput="actualizarTasasManuales()">
+          </div>
+          <div style="flex:1;">
+            <label>Tasa Peso COP (Bs):</label>
+            <input type="number" id="input-tasa-cop" value="0.21" step="0.001" oninput="actualizarTasasManuales()">
+          </div>
+        </div>
+        <div style="display:flex; gap:10px;">
+          <div style="flex:1;">
+            <label>Anterior BCV:</label>
             <input type="number" id="input-prev-bcv" value="830.00" oninput="actualizarTasasManuales()">
           </div>
           <div style="flex:1;">
-            <label>Tasa Anterior USDT:</label>
+            <label>Anterior USDT:</label>
             <input type="number" id="input-prev-usdt" value="880.00" oninput="actualizarTasasManuales()">
           </div>
         </div>
       </div>
     </details>
-
-    <!-- BANNER INSTALACION IPHONE -->
-    <div id="ios-prompt" class="ios-banner">
-      📲 <strong>Instalar en iPhone:</strong> Toca el botón <strong>Compartir</strong> y selecciona <strong>"Agregar a inicio"</strong>.
-    </div>
 
     <button class="btn-limpiar" onclick="limpiarTodo()">🧹 Limpiar Todos los Campos</button>
 
@@ -148,23 +154,7 @@
           <div class="result-line"><span>Al cambio BCV:</span> <strong id="res-bcv">0,00 Bs</strong></div>
           <div class="result-line"><span>Al cambio USDT P2P:</span> <strong id="res-usdt">0,00 Bs</strong></div>
           <div class="result-line"><span>En Euros (€):</span> <strong id="res-eur">0,00 €</strong></div>
-        </div>
-      </div>
-
-      <div class="calc-section">
-        <h2>🏦 Selección Rápida de Banco</h2>
-        <label>Toca un banco para cargar su comisión:</label>
-        <div class="bank-grid">
-          <div class="bank-btn" onclick="seleccionarBanco(2.5, this)"><span>🏛️ BdV</span><span class="bank-badge">2.5%</span></div>
-          <div class="bank-btn" onclick="seleccionarBanco(1.5, this)"><span>👷 BDT</span><span class="bank-badge">1.5%</span></div>
-          <div class="bank-btn" onclick="seleccionarBanco(2.5, this)"><span>😇 B. Tesoro</span><span class="bank-badge">2.5%</span></div>
-          <div class="bank-btn" onclick="seleccionarBanco(1.5, this)"><span>🔥 Banesco</span><span class="bank-badge">1.5%</span></div>
-          <div class="bank-btn" onclick="seleccionarBanco(1.5, this)"><span>🔵 Provincial</span><span class="bank-badge">1.5%</span></div>
-          <div class="bank-btn" onclick="seleccionarBanco(1.5, this)"><span>😁 BNC</span><span class="bank-badge">1.5%</span></div>
-          <div class="bank-btn" onclick="seleccionarBanco(5.0, this)"><span>🟢 Bancamiga</span><span class="bank-badge">5.0%</span></div>
-          <div class="bank-btn" onclick="seleccionarBanco(1.5, this)"><span>🌊 Bancaribe</span><span class="bank-badge">1.5%</span></div>
-          <div class="bank-btn" onclick="seleccionarBanco(3.0, this)"><span>🗣️ B. Activo</span><span class="bank-badge">3.0%</span></div>
-          <div class="bank-btn" onclick="seleccionarBanco(1.5, this)"><span>😴 Exterior</span><span class="bank-badge">1.5%</span></div>
+          <div class="result-line"><span>En Pesos (COP):</span> <strong id="res-cop">0 COP</strong></div>
         </div>
       </div>
     </div>
@@ -180,11 +170,13 @@
           <option value="USDT">USDT (Cripto)</option>
           <option value="BCV">Bolívares (Bs)</option>
           <option value="EUR">Euros (€)</option>
+          <option value="COP">Pesos (COP)</option>
         </select>
         
         <label>A:</label>
         <input type="number" id="cross-val-2" placeholder="Resultado" oninput="calcularCruzado(2)">
         <select id="cross-mon-2" onchange="calcularCruzado(2)">
+          <option value="COP">Pesos (COP)</option>
           <option value="USDT">USDT (Cripto)</option>
           <option value="USD">Dólares ($)</option>
           <option value="BCV">Bolívares (Bs)</option>
@@ -204,11 +196,29 @@
       </div>
     </div>
 
-    <!-- PESTAÑA 3: COMISIONES CON BANCOS -->
+    <!-- PESTAÑA 3: COMISIONES (BANCOS / INTERBANCARIAS) -->
     <div id="tab-comisiones" class="tab-content">
       <div class="calc-section">
-        <h2>Calculadora de Comisiones</h2>
-        <label>Selecciona un Banco:</label>
+        <h2>Comisiones Banco a Banco / Interbancarias</h2>
+        <label>Monto a Transferir o Pago Móvil (Bs):</label>
+        <input type="number" id="transf-monto-bs" placeholder="Ej. 58700" oninput="calcularComisionTransf()">
+        
+        <label>Tipo de Operación:</label>
+        <select id="transf-tipo" onchange="calcularComisionTransf()">
+          <option value="0.3">Transferencia Interbancaria Otros Bancos (0.3%)</option>
+          <option value="0.3">Pago Móvil Otro Banco (0.3%)</option>
+          <option value="0.0">Mismo Banco (0%)</option>
+        </select>
+
+        <div class="result-box">
+          <div class="result-line"><span>Comisión a Cobrar:</span> <strong id="transf-res-comision" style="color:var(--danger-color);">0,00 Bs</strong></div>
+          <div class="result-line"><span>Total Debitado de la Cuenta:</span> <strong id="transf-res-total" style="color:var(--neon-green);">0,00 Bs</strong></div>
+        </div>
+      </div>
+
+      <div class="calc-section">
+        <h2>Comisiones de Compra Divisas / P2P</h2>
+        <label>Selecciona un Banco (Compra Divisa):</label>
         <div class="bank-grid">
           <div class="bank-btn" onclick="seleccionarBancoComision(2.5, this)"><span>🏛️ BdV</span><span class="bank-badge">2.5%</span></div>
           <div class="bank-btn" onclick="seleccionarBancoComision(1.5, this)"><span>👷 BDT</span><span class="bank-badge">1.5%</span></div>
@@ -238,7 +248,7 @@
       </div>
     </div>
 
-    <!-- PESTAÑA 4: ARBITRAJE CON HISTORIAL Y BOTÓN ELIMINAR -->
+    <!-- PESTAÑA 4: ARBITRAJE -->
     <div id="tab-arbitraje" class="tab-content">
       <div class="calc-section">
         <h2>Arbitraje y Ganancias Multidivisa</h2>
@@ -257,7 +267,7 @@
         </div>
 
         <div class="result-box">
-          <div class="result-line"><span>Punto de Equilibrio (Tasa Mínima):</span> <strong id="arb-res-breakeven">0,00 Bs</strong></div>
+          <div class="result-line"><span>Punto de Equilibrio:</span> <strong id="arb-res-breakeven">0,00 Bs</strong></div>
           <div class="result-line"><span>Monto Final Venta:</span> <strong id="arb-res-final">0,00 Bs</strong></div>
           <div class="result-line"><span>Ganancia Neta (Bs):</span> <strong id="arb-res-ganancia-bs">0,00 Bs</strong></div>
           <div class="result-line"><span>Ganancia Neta (USDT):</span> <strong id="arb-res-ganancia-usdt">0,00 USDT</strong></div>
@@ -267,7 +277,6 @@
         <button class="btn-action" style="margin-top:10px;" onclick="registrarOperacion()">💾 Registrar Operación</button>
       </div>
 
-      <!-- HISTORIAL CON OPCIÓN DE ELIMINAR -->
       <div class="calc-section">
         <h2>Historial de Operaciones</h2>
         <div style="overflow-x:auto;">
@@ -283,7 +292,6 @@
 
   </div>
 
-  <!-- NAVEGACIÓN -->
   <nav class="nav-bar">
     <div class="nav-item active" onclick="switchTab('inicio', this)"><span>🏠</span><span>Inicio</span></div>
     <div class="nav-item" onclick="switchTab('cruzada', this)"><span>↕️</span><span>Cruzada</span></div>
@@ -295,6 +303,7 @@
     var tasaBCV = 832.48;
     var tasaUSDT = 885.10;
     var tasaEUR = 968.06;
+    var tasaCOP = 0.21;
 
     window.onload = function() {
       actualizarTasasManuales();
@@ -307,13 +316,17 @@
     function actualizarTasasManuales() {
       tasaBCV = parseFloat(document.getElementById('input-tasa-bcv').value) || 0;
       tasaUSDT = parseFloat(document.getElementById('input-tasa-usdt').value) || 0;
+      tasaEUR = parseFloat(document.getElementById('input-tasa-eur').value) || 0;
+      tasaCOP = parseFloat(document.getElementById('input-tasa-cop').value) || 0;
+
       var prevBCV = parseFloat(document.getElementById('input-prev-bcv').value) || tasaBCV;
       var prevUSDT = parseFloat(document.getElementById('input-prev-usdt').value) || tasaUSDT;
 
       document.getElementById('rate-bcv').innerText = formato(tasaBCV) + ' Bs';
       document.getElementById('rate-usdt').innerText = formato(tasaUSDT) + ' Bs';
+      document.getElementById('rate-eur').innerText = formato(tasaEUR) + ' Bs';
+      document.getElementById('rate-cop').innerText = tasaCOP.toFixed(3) + ' Bs';
 
-      // Variaciones Porcentuales
       var varBCV = prevBCV > 0 ? ((tasaBCV - prevBCV) / prevBCV) * 100 : 0;
       var varUSDT = prevUSDT > 0 ? ((tasaUSDT - prevUSDT) / prevUSDT) * 100 : 0;
 
@@ -325,11 +338,9 @@
       elVarUSDT.innerText = (varUSDT >= 0 ? '▲ +' : '▼ ') + varUSDT.toFixed(2) + '%';
       elVarUSDT.className = 'trend ' + (varUSDT >= 0 ? 'up' : 'down');
 
-      // Brecha Cambiaria BCV vs USDT
       var spread = tasaBCV > 0 ? ((tasaUSDT - tasaBCV) / tasaBCV) * 100 : 0;
       document.getElementById('rate-spread').innerText = spread.toFixed(2) + '%';
 
-      // Actualizar campos dependientes en la app
       document.getElementById('arb-tasa-compra').value = tasaBCV;
       document.getElementById('arb-tasa-venta').value = tasaUSDT;
       calcularDirecto();
@@ -343,14 +354,6 @@
       el.classList.add('active');
     }
 
-    function seleccionarBanco(comision, el) {
-      document.querySelectorAll('.bank-btn').forEach(b => b.classList.remove('active'));
-      el.classList.add('active');
-      document.getElementById('com-porc-banco').value = comision;
-      calcularComisiones(1);
-      switchTab('comisiones', document.querySelectorAll('.nav-item')[2]);
-    }
-
     function seleccionarBancoComision(comision, el) {
       document.querySelectorAll('#tab-comisiones .bank-btn').forEach(b => b.classList.remove('active'));
       el.classList.add('active');
@@ -360,9 +363,11 @@
 
     function calcularDirecto() {
       var usd = parseFloat(document.getElementById('usd-input').value) || 0;
-      document.getElementById('res-bcv').innerText = formato(usd * tasaBCV) + ' Bs';
+      var bsBcv = usd * tasaBCV;
+      document.getElementById('res-bcv').innerText = formato(bsBcv) + ' Bs';
       document.getElementById('res-usdt').innerText = formato(usd * tasaUSDT) + ' Bs';
-      document.getElementById('res-eur').innerText = formato((usd * tasaBCV) / tasaEUR) + ' €';
+      document.getElementById('res-eur').innerText = formato(bsBcv / (tasaEUR || 1)) + ' €';
+      document.getElementById('res-cop').innerText = tasaCOP > 0 ? formato(bsBcv / tasaCOP) + ' COP' : '0 COP';
     }
 
     function calcularCruzado(modo) {
@@ -370,7 +375,7 @@
       var v2 = document.getElementById('cross-val-2');
       var m1 = document.getElementById('cross-mon-1').value;
       var m2 = document.getElementById('cross-mon-2').value;
-      var tasas = { USD: tasaBCV, BCV: 1, USDT: tasaUSDT, EUR: tasaEUR };
+      var tasas = { USD: tasaBCV, BCV: 1, USDT: tasaUSDT, EUR: tasaEUR, COP: tasaCOP };
 
       if (modo === 1) {
         var val = parseFloat(v1.value) || 0;
@@ -379,6 +384,16 @@
         var val = parseFloat(v2.value) || 0;
         v1.value = ((val * tasas[m2]) / tasas[m1]).toFixed(2);
       }
+    }
+
+    function calcularComisionTransf() {
+      var bs = parseFloat(document.getElementById('transf-monto-bs').value) || 0;
+      var pct = parseFloat(document.getElementById('transf-tipo').value) || 0;
+      var comision = bs * (pct / 100);
+      var total = bs + comision;
+
+      document.getElementById('transf-res-comision').innerText = formato(comision) + ' Bs';
+      document.getElementById('transf-res-total').innerText = formato(total) + ' Bs';
     }
 
     function calcularIGTF() {
