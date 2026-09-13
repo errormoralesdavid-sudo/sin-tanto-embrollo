@@ -3,78 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calculadora & Gestor Pro Max - SeñorPolar Style</title>
+    <title>Calculadora de Tasas y Arbitraje</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <!-- FontAwesome para iconos -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body { background-color: #0d1117; color: #e6edf3; font-family: system-ui, -apple-system, sans-serif; overflow-x: hidden; }
-        .card-custom { background-color: #161b22; border: 1px solid #30363d; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-        .card-custom:hover { border-color: #238636; box-shadow: 0 0 20px rgba(35, 134, 54, 0.15); }
-        .input-custom { background-color: #0d1117; border: 1px solid #30363d; color: #e6edf3; transition: all 0.2s; }
-        .input-custom:focus { border-color: #238636; outline: none; box-shadow: 0 0 0 3px rgba(35, 134, 54, 0.2); }
-        
-        /* Animaciones extravagantes y fluidas */
-        @keyframes pulseGlow {
-            0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
-            70% { box-shadow: 0 0 0 15px rgba(16, 185, 129, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
-        }
-        .checkpoint-anim {
-            animation: pulseGlow 0.6s cubic-bezier(0.4, 0, 0.6, 1);
-            border-color: #10b981 !important;
-        }
-
-        @keyframes scanLaser {
-            0% { background-position: -200% 0; }
-            100% { background-position: 200% 0; }
-        }
-        .scanning {
-            background: linear-gradient(90deg, #161b22 0%, #238636 50%, #161b22 100%);
-            background-size: 200% 100%;
-            animation: scanLaser 1.2s infinite linear;
-        }
-
-        @keyframes slideInUp {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .animate-slide-up {
-            animation: slideInUp 0.4s ease-out forwards;
-        }
-
-        /* Notificación Toast flotante */
-        #toastContainer {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            z-index: 9999;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-        .toast {
-            background: #161b22;
-            border: 1px solid #238636;
-            color: #fff;
-            padding: 12px 20px;
-            border-radius: 12px;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            animation: slideInUp 0.3s ease, fadeOut 0.3s ease 2.7s forwards;
-        }
-        @keyframes fadeOut {
-            to { opacity: 0; transform: translateY(10px); }
-        }
+        body { background-color: #0d1117; color: #e6edf3; font-family: system-ui, -apple-system, sans-serif; }
+        .card-custom { background-color: #161b22; border: 1px solid #30363d; }
+        .input-custom { background-color: #0d1117; border: 1px solid #30363d; color: #e6edf3; }
+        .input-custom:focus { border-color: #238636; outline: none; }
     </style>
 </head>
 <body class="min-h-screen p-4 md:p-8">
-
-    <!-- CONTENEDOR DE TOASTS (NOTIFICACIONES) -->
-    <div id="toastContainer"></div>
 
     <div class="max-w-4xl mx-auto space-y-6">
         
@@ -82,18 +23,18 @@
         <header class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 card-custom p-6 rounded-2xl shadow-lg">
             <div>
                 <h1 class="text-2xl font-bold flex items-center gap-2 text-white">
-                    <i class="fa-solid fa-bolt text-emerald-400 animate-bounce"></i> Gestor Pro Max & Arbitraje
+                    <i class="fa-solid fa-calculator text-emerald-400"></i> Gestor de Tasas & Cambio
                 </h1>
-                <p class="text-sm text-gray-400 mt-1">Control integral de tasas, conversiones y cálculo de vueltos.</p>
+                <p class="text-sm text-gray-400 mt-1">Control rápido de BCV, USDT y cálculo de vueltos.</p>
             </div>
             <div class="flex gap-2 w-full md:w-auto">
-                <button id="btnActualizar" onclick="cargarTasasAnimadas()" class="flex-1 md:flex-none bg-emerald-600 hover:bg-emerald-500 text-white px-5 py-2.5 rounded-xl font-medium text-sm transition flex items-center justify-center gap-2 cursor-pointer shadow-md active:scale-95">
-                    <i id="iconSync" class="fa-solid fa-rotate"></i> Actualizar Tasas
+                <button onclick="cargarTasas()" class="flex-1 md:flex-none bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-xl font-medium text-sm transition flex items-center justify-center gap-2 cursor-pointer shadow-md">
+                    <i class="fa-solid fa-rotate"></i> Actualizar Tasas
                 </button>
             </div>
         </header>
 
-        <!-- CONFIGURACIÓN DE TASAS Y BANCOS -->
+        <!-- GRID DE CONFIGURACIÓN DE TASAS -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <!-- Tasas Base -->
             <div class="card-custom p-6 rounded-2xl shadow-lg space-y-4">
@@ -103,45 +44,33 @@
                 <div class="space-y-3">
                     <div>
                         <label class="text-xs text-gray-400 block mb-1">Tasa BCV Oficial (Bs.)</label>
-                        <input type="number" id="tasaBCV" step="0.0001" value="36.50" oninput="calcularTodo()" class="w-full px-4 py-2.5 rounded-xl input-custom text-lg font-semibold">
+                        <input type="number" id="tasaBCV" step="0.0001" value="36.50" oninput="calcularTodo()" class="w-full px-4 py-2 rounded-xl input-custom text-lg font-semibold">
                     </div>
                     <div>
                         <label class="text-xs text-gray-400 block mb-1">Tasa USDT / Binance (Bs.)</label>
-                        <input type="number" id="tasaUSDT" step="0.0001" value="38.20" oninput="calcularTodo()" class="w-full px-4 py-2.5 rounded-xl input-custom text-lg font-semibold">
+                        <input type="number" id="tasaUSDT" step="0.0001" value="38.20" oninput="calcularTodo()" class="w-full px-4 py-2 rounded-xl input-custom text-lg font-semibold">
                     </div>
                 </div>
             </div>
 
-            <!-- Conversor Rápido con Selección de Plataforma/Banco -->
+            <!-- Calculadora Principal -->
             <div class="card-custom p-6 rounded-2xl shadow-lg space-y-4">
-                <div class="flex justify-between items-center">
-                    <h2 class="text-lg font-semibold text-emerald-400 flex items-center gap-2">
-                        <i class="fa-solid fa-right-left"></i> Conversor Rápido
-                    </h2>
-                    <!-- Selector de Banco/Plataforma con Logos -->
-                    <div class="flex items-center gap-2 bg-black/40 px-3 py-1 rounded-xl border border-gray-800">
-                        <img id="logoPlataforma" src="https://cryptologos.cc/logos/tether-usdt-logo.svg" class="w-5 h-5 object-contain" alt="Logo">
-                        <select id="selectBanco" onchange="cambiarPlataforma()" class="bg-transparent text-xs text-emerald-300 font-semibold focus:outline-none cursor-pointer">
-                            <option value="USDT" data-logo="https://cryptologos.cc/logos/tether-usdt-logo.svg">Binance USDT</option>
-                            <option value="Banesco" data-logo="https://upload.wikimedia.org/wikipedia/commons/2/25/Banesco_Logo.svg">Banesco (BCV)</option>
-                            <option value="Mercantil" data-logo="https://upload.wikimedia.org/wikipedia/commons/a/a2/Banco_Mercantil_logo.svg">Mercantil (BCV)</option>
-                            <option value="Zelle" data-logo="https://images.seeklogo.com/logo-png/38/2/zelle-logo-png_seeklogo-384918.png">Zelle Cash</option>
-                        </select>
-                    </div>
-                </div>
+                <h2 class="text-lg font-semibold text-emerald-400 flex items-center gap-2">
+                    <i class="fa-solid fa-right-left"></i> Conversor Rápido
+                </h2>
                 <div>
                     <label class="text-xs text-gray-400 block mb-1">Monto a Calcular (USD / USDT)</label>
                     <div class="relative">
                         <span class="absolute left-4 top-3 text-gray-400 font-bold">$</span>
-                        <input type="number" id="montoInput" value="10" oninput="calcularTodo()" class="w-full pl-8 pr-4 py-2.5 rounded-xl input-custom text-lg font-semibold">
+                        <input type="number" id="montoInput" value="10" oninput="calcularTodo()" class="w-full pl-8 pr-4 py-2 rounded-xl input-custom text-lg font-semibold">
                     </div>
                 </div>
-                <div class="grid grid-cols-2 gap-4 pt-1">
-                    <div class="bg-black/30 p-3 rounded-xl border border-gray-800 transition transform hover:scale-102">
+                <div class="grid grid-cols-2 gap-4 pt-2">
+                    <div class="bg-black/30 p-3 rounded-xl border border-gray-800">
                         <span class="text-xs text-gray-400 block">Total en Bolívares (BCV)</span>
                         <span id="resBCV" class="text-lg font-bold text-white">Bs. 0.00</span>
                     </div>
-                    <div class="bg-black/30 p-3 rounded-xl border border-gray-800 transition transform hover:scale-102">
+                    <div class="bg-black/30 p-3 rounded-xl border border-gray-800">
                         <span class="text-xs text-gray-400 block">Total en Bolívares (USDT)</span>
                         <span id="resUSDT" class="text-lg font-bold text-emerald-400">Bs. 0.00</span>
                     </div>
@@ -149,7 +78,7 @@
             </div>
         </div>
 
-        <!-- CALCULADORA DE VUELTOS / CAMBIO DIARIO -->
+        <!-- NUEVA HERRAMIENTA: CALCULADORA DE VUELTOS MIXTOS -->
         <div class="card-custom p-6 rounded-2xl shadow-lg space-y-4">
             <h2 class="text-lg font-semibold text-emerald-400 flex items-center gap-2">
                 <i class="fa-solid fa-cash-register"></i> Calculadora de Vueltos / Cambio Diario
@@ -176,14 +105,14 @@
             </div>
         </div>
 
-        <!-- HISTORIAL DE OPERACIONES CON CHECKPOINT ANIMADO -->
-        <div id="cardHistorial" class="card-custom p-6 rounded-2xl shadow-lg space-y-4">
+        <!-- HISTORIAL DE OPERACIONES -->
+        <div class="card-custom p-6 rounded-2xl shadow-lg space-y-4">
             <div class="flex justify-between items-center">
                 <h2 class="text-lg font-semibold text-emerald-400 flex items-center gap-2">
                     <i class="fa-solid fa-clock-rotate-left"></i> Historial Reciente
                 </h2>
-                <button onclick="guardarEnHistorialAnimado()" class="bg-emerald-700/40 hover:bg-emerald-600/60 border border-emerald-600 text-xs px-4 py-2 rounded-xl text-white font-medium transition cursor-pointer flex items-center gap-2 active:scale-95 shadow-md">
-                    <i class="fa-solid fa-bookmark"></i> Registrar Checkpoint
+                <button onclick="guardarEnHistorial()" class="bg-gray-800 hover:bg-gray-700 text-xs px-3 py-1.5 rounded-lg text-gray-300 border border-gray-700 transition cursor-pointer">
+                    <i class="fa-solid fa-plus mr-1"></i> Registrar Cálculo Actual
                 </button>
             </div>
             <div class="overflow-x-auto">
@@ -191,9 +120,9 @@
                     <thead class="bg-black/40 text-xs uppercase text-gray-400 border-b border-gray-800">
                         <tr>
                             <th class="p-3">Hora</th>
-                            <th class="p-3">Canal / Banco</th>
                             <th class="p-3">Monto ($)</th>
-                            <th class="p-3">Resultado</th>
+                            <th class="p-3">BCV (Bs.)</th>
+                            <th class="p-3">USDT (Bs.)</th>
                             <th class="p-3 text-right">Acción</th>
                         </tr>
                     </thead>
@@ -207,27 +136,7 @@
     </div>
 
     <script>
-        // Cambiar dinámicamente el logo de la plataforma seleccionada
-        function cambiarPlataforma() {
-            const select = document.getElementById('selectBanco');
-            const selectedOption = select.options[select.selectedIndex];
-            const logoUrl = selectedOption.getAttribute('data-logo');
-            document.getElementById('logoPlataforma').src = logoUrl;
-        }
-
-        // Sistema de notificaciones Toast flotantes
-        function mostrarToast(mensaje, tipo = 'success') {
-            const container = document.getElementById('toastContainer');
-            const toast = document.createElement('div');
-            toast.className = 'toast';
-            toast.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-400"></i> <span>${mensaje}</span>`;
-            container.appendChild(toast);
-            setTimeout(() => {
-                toast.remove();
-            }, 3000);
-        }
-
-        // Lógica completa de cálculos
+        // Lógica principal de cálculos
         function calcularTodo() {
             const bcv = parseFloat(document.getElementById('tasaBCV').value) || 0;
             const usdt = parseFloat(document.getElementById('tasaUSDT').value) || 0;
@@ -254,28 +163,21 @@
             document.getElementById('vueltoTotalBs').innerText = `Bs. ${vueltoBs.toFixed(2)}`;
         }
 
-        // Historial guardado en localStorage con animación de Checkpoint
-        let historial = JSON.parse(localStorage.getItem('historial_tasas_pro_max')) || [];
+        // Historial básico guardado en memoria local
+        let historial = JSON.parse(localStorage.getItem('historial_tasas')) || [];
 
-        function guardarEnHistorialAnimado() {
+        function guardarEnHistorial() {
             const monto = document.getElementById('montoInput').value;
-            const selectBanco = document.getElementById('selectBanco').value;
+            const bcvRes = document.getElementById('resBCV').innerText;
             const usdtRes = document.getElementById('resUSDT').innerText;
             const hora = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
-            const item = { hora, banco: selectBanco, monto, resultado: usdtRes };
+            const item = { hora, monto, bcvRes, usdtRes };
             historial.unshift(item);
-            if(historial.length > 5) historial.pop(); // Mantener últimos 5 registros
+            if(historial.length > 5) historial.pop(); // Máximo 5 elementos
 
-            localStorage.setItem('historial_tasas_pro_max', JSON.stringify(historial));
-            
-            // Activar animación "Checkpoint" neón
-            const card = document.getElementById('cardHistorial');
-            card.classList.add('checkpoint-anim');
-            setTimeout(() => card.classList.remove('checkpoint-anim'), 600);
-
+            localStorage.setItem('historial_tasas', JSON.stringify(historial));
             renderizarHistorial();
-            mostrarToast("¡Checkpoint registrado con éxito en el historial!");
         }
 
         function renderizarHistorial() {
@@ -286,15 +188,13 @@
             }
 
             tbody.innerHTML = historial.map((row, index) => `
-                <tr class="border-b border-gray-800/50 hover:bg-black/20 animate-slide-up">
+                <tr class="border-b border-gray-800/50 hover:bg-black/20">
                     <td class="p-3 text-gray-400 text-xs">${row.hora}</td>
-                    <td class="p-3 font-medium text-emerald-300 flex items-center gap-1.5 mt-1">
-                        <i class="fa-solid fa-wallet text-xs"></i> ${row.banco}
-                    </td>
                     <td class="p-3 font-semibold">$${row.monto}</td>
-                    <td class="p-3 font-bold text-white">${row.resultado}</td>
+                    <td class="p-3">${row.bcvRes}</td>
+                    <td class="p-3 text-emerald-400">${row.usdtRes}</td>
                     <td class="p-3 text-right">
-                        <button onclick="eliminarHistorial(${index})" class="text-red-400 hover:text-red-300 text-xs cursor-pointer p-1"><i class="fa-solid fa-trash"></i></button>
+                        <button onclick="eliminarHistorial(${index})" class="text-red-400 hover:text-red-300 text-xs cursor-pointer"><i class="fa-solid fa-trash"></i></button>
                     </td>
                 </tr>
             `).join('');
@@ -302,28 +202,17 @@
 
         function eliminarHistorial(index) {
             historial.splice(index, 1);
-            localStorage.setItem('historial_tasas_pro_max', JSON.stringify(historial));
+            localStorage.setItem('historial_tasas', JSON.stringify(historial));
             renderizarHistorial();
-            mostrarToast("Registro eliminado del historial", "info");
         }
 
-        // Animación futurista tipo láser al actualizar tasas
-        function cargarTasasAnimadas() {
-            const btn = document.getElementById('btnActualizar');
-            const icon = document.getElementById('iconSync');
-            
-            btn.classList.add('scanning');
-            icon.classList.add('fa-spin');
-
-            setTimeout(() => {
-                btn.classList.remove('scanning');
-                icon.classList.remove('fa-spin');
-                calcularTodo();
-                mostrarToast("¡Tasas sincronizadas con éxito!");
-            }, 1200);
+        // Simulación de carga de tasas (aquí podrías conectar luego una API si lo deseas)
+        function cargarTasas() {
+            alert("¡Tasas sincronizadas con éxito!");
+            calcularTodo();
         }
 
-        // Inicializar al cargar la página
+        // Inicializar al cargar
         window.onload = () => {
             calcularTodo();
             renderizarHistorial();
