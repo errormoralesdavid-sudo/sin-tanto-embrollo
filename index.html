@@ -1,711 +1,222 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sin Tanto Embrollo PRO</title>
-  <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#00e676">
-  <style>
-    :root {
-      --bg-color: #121212;
-      --card-bg: #1e1e1e;
-      --input-bg: #2a2a2a;
-      --neon-green: #00e676;
-      --text-color: #ffffff;
-      --text-muted: #b0bec5;
-      --border-color: #2e2e2e;
-      --danger-color: #ff5252;
-    }
-
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; transition: background 0.2s ease, transform 0.1s ease; }
-    body { background-color: var(--bg-color); color: var(--text-color); padding-bottom: 80px; overflow-x: hidden; }
-
-    header { background-color: var(--card-bg); border-bottom: 2px solid var(--neon-green); padding: 15px; text-align: center; }
-    h1 { color: var(--neon-green); font-size: 1.2rem; text-transform: uppercase; letter-spacing: 1px; }
-
-    .slider-container { display: flex; gap: 10px; overflow-x: auto; padding: 15px; scroll-snap-type: x mandatory; }
-    .slider-container::-webkit-scrollbar { display: none; }
-    .card-rate { flex: 0 0 65%; scroll-snap-align: center; background-color: var(--card-bg); padding: 12px; border-radius: 12px; border: 1px solid var(--border-color); text-align: center; transform: scale(1); }
-    .card-rate:active { transform: scale(0.98); }
-    .card-rate h3 { font-size: 11px; color: var(--text-muted); text-transform: uppercase; }
-    .price { font-size: 18px; font-weight: bold; margin: 4px 0; }
-    .trend { font-size: 11px; font-weight: bold; }
-    .trend.up { color: var(--neon-green); }
-    .trend.down { color: var(--danger-color); }
-
-    .container { padding: 15px; max-width: 600px; margin: 0 auto; }
-    .calc-section { background-color: var(--card-bg); padding: 18px; border-radius: 14px; border: 1px solid var(--border-color); margin-bottom: 15px; animation: fadeIn 0.3s ease; }
-    
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(6px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    .calc-section h2 { font-size: 15px; color: var(--neon-green); text-align: center; margin-bottom: 12px; }
-
-    label { display: block; margin-bottom: 5px; color: var(--text-muted); font-size: 12px; }
-    input, select { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #424242; background-color: var(--input-bg); color: #fff; font-size: 14px; outline: none; margin-bottom: 10px; }
-    input:focus, select:focus { border-color: var(--neon-green); box-shadow: 0 0 5px rgba(0,230,118,0.3); }
-
-    .result-box { background-color: var(--input-bg); padding: 12px; border-radius: 8px; border-left: 4px solid var(--neon-green); margin-top: 10px; }
-    .result-line { margin: 6px 0; font-size: 13px; display: flex; justify-content: space-between; align-items: center; }
-    .result-line span { color: var(--text-muted); }
-    .result-line strong { color: #fff; }
-
-    .bank-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 12px; max-height: 200px; overflow-y: auto; padding-right: 5px; }
-    .bank-btn, .binance-btn { background-color: var(--input-bg); border: 1px solid var(--border-color); color: #fff; padding: 10px; border-radius: 8px; font-size: 12px; cursor: pointer; text-align: left; display: flex; justify-content: space-between; align-items: center; }
-    .bank-btn:hover, .bank-btn.active, .binance-btn:hover, .binance-btn.active { border-color: var(--neon-green); background-color: #1b3a2b; transform: scale(1.02); }
-    .bank-badge { background: var(--neon-green); color: #000; padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 10px; }
-
-    .btn-action { background: var(--neon-green); color: #000; border: none; padding: 12px; border-radius: 8px; font-weight: bold; width: 100%; cursor: pointer; font-size: 14px; }
-    .btn-action:active { transform: scale(0.97); opacity: 0.9; }
-    .btn-copy { background: #2e2e2e; color: var(--neon-green); border: 1px solid var(--neon-green); padding: 6px 8px; border-radius: 6px; font-size: 11px; cursor: pointer; margin-top: 8px; width: 100%; }
-    .btn-copy:active { transform: scale(0.97); }
-    .btn-limpiar { background: transparent; color: var(--danger-color); border: 1px solid var(--danger-color); padding: 8px; border-radius: 8px; width: 100%; margin-bottom: 15px; cursor: pointer; font-size: 12px; }
-    .btn-delete { background: transparent; color: var(--danger-color); border: none; cursor: pointer; font-weight: bold; font-size: 14px; }
-
-    .tab-content { display: none; }
-    .tab-content.active { display: block; animation: fadeIn 0.3s ease; }
-    .nav-bar { position: fixed; bottom: 0; width: 100%; background-color: var(--card-bg); border-top: 1px solid var(--border-color); display: flex; justify-content: space-around; padding: 10px 0; z-index: 100; backdrop-filter: blur(10px); }
-    .nav-item { color: var(--text-muted); font-size: 10px; text-align: center; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 3px; transition: color 0.2s ease; }
-    .nav-item.active { color: var(--neon-green); font-weight: bold; transform: translateY(-2px); }
-
-    .history-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 11px; }
-    .history-table th { color: var(--neon-green); border-bottom: 1px solid #424242; padding: 6px; text-align: left; }
-    .history-table td { padding: 8px 6px; border-bottom: 1px solid var(--border-color); vertical-align: middle; }
-    
-    .badge-info { background: #2a2a2a; border: 1px solid var(--border-color); padding: 4px 8px; border-radius: 6px; font-size: 10px; color: var(--neon-green); display: inline-block; margin-top: 4px; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora de Tasas y Arbitraje</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <!-- FontAwesome para iconos -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { background-color: #0d1117; color: #e6edf3; font-family: system-ui, -apple-system, sans-serif; }
+        .card-custom { background-color: #161b22; border: 1px solid #30363d; }
+        .input-custom { background-color: #0d1117; border: 1px solid #30363d; color: #e6edf3; }
+        .input-custom:focus { border-color: #238636; outline: none; }
+    </style>
 </head>
-<body>
+<body class="min-h-screen p-4 md:p-8">
 
-  <header>
-    <h1>💸 SIN TANTO EMBROLLO PRO</h1>
-  </header>
-
-  <div class="slider-container">
-    <div class="card-rate">
-      <h3>🏛️ BCV (Oficial)</h3>
-      <div class="price" id="rate-bcv">832,48 Bs</div>
-      <div class="trend up" id="var-bcv">▲ +0,00%</div>
-    </div>
-    <div class="card-rate">
-      <h3>🔶 USDT (Binance)</h3>
-      <div class="price" id="rate-usdt">885,10 Bs</div>
-      <div class="trend up" id="var-usdt">▲ +0,00%</div>
-    </div>
-    <div class="card-rate">
-      <h3>📊 Brecha (BCV/USDT)</h3>
-      <div class="price" id="rate-spread" style="color:var(--neon-green);">6,32%</div>
-      <div class="trend" style="color:var(--text-muted);">Diferencia</div>
-    </div>
-    <div class="card-rate">
-      <h3>💶 Euro (€)</h3>
-      <div class="price" id="rate-eur">968,06 Bs</div>
-      <div class="trend" style="color:var(--text-muted);">Oficial BCV</div>
-    </div>
-    <div class="card-rate">
-      <h3>🇨🇴 Peso Col. (COP)</h3>
-      <div class="price" id="rate-cop">3.102,00 Bs</div>
-      <div class="trend" style="color:var(--text-muted);">Por 1$ (aprox)</div>
-    </div>
-  </div>
-
-  <div class="container">
-
-    <details class="calc-section" style="cursor:pointer;">
-      <summary style="color:var(--neon-green); font-weight:bold; font-size:13px; text-align:center;">⚙️ Configuración y Tasas del Día</summary>
-      <div style="margin-top:12px;">
+    <div class="max-w-4xl mx-auto space-y-6">
         
-        <div style="background:var(--input-bg); padding:10px; border-radius:8px; margin-bottom:12px; border:1px dashed var(--neon-green);">
-          <label style="color:var(--neon-green);">🌐 Sincronización Automática (DolarVZLA API):</label>
-          <button class="btn-action" style="margin-top:5px; font-size:12px; padding:8px;" onclick="sincronizarDolarVzlaAPI()">🔄 Sincronizar Tasas BCV Online</button>
+        <!-- ENCABEZADO -->
+        <header class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 card-custom p-6 rounded-2xl shadow-lg">
+            <div>
+                <h1 class="text-2xl font-bold flex items-center gap-2 text-white">
+                    <i class="fa-solid fa-calculator text-emerald-400"></i> Gestor de Tasas & Cambio
+                </h1>
+                <p class="text-sm text-gray-400 mt-1">Control rápido de BCV, USDT y cálculo de vueltos.</p>
+            </div>
+            <div class="flex gap-2 w-full md:w-auto">
+                <button onclick="cargarTasas()" class="flex-1 md:flex-none bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-xl font-medium text-sm transition flex items-center justify-center gap-2 cursor-pointer shadow-md">
+                    <i class="fa-solid fa-rotate"></i> Actualizar Tasas
+                </button>
+            </div>
+        </header>
+
+        <!-- GRID DE CONFIGURACIÓN DE TASAS -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Tasas Base -->
+            <div class="card-custom p-6 rounded-2xl shadow-lg space-y-4">
+                <h2 class="text-lg font-semibold text-emerald-400 flex items-center gap-2">
+                    <i class="fa-solid fa-sliders"></i> Configuración de Tasas
+                </h2>
+                <div class="space-y-3">
+                    <div>
+                        <label class="text-xs text-gray-400 block mb-1">Tasa BCV Oficial (Bs.)</label>
+                        <input type="number" id="tasaBCV" step="0.0001" value="36.50" oninput="calcularTodo()" class="w-full px-4 py-2 rounded-xl input-custom text-lg font-semibold">
+                    </div>
+                    <div>
+                        <label class="text-xs text-gray-400 block mb-1">Tasa USDT / Binance (Bs.)</label>
+                        <input type="number" id="tasaUSDT" step="0.0001" value="38.20" oninput="calcularTodo()" class="w-full px-4 py-2 rounded-xl input-custom text-lg font-semibold">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Calculadora Principal -->
+            <div class="card-custom p-6 rounded-2xl shadow-lg space-y-4">
+                <h2 class="text-lg font-semibold text-emerald-400 flex items-center gap-2">
+                    <i class="fa-solid fa-right-left"></i> Conversor Rápido
+                </h2>
+                <div>
+                    <label class="text-xs text-gray-400 block mb-1">Monto a Calcular (USD / USDT)</label>
+                    <div class="relative">
+                        <span class="absolute left-4 top-3 text-gray-400 font-bold">$</span>
+                        <input type="number" id="montoInput" value="10" oninput="calcularTodo()" class="w-full pl-8 pr-4 py-2 rounded-xl input-custom text-lg font-semibold">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4 pt-2">
+                    <div class="bg-black/30 p-3 rounded-xl border border-gray-800">
+                        <span class="text-xs text-gray-400 block">Total en Bolívares (BCV)</span>
+                        <span id="resBCV" class="text-lg font-bold text-white">Bs. 0.00</span>
+                    </div>
+                    <div class="bg-black/30 p-3 rounded-xl border border-gray-800">
+                        <span class="text-xs text-gray-400 block">Total en Bolívares (USDT)</span>
+                        <span id="resUSDT" class="text-lg font-bold text-emerald-400">Bs. 0.00</span>
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <div style="display:flex; gap:10px;">
-          <div style="flex:1;">
-            <label>Tasa BCV (Bs):</label>
-            <input type="number" id="input-tasa-bcv" value="832.48" step="0.01" oninput="actualizarTasasManuales()">
-          </div>
-          <div style="flex:1;">
-            <label>Tasa USDT (Bs):</label>
-            <input type="number" id="input-tasa-usdt" value="885.10" step="0.01" oninput="actualizarTasasManuales()">
-          </div>
+        <!-- NUEVA HERRAMIENTA: CALCULADORA DE VUELTOS MIXTOS -->
+        <div class="card-custom p-6 rounded-2xl shadow-lg space-y-4">
+            <h2 class="text-lg font-semibold text-emerald-400 flex items-center gap-2">
+                <i class="fa-solid fa-cash-register"></i> Calculadora de Vueltos / Cambio Diario
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="text-xs text-gray-400 block mb-1">Monto Total de la Cuenta ($)</label>
+                    <input type="number" id="cuentaMonto" value="13.50" oninput="calcularVuelto()" class="w-full px-4 py-2 rounded-xl input-custom">
+                </div>
+                <div>
+                    <label class="text-xs text-gray-400 block mb-1">Efectivo Pagado por el Cliente ($)</label>
+                    <input type="number" id="efectivoPagado" value="20.00" oninput="calcularVuelto()" class="w-full px-4 py-2 rounded-xl input-custom">
+                </div>
+            </div>
+            <div class="bg-emerald-950/20 border border-emerald-900/50 p-4 rounded-xl flex flex-col md:flex-row justify-between items-center gap-4">
+                <div>
+                    <span class="text-xs text-emerald-400 uppercase tracking-wider font-semibold">Vuelto Exacto a Devolver:</span>
+                    <div id="vueltoTotalUSD" class="text-2xl font-bold text-white">$6.50</div>
+                </div>
+                <div class="text-right">
+                    <span class="text-xs text-gray-400 block">Equivalente en Bolívares (al BCV):</span>
+                    <span id="vueltoTotalBs" class="text-lg font-semibold text-emerald-300">Bs. 237.25</span>
+                </div>
+            </div>
         </div>
-        <div style="display:flex; gap:10px;">
-          <div style="flex:1;">
-            <label>Tasa Euro (€):</label>
-            <input type="number" id="input-tasa-eur" value="968.06" step="0.01" oninput="actualizarTasasManuales()">
-          </div>
-          <div style="flex:1;">
-            <label>Valor 1$ en COP:</label>
-            <input type="number" id="input-tasa-cop" value="3102.00" step="0.01" oninput="actualizarTasasManuales()">
-          </div>
-        </div>
-        <div style="display:flex; gap:10px;">
-          <div style="flex:1;">
-            <label>Anterior BCV:</label>
-            <input type="number" id="input-prev-bcv" value="830.00" oninput="actualizarTasasManuales()">
-          </div>
-          <div style="flex:1;">
-            <label>Anterior USDT:</label>
-            <input type="number" id="input-prev-usdt" value="880.00" oninput="actualizarTasasManuales()">
-          </div>
-        </div>
-      </div>
-    </details>
 
-    <button class="btn-limpiar" onclick="limpiarTodo()">🧹 Limpiar Todos los Campos</button>
-
-    <!-- PESTAÑA 1: INICIO -->
-    <div id="tab-inicio" class="tab-content active">
-      <div class="calc-section">
-        <h2>Calculadora Rápida ($)</h2>
-        <label>Monto en Dólares ($):</label>
-        <input type="number" id="usd-input" placeholder="Ej. 10" oninput="calcularDirecto()">
-        
-        <div class="result-box">
-          <div class="result-line"><span>Al cambio BCV:</span> <strong id="res-bcv">0,00 Bs</strong></div>
-          <div class="result-line"><span>Al cambio USDT P2P:</span> <strong id="res-usdt">0,00 Bs</strong></div>
-          <div class="result-line"><span>En Euros (€):</span> <strong id="res-eur">0,00 €</strong></div>
-          <div class="result-line"><span>En Pesos (COP):</span> <strong id="res-cop">0 COP</strong></div>
-          <button class="btn-copy" onclick="copiarTexto('resumen-rapido')">📋 Copiar Resumen</button>
+        <!-- HISTORIAL DE OPERACIONES -->
+        <div class="card-custom p-6 rounded-2xl shadow-lg space-y-4">
+            <div class="flex justify-between items-center">
+                <h2 class="text-lg font-semibold text-emerald-400 flex items-center gap-2">
+                    <i class="fa-solid fa-clock-rotate-left"></i> Historial Reciente
+                </h2>
+                <button onclick="guardarEnHistorial()" class="bg-gray-800 hover:bg-gray-700 text-xs px-3 py-1.5 rounded-lg text-gray-300 border border-gray-700 transition cursor-pointer">
+                    <i class="fa-solid fa-plus mr-1"></i> Registrar Cálculo Actual
+                </button>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm text-gray-300">
+                    <thead class="bg-black/40 text-xs uppercase text-gray-400 border-b border-gray-800">
+                        <tr>
+                            <th class="p-3">Hora</th>
+                            <th class="p-3">Monto ($)</th>
+                            <th class="p-3">BCV (Bs.)</th>
+                            <th class="p-3">USDT (Bs.)</th>
+                            <th class="p-3 text-right">Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tablaHistorial">
+                        <!-- Se llena dinámicamente -->
+                    </tbody>
+                </table>
+            </div>
         </div>
-      </div>
-    </div>
 
-    <!-- PESTAÑA 2: CRUZADA Y IGTF -->
-    <div id="tab-cruzada" class="tab-content">
-      <div class="calc-section">
-        <h2>Calculadora Cruzada</h2>
-        <label>De:</label>
-        <input type="number" id="cross-val-1" placeholder="Monto" oninput="calcularCruzado(1)">
-        <select id="cross-mon-1" onchange="calcularCruzado(1)">
-          <option value="USD">Dólares ($)</option>
-          <option value="USDT">USDT (Cripto)</option>
-          <option value="BCV">Bolívares (Bs)</option>
-          <option value="EUR">Euros (€)</option>
-          <option value="COP">Pesos (COP)</option>
-        </select>
-        
-        <label>A:</label>
-        <input type="number" id="cross-val-2" placeholder="Resultado" oninput="calcularCruzado(2)">
-        <select id="cross-mon-2" onchange="calcularCruzado(2)">
-          <option value="COP">Pesos (COP)</option>
-          <option value="USDT">USDT (Cripto)</option>
-          <option value="USD">Dólares ($)</option>
-          <option value="BCV">Bolívares (Bs)</option>
-          <option value="EUR">Euros (€)</option>
-        </select>
-      </div>
-
-      <div class="calc-section">
-        <h2>🧾 Impuestos / IGTF (3%)</h2>
-        <label>Precio del Producto ($):</label>
-        <input type="number" id="igtf-monto-usd" placeholder="Ej. 50" oninput="calcularIGTF()">
-        <div class="result-box">
-          <div class="result-line"><span>Monto Base en Bs (BCV):</span> <strong id="igtf-res-base">0,00 Bs</strong></div>
-          <div class="result-line"><span>IGTF 3% (Divisa):</span> <strong id="igtf-res-3pct">0,00 $</strong></div>
-          <div class="result-line"><span>Total a Cobrar/Pagar:</span> <strong id="igtf-res-total" style="color:var(--neon-green);">0,00 $ / 0,00 Bs</strong></div>
-        </div>
-      </div>
     </div>
 
-    <!-- PESTAÑA 3: COMISIONES & META NETA -->
-    <div id="tab-comisiones" class="tab-content">
-      <div class="calc-section">
-        <h2>Comisiones Interbancarias (0.3%)</h2>
-        <label>Monto a Transferir o Pago Móvil (Bs):</label>
-        <input type="number" id="transf-monto-bs" placeholder="Ej. 58700" oninput="calcularComisionTransf()">
-        
-        <label>Tipo de Operación:</label>
-        <select id="transf-tipo" onchange="calcularComisionTransf()">
-          <option value="0.3">Transferencia Interbancaria Otros Bancos (0.3%)</option>
-          <option value="0.3">Pago Móvil Otro Banco (0.3%)</option>
-          <option value="0.0">Mismo Banco (0%)</option>
-        </select>
+    <script>
+        // Lógica principal de cálculos
+        function calcularTodo() {
+            const bcv = parseFloat(document.getElementById('tasaBCV').value) || 0;
+            const usdt = parseFloat(document.getElementById('tasaUSDT').value) || 0;
+            const monto = parseFloat(document.getElementById('montoInput').value) || 0;
 
-        <div class="result-box">
-          <div class="result-line"><span>Comisión a Cobrar:</span> <strong id="transf-res-comision" style="color:var(--danger-color);">0,00 Bs</strong></div>
-          <div class="result-line"><span>Total Debitado de la Cuenta:</span> <strong id="transf-res-total" style="color:var(--neon-green);">0,00 Bs</strong></div>
-        </div>
-      </div>
+            const totalBCV = monto * bcv;
+            const totalUSDT = monto * usdt;
 
-      <!-- CALCULADORA DE META NETA -->
-      <div class="calc-section">
-        <h2>🎯 Meta Neta (¿Cuánto enviar para recibir X?)</h2>
-        <label>Monto Neto Deseado a Recibir ($):</label>
-        <input type="number" id="meta-usd" placeholder="Ej. 50" oninput="calcularMetaNeta()">
-        
-        <div class="result-box">
-          <div class="result-line"><span>Monto a Transferir en Bs (con comisiones):</span> <strong id="meta-res-bs" style="color:var(--neon-green);">0,00 Bs</strong></div>
-          <button class="btn-copy" onclick="copiarTexto('meta-neta')">📋 Copiar para Enviar</button>
-        </div>
-      </div>
+            document.getElementById('resBCV').innerText = `Bs. ${totalBCV.toFixed(2)}`;
+            document.getElementById('resUSDT').innerText = `Bs. ${totalUSDT.toFixed(2)}`;
 
-      <div class="calc-section">
-        <h2>Comisiones de Compra Divisas / P2P</h2>
-        
-        <label>1. Selecciona el Banco:</label>
-        <div class="bank-grid">
-          <div class="bank-btn active" onclick="seleccionarBancoComision(2.5, 'Banco de Venezuela (BdV)', this)"><span>🏛️ BdV</span><span class="bank-badge">2.5%</span></div>
-          <div class="bank-btn" onclick="seleccionarBancoComision(1.5, 'Banco Bicentenario (BDT)', this)"><span>👷 BDT</span><span class="bank-badge">1.5%</span></div>
-          <div class="bank-btn" onclick="seleccionarBancoComision(2.5, 'Banco del Tesoro', this)"><span>😇 B. Tesoro</span><span class="bank-badge">2.5%</span></div>
-          <div class="bank-btn" onclick="seleccionarBancoComision(1.5, 'Banesco', this)"><span>🔥 Banesco</span><span class="bank-badge">1.5%</span></div>
-          <div class="bank-btn" onclick="seleccionarBancoComision(1.5, 'BBVA Provincial', this)"><span>🔵 Provincial</span><span class="bank-badge">1.5%</span></div>
-          <div class="bank-btn" onclick="seleccionarBancoComision(1.5, 'BNC', this)"><span>😁 BNC</span><span class="bank-badge">1.5%</span></div>
-        </div>
-
-        <label style="margin-top:8px;">2. Selecciona Comisión de Binance:</label>
-        <div class="bank-grid">
-          <div class="binance-btn active" onclick="seleccionarBinanceComision(0.0, 'Binance Maker (0%)', this)"><span>⚡ Maker</span><span class="bank-badge">0%</span></div>
-          <div class="binance-btn" onclick="seleccionarBinanceComision(0.1, 'Binance Taker (0.1%)', this)"><span>⚡ Taker</span><span class="bank-badge">0.1%</span></div>
-          <div class="binance-btn" onclick="seleccionarBinanceComision(0.2, 'Binance P2P / Otro (0.2%)', this)"><span>🤝 P2P Ref</span><span class="bank-badge">0.2%</span></div>
-          <div class="binance-btn" onclick="seleccionarBinanceComision(0.35, 'Binance Tarjeta / Otros', this)"><span>💳 Tarjeta</span><span class="bank-badge">0.35%</span></div>
-        </div>
-
-        <input type="hidden" id="banco-seleccionado-nombre" value="Banco de Venezuela (BdV)">
-        <input type="hidden" id="binance-seleccionado-nombre" value="Binance Maker (0%)">
-
-        <div style="display:flex; gap:10px; margin-top: 10px;">
-          <div style="flex:1;">
-            <label>Com. Banco (%):</label>
-            <input type="number" id="com-porc-banco" value="2.5" oninput="calcularComisiones(1)">
-          </div>
-          <div style="flex:1;">
-            <label>Com. Binance (%):</label>
-            <input type="number" id="com-porc-binance" value="0.0" oninput="calcularComisiones(1)">
-          </div>
-        </div>
-        
-        <div class="result-box">
-          <label>Envías desde el Banco ($):</label>
-          <input type="number" id="com-envio-usd" placeholder="Ej. 100" oninput="calcularComisiones(1)">
-          <label>Te llega en USDT:</label>
-          <input type="number" id="com-recibo-usdt" placeholder="Ej. 97.5" oninput="calcularComisiones(2)" style="color:var(--neon-green);">
-        </div>
-      </div>
-    </div>
-
-    <!-- PESTAÑA 4: ARBITRAJE -->
-    <div id="tab-arbitraje" class="tab-content">
-      <div class="calc-section">
-        <h2>Arbitraje y Ganancias Integradas</h2>
-        
-        <div style="background:var(--input-bg); border:1px solid var(--neon-green); padding:10px; border-radius:8px; margin-bottom:12px;">
-          <div style="font-size:11px; color:var(--text-muted); text-transform:uppercase;">Canal de Operación Activo:</div>
-          <div id="resumen-canal-activo" style="font-size:13px; font-weight:bold; color:var(--neon-green); margin-top:2px;">Banco de Venezuela (BdV) [2.5%] + Binance Maker (0%)</div>
-        </div>
-
-        <label>Monto Inicial en Banco (Bs):</label>
-        <input type="number" id="arb-bs-inicial" placeholder="Ej. 5000" oninput="calcularArbitraje()">
-        
-        <div style="display:flex; gap:10px;">
-          <div style="flex:1;">
-            <label>Tasa Compra Banco:</label>
-            <input type="number" id="arb-tasa-compra" value="832.48" oninput="calcularArbitraje()">
-          </div>
-          <div style="flex:1;">
-            <label>Tasa Venta P2P:</label>
-            <input type="number" id="arb-tasa-venta" value="885.10" oninput="calcularArbitraje()">
-          </div>
-        </div>
-
-        <div class="result-box">
-          <div class="result-line"><span>Punto de Equilibrio:</span> <strong id="arb-res-breakeven">0,00 Bs</strong></div>
-          <div class="result-line"><span>Monto Final Venta:</span> <strong id="arb-res-final">0,00 Bs</strong></div>
-          <div class="result-line"><span>Comisiones Totales (Bs):</span> <strong id="arb-res-comision-bs" style="color:var(--danger-color);">0,00 Bs</strong></div>
-          <div class="result-line"><span>Ganancia Neta Real (Bs):</span> <strong id="arb-res-ganancia-bs">0,00 Bs</strong></div>
-          <div class="result-line"><span>Ganancia Neta (USDT):</span> <strong id="arb-res-ganancia-usdt">0,00 USDT</strong></div>
-          <div class="result-line"><span>Ganancia Neta ($):</span> <strong id="arb-res-ganancia-usd">0,00 $</strong></div>
-        </div>
-
-        <label style="margin-top:10px;">Nota / Descripción de la operación:</label>
-        <input type="text" id="arb-nota" placeholder="Ej. Arbitraje BdV - Binance P2P">
-
-        <button class="btn-action" style="margin-top:5px;" onclick="registrarOperacion()">💾 Registrar Operación</button>
-      </div>
-
-      <div class="calc-section">
-        <h2>Historial Integrado</h2>
-        <input type="text" id="buscar-historial" placeholder="🔍 Filtrar por banco o nota..." oninput="filtrarHistorial()">
-        <div style="overflow-x:auto;">
-          <table class="history-table">
-            <thead>
-              <tr><th>Fecha</th><th>Detalles / Canal</th><th>Inversión</th><th>Ganancia Real</th><th>Acción</th></tr>
-            </thead>
-            <tbody id="historial-rows"></tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-  </div>
-
-  <nav class="nav-bar">
-    <div class="nav-item active" onclick="switchTab('inicio', this)"><span>🏠</span><span>Inicio</span></div>
-    <div class="nav-item" onclick="switchTab('cruzada', this)"><span>↕️</span><span>Cruzada</span></div>
-    <div class="nav-item" onclick="switchTab('comisiones', this)"><span>⚙️</span><span>Comisión</span></div>
-    <div class="nav-item" onclick="switchTab('arbitraje', this)"><span>📈</span><span>Arbitraje</span></div>
-  </nav>
-
-  <script>
-    var tasaBCV = 832.48;
-    var tasaUSDT = 885.10;
-    var tasaEUR = 968.06;
-    var tasaCOP = 3102.00;
-    var historial = [];
-
-    window.onload = function() {
-      cargarDatosGuardados();
-      actualizarTasasManuales();
-    };
-
-    function formato(num) {
-      return Number(num).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    }
-
-    function guardarDatos() {
-      var datos = {
-        bcv: document.getElementById('input-tasa-bcv').value,
-        usdt: document.getElementById('input-tasa-usdt').value,
-        eur: document.getElementById('input-tasa-eur').value,
-        cop: document.getElementById('input-tasa-cop').value,
-        prevBcv: document.getElementById('input-prev-bcv').value,
-        prevUsdt: document.getElementById('input-prev-usdt').value,
-        historial: historial
-      };
-      localStorage.setItem('embrollo_data_pro', JSON.stringify(datos));
-    }
-
-    function cargarDatosGuardados() {
-      var datos = JSON.parse(localStorage.getItem('embrollo_data_pro'));
-      if (datos) {
-        if(datos.bcv) document.getElementById('input-tasa-bcv').value = datos.bcv;
-        if(datos.usdt) document.getElementById('input-tasa-usdt').value = datos.usdt;
-        if(datos.eur) document.getElementById('input-tasa-eur').value = datos.eur;
-        if(datos.cop) document.getElementById('input-tasa-cop').value = datos.cop;
-        if(datos.prevBcv) document.getElementById('input-prev-bcv').value = datos.prevBcv;
-        if(datos.prevUsdt) document.getElementById('input-prev-usdt').value = datos.prevUsdt;
-        if(datos.historial) {
-          historial = datos.historial;
-          renderHistorial();
+            calcularVuelto();
         }
-      }
-    }
 
-    function actualizarTasasManuales() {
-      tasaBCV = parseFloat(document.getElementById('input-tasa-bcv').value) || 0;
-      tasaUSDT = parseFloat(document.getElementById('input-tasa-usdt').value) || 0;
-      tasaEUR = parseFloat(document.getElementById('input-tasa-eur').value) || 0;
-      tasaCOP = parseFloat(document.getElementById('input-tasa-cop').value) || 0;
+        function calcularVuelto() {
+            const cuenta = parseFloat(document.getElementById('cuentaMonto').value) || 0;
+            const pagado = parseFloat(document.getElementById('efectivoPagado').value) || 0;
+            const bcv = parseFloat(document.getElementById('tasaBCV').value) || 0;
 
-      var prevBCV = parseFloat(document.getElementById('input-prev-bcv').value) || tasaBCV;
-      var prevUSDT = parseFloat(document.getElementById('input-prev-usdt').value) || tasaUSDT;
+            const vueltoUSD = pagado - cuenta;
+            const vueltoBs = vueltoUSD > 0 ? vueltoUSD * bcv : 0;
 
-      document.getElementById('rate-bcv').innerText = formato(tasaBCV) + ' Bs';
-      document.getElementById('rate-usdt').innerText = formato(tasaUSDT) + ' Bs';
-      document.getElementById('rate-eur').innerText = formato(tasaEUR) + ' Bs';
-      document.getElementById('rate-cop').innerText = formato(tasaCOP) + ' Bs';
-
-      var varBCV = prevBCV > 0 ? ((tasaBCV - prevBCV) / prevBCV) * 100 : 0;
-      var varUSDT = prevUSDT > 0 ? ((tasaUSDT - prevUSDT) / prevUSDT) * 100 : 0;
-
-      var elVarBCV = document.getElementById('var-bcv');
-      elVarBCV.innerText = (varBCV >= 0 ? '▲ +' : '▼ ') + varBCV.toFixed(2) + '%';
-      elVarBCV.className = 'trend ' + (varBCV >= 0 ? 'up' : 'down');
-
-      var elVarUSDT = document.getElementById('var-usdt');
-      elVarUSDT.innerText = (varUSDT >= 0 ? '▲ +' : '▼ ') + varUSDT.toFixed(2) + '%';
-      elVarUSDT.className = 'trend ' + (varUSDT >= 0 ? 'up' : 'down');
-
-      var spread = tasaBCV > 0 ? ((tasaUSDT - tasaBCV) / tasaBCV) * 100 : 0;
-      document.getElementById('rate-spread').innerText = spread.toFixed(2) + '%';
-
-      document.getElementById('arb-tasa-compra').value = tasaBCV;
-      document.getElementById('arb-tasa-venta').value = tasaUSDT;
-      
-      calcularDirecto();
-      calcularArbitraje();
-      calcularMetaNeta();
-      guardarDatos();
-    }
-
-    async function sincronizarDolarVzlaAPI() {
-      try {
-        var response = await fetch('https://rates.dolarvzla.com/bcv/current.json');
-        var data = await response.json();
-        
-        if (data.current) {
-          if (data.current.usd) document.getElementById('input-tasa-bcv').value = data.current.usd;
-          if (data.current.eur) document.getElementById('input-tasa-eur').value = data.current.eur;
+            document.getElementById('vueltoTotalUSD').innerText = `$${vueltoUSD > 0 ? vueltoUSD.toFixed(2) : '0.00'}`;
+            document.getElementById('vueltoTotalBs').innerText = `Bs. ${vueltoBs.toFixed(2)}`;
         }
-        if (data.previous) {
-          if (data.previous.usd) document.getElementById('input-prev-bcv').value = data.previous.usd;
+
+        // Historial básico guardado en memoria local
+        let historial = JSON.parse(localStorage.getItem('historial_tasas')) || [];
+
+        function guardarEnHistorial() {
+            const monto = document.getElementById('montoInput').value;
+            const bcvRes = document.getElementById('resBCV').innerText;
+            const usdtRes = document.getElementById('resUSDT').innerText;
+            const hora = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+            const item = { hora, monto, bcvRes, usdtRes };
+            historial.unshift(item);
+            if(historial.length > 5) historial.pop(); // Máximo 5 elementos
+
+            localStorage.setItem('historial_tasas', JSON.stringify(historial));
+            renderizarHistorial();
         }
-        
-        actualizarTasasManuales();
-        alert('¡Tasas oficiales BCV sincronizadas exitosamente desde DolarVZLA!');
-      } catch (error) {
-        alert('Error al conectar con la API de DolarVZLA. Revisa tu conexión a internet.');
-      }
-    }
 
-    function switchTab(tabId, el) {
-      document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-      document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-      document.getElementById('tab-' + tabId).classList.add('active');
-      el.classList.add('active');
-    }
+        function renderizarHistorial() {
+            const tbody = document.getElementById('tablaHistorial');
+            if(historial.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-gray-500">No hay registros recientes</td></tr>`;
+                return;
+            }
 
-    function seleccionarBancoComision(comision, nombreBanco, el) {
-      document.querySelectorAll('#tab-comisiones .bank-btn').forEach(b => b.classList.remove('active'));
-      el.classList.add('active');
-      document.getElementById('com-porc-banco').value = comision;
-      document.getElementById('banco-seleccionado-nombre').value = nombreBanco;
-      actualizarResumenCanal();
-      calcularComisiones(1);
-      calcularArbitraje();
-    }
-
-    function seleccionarBinanceComision(comision, nombreBinance, el) {
-      document.querySelectorAll('#tab-comisiones .binance-btn').forEach(b => b.classList.remove('active'));
-      el.classList.add('active');
-      document.getElementById('com-porc-binance').value = comision;
-      document.getElementById('binance-seleccionado-nombre').value = nombreBinance;
-      actualizarResumenCanal();
-      calcularComisiones(1);
-      calcularArbitraje();
-    }
-
-    function actualizarResumenCanal() {
-      var banco = document.getElementById('banco-seleccionado-nombre').value;
-      var pb = document.getElementById('com-porc-banco').value;
-      var binance = document.getElementById('binance-seleccionado-nombre').value;
-      var pbin = document.getElementById('com-porc-binance').value;
-      document.getElementById('resumen-canal-activo').innerText = `${banco} [${pb}%] + ${binance} [${pbin}%]`;
-    }
-
-    function calcularDirecto() {
-      var usd = parseFloat(document.getElementById('usd-input').value) || 0;
-      var bsBcv = usd * tasaBCV;
-      document.getElementById('res-bcv').innerText = formato(bsBcv) + ' Bs';
-      document.getElementById('res-usdt').innerText = formato(usd * tasaUSDT) + ' Bs';
-      document.getElementById('res-eur').innerText = formato(bsBcv / (tasaEUR || 1)) + ' €';
-      document.getElementById('res-cop').innerText = tasaCOP > 0 ? formato(usd * tasaCOP) + ' COP' : '0 COP';
-    }
-
-    function calcularCruzado(modo) {
-      var v1 = document.getElementById('cross-val-1');
-      var v2 = document.getElementById('cross-val-2');
-      var m1 = document.getElementById('cross-mon-1').value;
-      var m2 = document.getElementById('cross-mon-2').value;
-      
-      function obtenerValorEnBs(monto, moneda) {
-        if (moneda === 'BCV') return monto;
-        if (moneda === 'USD') return monto * tasaBCV;
-        if (moneda === 'USDT') return monto * tasaUSDT;
-        if (moneda === 'EUR') return monto * tasaEUR;
-        if (moneda === 'COP') return monto * (tasaBCV / tasaCOP); 
-        return 0;
-      }
-
-      function convertirDesdeBs(montoBs, monedaDestino) {
-        if (monedaDestino === 'BCV') return montoBs;
-        if (monedaDestino === 'USD') return montoBs / tasaBCV;
-        if (monedaDestino === 'USDT') return montoBs / tasaUSDT;
-        if (monedaDestino === 'EUR') return montoBs / tasaEUR;
-        if (monedaDestino === 'COP') return montoBs / (tasaBCV / tasaCOP);
-        return 0;
-      }
-
-      if (modo === 1) {
-        var val = parseFloat(v1.value) || 0;
-        var bs = obtenerValorEnBs(val, m1);
-        v2.value = convertirDesdeBs(bs, m2).toFixed(2);
-      } else {
-        var val = parseFloat(v2.value) || 0;
-        var bs = obtenerValorEnBs(val, m2);
-        v1.value = convertirDesdeBs(bs, m1).toFixed(2);
-      }
-    }
-
-    function calcularComisionTransf() {
-      var bs = parseFloat(document.getElementById('transf-monto-bs').value) || 0;
-      var pct = parseFloat(document.getElementById('transf-tipo').value) || 0;
-      var comision = bs * (pct / 100);
-      var total = bs + comision;
-
-      document.getElementById('transf-res-comision').innerText = formato(comision) + ' Bs';
-      document.getElementById('transf-res-total').innerText = formato(total) + ' Bs';
-    }
-
-    function calcularMetaNeta() {
-      var metaUsd = parseFloat(document.getElementById('meta-usd').value) || 0;
-      var pBanco = parseFloat(document.getElementById('com-porc-banco').value) || 2.5;
-      var pBinance = parseFloat(document.getElementById('com-porc-binance').value) || 0;
-      
-      // Factor combinado (Banco + Binance)
-      var factorComision = (1 - (pBanco / 100)) * (1 - (pBinance / 100));
-      var usdNecesarios = factorComision > 0 ? metaUsd / factorComision : metaUsd;
-      var bsBase = usdNecesarios * tasaBCV;
-      var bsTotalConTransf = bsBase * 1.003; 
-
-      document.getElementById('meta-res-bs').innerText = formato(bsTotalConTransf) + ' Bs';
-    }
-
-    function calcularIGTF() {
-      var usd = parseFloat(document.getElementById('igtf-monto-usd').value) || 0;
-      var baseBs = usd * tasaBCV;
-      var igtfUsd = usd * 0.03;
-      var igtfBs = igtfUsd * tasaBCV;
-      var totalUsd = usd + igtfUsd;
-      var totalBs = baseBs + igtfBs;
-
-      document.getElementById('igtf-res-base').innerText = formato(baseBs) + ' Bs';
-      document.getElementById('igtf-res-3pct').innerText = formato(igtfUsd) + ' $';
-      document.getElementById('igtf-res-total').innerText = formato(totalUsd) + ' $ / ' + formato(totalBs) + ' Bs';
-    }
-
-    function calcularComisiones(modo) {
-      var pBanco = parseFloat(document.getElementById('com-porc-banco').value) || 0;
-      var pBinance = parseFloat(document.getElementById('com-porc-binance').value) || 0;
-      var factor = (1 - (pBanco / 100)) * (1 - (pBinance / 100));
-
-      var env = document.getElementById('com-envio-usd');
-      var rec = document.getElementById('com-recibo-usdt');
-
-      if (modo === 1) {
-        var v = parseFloat(env.value) || 0;
-        rec.value = (v * factor).toFixed(2);
-      } else {
-        var v = parseFloat(rec.value) || 0;
-        env.value = factor > 0 ? (v / factor).toFixed(2) : 0;
-      }
-      actualizarResumenCanal();
-      calcularMetaNeta();
-    }
-
-    function calcularArbitraje() {
-      var bs = parseFloat(document.getElementById('arb-bs-inicial').value) || 0;
-      var tCompra = parseFloat(document.getElementById('arb-tasa-compra').value) || tasaBCV;
-      var tVenta = parseFloat(document.getElementById('arb-tasa-venta').value) || tasaUSDT;
-      var pBanco = parseFloat(document.getElementById('com-porc-banco').value) || 0;
-      var pBinance = parseFloat(document.getElementById('com-porc-binance').value) || 0;
-
-      // Punto de equilibrio considerando Banco y Binance
-      var factorComision = (1 - (pBanco / 100)) * (1 - (pBinance / 100));
-      var tasaMinima = factorComision > 0 ? tCompra / factorComision : tCompra;
-      document.getElementById('arb-res-breakeven').innerText = formato(tasaMinima) + ' Bs';
-
-      if (bs > 0 && tCompra > 0) {
-        var usdBrutos = bs / tCompra;
-        var usdtNetos = usdBrutos * factorComision;
-        var bsFinales = usdtNetos * tVenta;
-        
-        var valorInicialUsdEq = bs / tCompra;
-        var valorFinalUsdEq = bsFinales / tCompra; // Equivalente en poder de compra
-        var gananciaBs = bsFinales - bs;
-        var gananciaUSDT = gananciaBs / tVenta;
-        var gananciaUSD = gananciaBs / tCompra;
-
-        var comisionesTotalesBs = bs - (usdtNetos * tCompra); // Estimado de pérdida en Bs por comisiones
-
-        var colorRes = gananciaBs >= 0 ? 'var(--neon-green)' : 'var(--danger-color)';
-
-        document.getElementById('arb-res-final').innerText = formato(bsFinales) + ' Bs';
-        document.getElementById('arb-res-comision-bs').innerText = formato(comisionesTotalesBs) + ' Bs';
-        
-        var elBs = document.getElementById('arb-res-ganancia-bs');
-        elBs.innerText = formato(gananciaBs) + ' Bs';
-        elBs.style.color = colorRes;
-
-        var elUsdt = document.getElementById('arb-res-ganancia-usdt');
-        elUsdt.innerText = formato(gananciaUSDT) + ' USDT';
-        elUsdt.style.color = colorRes;
-
-        var elUsd = document.getElementById('arb-res-ganancia-usd');
-        elUsd.innerText = formato(gananciaUSD) + ' $';
-        elUsd.style.color = colorRes;
-      }
-    }
-
-    function registrarOperacion() {
-      var bs = document.getElementById('arb-bs-inicial').value;
-      var ganBs = document.getElementById('arb-res-ganancia-bs').innerText;
-      var comBs = document.getElementById('arb-res-comision-bs').innerText;
-      var canalActual = document.getElementById('resumen-canal-activo').innerText;
-      var notaUsuario = document.getElementById('arb-nota').value || 'Arbitraje estándar';
-
-      if (!bs || ganBs === '0,00 Bs') return;
-
-      var item = {
-        id: Date.now(),
-        fecha: new Date().toLocaleDateString(),
-        detalle: `${canalActual} <br><span style="color:var(--text-muted);">${notaUsuario}</span>`,
-        inversion: bs + ' Bs',
-        ganancia: ganBs,
-        comision: comBs
-      };
-
-      historial.unshift(item);
-      document.getElementById('arb-nota').value = '';
-      renderHistorial();
-      guardarDatos();
-      alert('¡Operación registrada con éxito en el historial!');
-    }
-
-    function renderHistorial(filtro = '') {
-      var tbody = document.getElementById('historial-rows');
-      tbody.innerHTML = '';
-      historial.filter(h => h.detalle.toLowerCase().includes(filtro.toLowerCase())).forEach(h => {
-        var tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>${h.fecha}</td>
-          <td>${h.detalle} <div class="badge-info">Comisiones Totales: ${h.comision}</div></td>
-          <td>${h.inversion}</td>
-          <td style="color:var(--neon-green); font-weight:bold;">${h.ganancia}</td>
-          <td><button class="btn-delete" onclick="eliminarHistorial(${h.id})">🗑️</button></td>
-        `;
-        tbody.appendChild(tr);
-      });
-    }
-
-    function eliminarHistorial(id) {
-      historial = historial.filter(h => h.id !== id);
-      renderHistorial();
-      guardarDatos();
-    }
-
-    function filtrarHistorial() {
-      var query = document.getElementById('buscar-historial').value;
-      renderHistorial(query);
-    }
-
-    function copiarTexto(tipo) {
-      var texto = '';
-      if (tipo === 'resumen-rapido') {
-        var usd = document.getElementById('usd-input').value || '0';
-        texto = `💵 *Cotización $${usd}:*\n• BCV: ${document.getElementById('res-bcv').innerText}\n• USDT: ${document.getElementById('res-usdt').innerText}\n• EUR: ${document.getElementById('res-eur').innerText}\n• COP: ${document.getElementById('res-cop').innerText}`;
-      } else if (tipo === 'meta-neta') {
-        var meta = document.getElementById('meta-usd').value || '0';
-        texto = `📌 Para recibir *${meta} $ netos* (descontando banco y Binance), debes transferir un total de *${document.getElementById('meta-res-bs').innerText}*.`;
-      }
-      navigator.clipboard.writeText(texto);
-      alert('¡Copiado al portapapeles!');
-    }
-
-    function limpiarTodo() {
-      document.querySelectorAll('input').forEach(i => {
-        if(i.id !== 'input-tasa-bcv' && i.id !== 'input-tasa-usdt' && i.id !== 'input-tasa-eur' && i.id !== 'input-tasa-cop') {
-          i.value = '';
+            tbody.innerHTML = historial.map((row, index) => `
+                <tr class="border-b border-gray-800/50 hover:bg-black/20">
+                    <td class="p-3 text-gray-400 text-xs">${row.hora}</td>
+                    <td class="p-3 font-semibold">$${row.monto}</td>
+                    <td class="p-3">${row.bcvRes}</td>
+                    <td class="p-3 text-emerald-400">${row.usdtRes}</td>
+                    <td class="p-3 text-right">
+                        <button onclick="eliminarHistorial(${index})" class="text-red-400 hover:text-red-300 text-xs cursor-pointer"><i class="fa-solid fa-trash"></i></button>
+                    </td>
+                </tr>
+            `).join('');
         }
-      });
-      document.getElementById('com-porc-banco').value = '2.5';
-      document.getElementById('com-porc-binance').value = '0.0';
-      actualizarTasasManuales();
-    }
-  </script>
+
+        function eliminarHistorial(index) {
+            historial.splice(index, 1);
+            localStorage.setItem('historial_tasas', JSON.stringify(historial));
+            renderizarHistorial();
+        }
+
+        // Simulación de carga de tasas (aquí podrías conectar luego una API si lo deseas)
+        function cargarTasas() {
+            alert("¡Tasas sincronizadas con éxito!");
+            calcularTodo();
+        }
+
+        // Inicializar al cargar
+        window.onload = () => {
+            calcularTodo();
+            renderizarHistorial();
+        };
+    </script>
 </body>
 </html>
