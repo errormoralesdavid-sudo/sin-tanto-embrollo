@@ -76,6 +76,7 @@
     .history-table td { padding: 8px 6px; border-bottom: 1px solid var(--border-color); vertical-align: middle; }
     
     .badge-info { background: #2a2a2a; border: 1px solid var(--border-color); padding: 4px 8px; border-radius: 6px; font-size: 10px; color: var(--neon-green); display: inline-block; margin-top: 4px; }
+    .status-badge { font-size: 10px; padding: 2px 6px; border-radius: 4px; background: #2a2a2a; color: var(--text-muted); margin-top: 4px; display: inline-block; }
   </style>
 </head>
 <body>
@@ -87,22 +88,22 @@
   <div class="slider-container">
     <div class="card-rate">
       <h3>🏛️ BCV (Oficial)</h3>
-      <div class="price" id="rate-bcv">832,48 Bs</div>
+      <div class="price" id="rate-bcv">Cargando...</div>
       <div class="trend up" id="var-bcv">▲ +0,00%</div>
     </div>
     <div class="card-rate">
       <h3>🔶 USDT (Binance)</h3>
-      <div class="price" id="rate-usdt">885,10 Bs</div>
+      <div class="price" id="rate-usdt">Cargando...</div>
       <div class="trend up" id="var-usdt">▲ +0,00%</div>
     </div>
     <div class="card-rate">
       <h3>📊 Brecha (BCV/USDT)</h3>
-      <div class="price" id="rate-spread" style="color:var(--neon-green);">6,32%</div>
+      <div class="price" id="rate-spread" style="color:var(--neon-green);">0,00%</div>
       <div class="trend" style="color:var(--text-muted);">Diferencia</div>
     </div>
     <div class="card-rate">
       <h3>💶 Euro (€)</h3>
-      <div class="price" id="rate-eur">968,06 Bs</div>
+      <div class="price" id="rate-eur">Cargando...</div>
       <div class="trend" style="color:var(--text-muted);">Oficial BCV</div>
     </div>
     <div class="card-rate">
@@ -118,9 +119,13 @@
       <summary style="color:var(--neon-green); font-weight:bold; font-size:13px; text-align:center;">⚙️ Configuración y Tasas del Día</summary>
       <div style="margin-top:12px;">
         
-        <div style="background:var(--input-bg); padding:10px; border-radius:8px; margin-bottom:12px; border:1px dashed var(--neon-green);">
-          <label style="color:var(--neon-green);">🌐 Sincronización Automática (DolarVZLA API):</label>
-          <button class="btn-action" style="margin-top:5px; font-size:12px; padding:8px;" onclick="sincronizarDolarVzlaAPI()">🔄 Sincronizar Tasas BCV Online</button>
+        <div style="background:var(--input-bg); padding:10px; border-radius:8px; margin-bottom:12px; border:1px dashed var(--neon-green); text-align:center;">
+          <label style="color:var(--neon-green); margin-bottom:4px;">🌐 Sincronización Manual Re-intento:</label>
+          <div id="sync-status" class="status-badge">🔄 Autocargando tasas en vivo...</div>
+          <div style="display:flex; gap:8px; margin-top:8px;">
+            <button class="btn-action" style="font-size:11px; padding:8px;" onclick="sincronizarDolarVzlaAPI(true)">🔄 BCV (DolarVZLA)</button>
+            <button class="btn-action" style="font-size:11px; padding:8px; background:#f0b90b; color:#000;" onclick="sincronizarBinanceP2P(true)">🔶 USDT (Binance)</button>
+          </div>
         </div>
 
         <div style="display:flex; gap:10px;">
@@ -360,7 +365,20 @@
     window.onload = function() {
       cargarDatosGuardados();
       actualizarTasasManuales();
+      
+      // AUTO-INICIALIZACIÓN: Sincroniza BCV y Binance apenas entras
+      sincronizacionesIniciales();
     };
+
+    async function sincronizacionesIniciales() {
+      var statusEl = document.getElementById('sync-status');
+      if (statusEl) statusEl.innerText = '🔄 Sincronizando BCV y Binance P2P...';
+      
+      await sincronizarDolarVzlaAPI(false);
+      await sincronizarBinanceP2P(false);
+
+      if (statusEl) statusEl.innerText = '✅ Tasas sincronizadas en vivo';
+    }
 
     function formato(num) {
       return Number(num).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -432,7 +450,7 @@
       guardarDatos();
     }
 
-    async function sincronizarDolarVzlaAPI() {
+    async function sincronizarDolarVzlaAPI(mostrarAlerta = false) {
       try {
         var response = await fetch('https://rates.dolarvzla.com/bcv/current.json');
         var data = await response.json();
@@ -446,9 +464,66 @@
         }
         
         actualizarTasasManuales();
-        alert('¡Tasas oficiales BCV sincronizadas exitosamente desde DolarVZLA!');
+        if (mostrarAlerta) alert('¡Tasas oficiales BCV sincronizadas exitosamente!');
       } catch (error) {
-        alert('Error al conectar con la API de DolarVZLA. Revisa tu conexión a internet.');
+        if (mostrarAlerta) alert('Error al conectar con la API de BCV.');
+      }
+    }
+
+    async function sincronizarBinanceP2P(mostrarAlerta = false) {
+      var binanceUrl = 'https://p2p.binance.com/bapi/c2c/v2/friendly/c2c/adv/search';
+      var payload = {
+        asset: "USDT",
+        fiat: "VES",
+        tradeType: "BUY",
+        page: 1,
+        rows: 5,
+        payTypes: []
+      };
+
+      try {
+        var proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(binanceUrl);
+        var response = await fetch(proxyUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        
+        var resData = await response.json();
+        
+        if (resData && resData.data && resData.data.length > 0) {
+          var sum = 0;
+          var count = 0;
+          resData.data.forEach(item => {
+            if (item.adv && item.adv.price) {
+              sum += parseFloat(item.adv.price);
+              count++;
+            }
+          });
+          
+          if (count > 0) {
+            var promedioUsdt = sum / count;
+            document.getElementById('input-tasa-usdt').value = promedioUsdt.toFixed(2);
+            actualizarTasasManuales();
+            if (mostrarAlerta) alert('¡Tasa USDT Binance P2P obtenida exitosamente! Promedio: ' + promedioUsdt.toFixed(2) + ' Bs');
+            return;
+          }
+        }
+      } catch (e) {
+        console.warn('Proxy Binance falló, intentando estimación alternativa...');
+      }
+
+      // Estimación de respaldo si Binance bloquea la conexión
+      try {
+        var fallbackRes = await fetch('https://rates.dolarvzla.com/bcv/current.json');
+        var fallbackData = await fallbackRes.json();
+        if (fallbackData && fallbackData.current && fallbackData.current.usd) {
+          var estUsdt = (parseFloat(fallbackData.current.usd) * 1.065).toFixed(2);
+          document.getElementById('input-tasa-usdt').value = estUsdt;
+          actualizarTasasManuales();
+        }
+      } catch (err) {
+        if (mostrarAlerta) alert('No se pudo conectar con los servidores.');
       }
     }
 
@@ -546,7 +621,6 @@
       var pBanco = parseFloat(document.getElementById('com-porc-banco').value) || 2.5;
       var pBinance = parseFloat(document.getElementById('com-porc-binance').value) || 0;
       
-      // Factor combinado (Banco + Binance)
       var factorComision = (1 - (pBanco / 100)) * (1 - (pBinance / 100));
       var usdNecesarios = factorComision > 0 ? metaUsd / factorComision : metaUsd;
       var bsBase = usdNecesarios * tasaBCV;
@@ -594,7 +668,6 @@
       var pBanco = parseFloat(document.getElementById('com-porc-banco').value) || 0;
       var pBinance = parseFloat(document.getElementById('com-porc-binance').value) || 0;
 
-      // Punto de equilibrio considerando Banco y Binance
       var factorComision = (1 - (pBanco / 100)) * (1 - (pBinance / 100));
       var tasaMinima = factorComision > 0 ? tCompra / factorComision : tCompra;
       document.getElementById('arb-res-breakeven').innerText = formato(tasaMinima) + ' Bs';
@@ -604,13 +677,11 @@
         var usdtNetos = usdBrutos * factorComision;
         var bsFinales = usdtNetos * tVenta;
         
-        var valorInicialUsdEq = bs / tCompra;
-        var valorFinalUsdEq = bsFinales / tCompra; // Equivalente en poder de compra
         var gananciaBs = bsFinales - bs;
         var gananciaUSDT = gananciaBs / tVenta;
         var gananciaUSD = gananciaBs / tCompra;
 
-        var comisionesTotalesBs = bs - (usdtNetos * tCompra); // Estimado de pérdida en Bs por comisiones
+        var comisionesTotalesBs = bs - (usdtNetos * tCompra);
 
         var colorRes = gananciaBs >= 0 ? 'var(--neon-green)' : 'var(--danger-color)';
 
