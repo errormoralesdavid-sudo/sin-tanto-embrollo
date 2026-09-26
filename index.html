@@ -82,7 +82,7 @@
       100% { transform: translateY(3px); }
     }
 
-    /* CARRUSEL DE MOVIMIENTO SUAVE Y CONTINUO ("POQUITO A POQUITO") */
+    /* CARRUSEL CON MOVIMIENTO CONTINUO */
     .slider-container {
       display: flex;
       gap: 12px;
@@ -346,7 +346,7 @@
       <div class="trend neutral" id="var-bcv">Sin cambios</div>
     </div>
     <div class="card-rate">
-      <h3>🔶 USDT (Binance)</h3>
+      <h3>🔶 USDT (Binance P2P)</h3>
       <div class="price" id="rate-usdt">Cargando...</div>
       <div class="trend neutral" id="var-usdt">Sin cambios</div>
     </div>
@@ -460,7 +460,7 @@
       </div>
     </div>
 
-    <!-- PESTAÑA 3: COMISIONES DINÁMICAS Y EDITABLES -->
+    <!-- PESTAÑA 3: COMISIONES -->
     <div id="tab-comisiones" class="tab-content">
       <div class="calc-section">
         <h2>Comisiones Interbancarias (0.3%)</h2>
@@ -644,7 +644,6 @@
       { id: 4, nombre: 'Tarjeta', comision: 0.35 }
     ];
 
-    // CONTROL DEL SCROLL CONTINUO Y PAUSA AL TOCAR
     var isUserInteracting = false;
     var resumeTimeout = null;
 
@@ -663,7 +662,6 @@
     function iniciarSmoothSlider() {
       var slider = document.getElementById('rate-slider');
       
-      // Eventos para congelar la animación si el usuario interactúa con el dedo o mouse
       slider.addEventListener('touchstart', function() { detenerAutoScroll(); });
       slider.addEventListener('touchend', function() { reanudarAutoScrollConDelay(); });
       slider.addEventListener('mouseenter', function() { detenerAutoScroll(); });
@@ -671,9 +669,8 @@
 
       function step() {
         if (!isUserInteracting) {
-          slider.scrollLeft += 0.6; // Avance píxel a píxel muy suave
+          slider.scrollLeft += 0.6;
           
-          // Al llegar al final, vuelve al inicio suavemente
           if (slider.scrollLeft >= (slider.scrollWidth - slider.clientWidth - 1)) {
             slider.scrollLeft = 0;
           }
@@ -693,7 +690,7 @@
       if (resumeTimeout) clearTimeout(resumeTimeout);
       resumeTimeout = setTimeout(function() {
         isUserInteracting = false;
-      }, 2500); // Vuelve a rodar suavemente a los 2.5 segundos de soltar
+      }, 2500);
     }
 
     function formato(num) {
@@ -900,6 +897,7 @@
       }
     }
 
+    // SINCRONIZACIÓN BCV OFICIAL
     async function sincronizarDolarVzlaAPI(mostrarAlerta = false) {
       try {
         var response = await fetch('https://rates.dolarvzla.com/bcv/current.json');
@@ -918,36 +916,32 @@
         document.getElementById('sync-status').innerText = '✅ Tasas BCV actualizadas en vivo';
         if (mostrarAlerta) alert('¡Tasas oficiales BCV sincronizadas!');
       } catch (error) {
-        if (mostrarAlerta) alert('Error al conectar con BCV.');
+        if (mostrarAlerta) alert('Error al conectar con el servidor BCV.');
       }
     }
 
+    // SINCRONIZACIÓN BINANCE P2P MEDIANTE DOLARAPI
     async function sincronizarBinanceP2P(mostrarAlerta = false) {
       try {
-        var proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent('https://p2p.binance.com/bapi/c2c/v2/friendly/c2c/adv/search');
-        var response = await fetch(proxyUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ asset: "USDT", fiat: "VES", tradeType: "BUY", page: 1, rows: 5, payTypes: [] })
-        });
-        var resData = await response.json();
-        if (resData && resData.data && resData.data.length > 0) {
-          var sum = 0, count = 0;
-          resData.data.forEach(item => {
-            if (item.adv && item.adv.price) { sum += parseFloat(item.adv.price); count++; }
-          });
-          if (count > 0) {
-            var nuevaTasa = parseFloat((sum / count).toFixed(2));
-            if (nuevaTasa !== tasaUSDT) {
-              prevUSDT = tasaUSDT;
-              document.getElementById('input-tasa-usdt').value = nuevaTasa;
-            }
-            actualizarTasasManuales();
-            document.getElementById('sync-status').innerText = '✅ Tasas Binance P2P actualizadas';
-            if (mostrarAlerta) alert('¡Tasa Binance P2P sincronizada!');
+        var response = await fetch('https://ve.dolarapi.com/v1/dolares');
+        var data = await response.json();
+        
+        // Buscamos la tasa del paralelo/cripto (Binance P2P)
+        var binanceObj = data.find(item => item.fuente === 'paralelo' || item.fuente === 'cripto') || data[1];
+        
+        if (binanceObj && binanceObj.promedio) {
+          var nuevaTasa = parseFloat(binanceObj.promedio);
+          if (nuevaTasa !== tasaUSDT) {
+            prevUSDT = tasaUSDT;
+            document.getElementById('input-tasa-usdt').value = nuevaTasa;
           }
+          actualizarTasasManuales();
+          document.getElementById('sync-status').innerText = '✅ Tasa Binance P2P obtenida en tiempo real';
+          if (mostrarAlerta) alert('¡Tasa de Binance P2P/Paralelo sincronizada correctamente!');
         }
-      } catch (e) {}
+      } catch (e) {
+        if (mostrarAlerta) alert('No se pudo obtener la tasa P2P en este momento.');
+      }
     }
 
     function switchTab(tabId, el) {
