@@ -82,20 +82,20 @@
       100% { transform: translateY(3px); }
     }
 
-    /* CARRUSEL ANIMADO CON AUTO-SCROLL LENTO */
+    /* CARRUSEL DE MOVIMIENTO SUAVE Y CONTINUO ("POQUITO A POQUITO") */
     .slider-container {
       display: flex;
       gap: 12px;
       overflow-x: auto;
       padding: 15px;
-      scroll-snap-type: x mandatory;
-      scroll-behavior: smooth;
+      white-space: nowrap;
+      -webkit-overflow-scrolling: touch;
+      user-select: none;
     }
     .slider-container::-webkit-scrollbar { display: none; }
 
     .card-rate {
       flex: 0 0 65%;
-      scroll-snap-align: center;
       background: var(--glass-bg);
       backdrop-filter: blur(10px);
       -webkit-backdrop-filter: blur(10px);
@@ -104,6 +104,8 @@
       padding: 14px;
       border-radius: 16px;
       text-align: center;
+      display: inline-block;
+      white-space: normal;
     }
     .card-rate:active { transform: scale(0.96); }
     .card-rate h3 { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.8px; }
@@ -111,6 +113,7 @@
     .trend { font-size: 11px; font-weight: bold; }
     .trend.up { color: var(--neon-green); }
     .trend.down { color: var(--danger-color); }
+    .trend.neutral { color: var(--text-muted); }
 
     .container {
       padding: 15px;
@@ -335,17 +338,17 @@
     </div>
   </header>
 
-  <!-- CARRUSEL MOVIMIENTO LENTO -->
-  <div class="slider-container" id="rate-slider" onmouseenter="pausarSlider()" onmouseleave="reanudarSlider()" ontouchstart="pausarSlider()" ontouchend="reanudarSlider()">
+  <!-- CARRUSEL CON MOVIMIENTO ULTRA FLUIDO ("POQUITO A POQUITO") -->
+  <div class="slider-container" id="rate-slider">
     <div class="card-rate">
       <h3>🏛️ BCV (Oficial)</h3>
       <div class="price" id="rate-bcv">Cargando...</div>
-      <div class="trend up" id="var-bcv">▲ +0,00%</div>
+      <div class="trend neutral" id="var-bcv">Sin cambios</div>
     </div>
     <div class="card-rate">
       <h3>🔶 USDT (Binance)</h3>
       <div class="price" id="rate-usdt">Cargando...</div>
-      <div class="trend up" id="var-usdt">▲ +0,00%</div>
+      <div class="trend neutral" id="var-usdt">Sin cambios</div>
     </div>
     <div class="card-rate">
       <h3>📊 Brecha (BCV/USDT)</h3>
@@ -355,7 +358,7 @@
     <div class="card-rate">
       <h3>💶 Euro (€)</h3>
       <div class="price" id="rate-eur">Cargando...</div>
-      <div class="trend" style="color:var(--text-muted);">Oficial BCV</div>
+      <div class="trend neutral" id="var-eur">Sin cambios</div>
     </div>
     <div class="card-rate">
       <h3>🇨🇴 Peso Col. (COP)</h3>
@@ -371,7 +374,7 @@
       <div style="margin-top:14px;">
         
         <div style="background:var(--input-bg); padding:12px; border-radius:10px; margin-bottom:12px; border:1px dashed var(--neon-green); text-align:center;">
-          <div id="sync-status" class="status-badge">🔄 Sincronizando tasas en vivo...</div>
+          <div id="sync-status" class="status-badge">🔄 Actualizando tasas automáticamente...</div>
           <div style="display:flex; gap:8px; margin-top:10px;">
             <button class="btn-action" style="font-size:11px; padding:8px;" onclick="sincronizarDolarVzlaAPI(true)">🔄 Reintentar BCV</button>
             <button class="btn-action" style="font-size:11px; padding:8px; background:#f0b90b; color:#000;" onclick="sincronizarBinanceP2P(true)">🔶 Reintentar Binance</button>
@@ -618,9 +621,13 @@
     var tasaUSDT = 885.10;
     var tasaEUR = 968.06;
     var tasaCOP = 3102.00;
+    
+    var prevBCV = null;
+    var prevUSDT = null;
+    var prevEUR = null;
+
     var historial = [];
 
-    // BANCOS Y BINANCE INICIALES
     var listaBancos = [
       { id: 1, nombre: 'BdV', comision: 2.5 },
       { id: 2, nombre: 'BDT', comision: 1.5 },
@@ -637,34 +644,57 @@
       { id: 4, nombre: 'Tarjeta', comision: 0.35 }
     ];
 
-    var sliderTimer = null;
-    var sliderPaused = false;
+    // CONTROL DEL SCROLL CONTINUO Y PAUSA AL TOCAR
+    var isUserInteracting = false;
+    var resumeTimeout = null;
 
     window.onload = function() {
       cargarDatosGuardados();
       renderBancos();
       renderBinance();
       actualizarTasasManuales();
-      sincronizacionesIniciales();
-      iniciarAutoSlider();
+      
+      sincronizarDolarVzlaAPI(false);
+      sincronizarBinanceP2P(false);
+      
+      iniciarSmoothSlider();
     };
 
-    // AUTO-SCROLL LENTO PARA EL CARRUSEL DE TASAS
-    function iniciarAutoSlider() {
+    function iniciarSmoothSlider() {
       var slider = document.getElementById('rate-slider');
-      sliderTimer = setInterval(() => {
-        if (!sliderPaused) {
-          if (slider.scrollLeft + slider.clientWidth >= slider.scrollWidth - 10) {
-            slider.scrollTo({ left: 0, behavior: 'smooth' });
-          } else {
-            slider.scrollBy({ left: 160, behavior: 'smooth' });
+      
+      // Eventos para congelar la animación si el usuario interactúa con el dedo o mouse
+      slider.addEventListener('touchstart', function() { detenerAutoScroll(); });
+      slider.addEventListener('touchend', function() { reanudarAutoScrollConDelay(); });
+      slider.addEventListener('mouseenter', function() { detenerAutoScroll(); });
+      slider.addEventListener('mouseleave', function() { reanudarAutoScrollConDelay(); });
+
+      function step() {
+        if (!isUserInteracting) {
+          slider.scrollLeft += 0.6; // Avance píxel a píxel muy suave
+          
+          // Al llegar al final, vuelve al inicio suavemente
+          if (slider.scrollLeft >= (slider.scrollWidth - slider.clientWidth - 1)) {
+            slider.scrollLeft = 0;
           }
         }
-      }, 3500); // Se mueve cada 3.5 segundos
+        requestAnimationFrame(step);
+      }
+
+      requestAnimationFrame(step);
     }
 
-    function pausarSlider() { sliderPaused = true; }
-    function reanudarSlider() { sliderPaused = false; }
+    function detenerAutoScroll() {
+      isUserInteracting = true;
+      if (resumeTimeout) clearTimeout(resumeTimeout);
+    }
+
+    function reanudarAutoScrollConDelay() {
+      if (resumeTimeout) clearTimeout(resumeTimeout);
+      resumeTimeout = setTimeout(function() {
+        isUserInteracting = false;
+      }, 2500); // Vuelve a rodar suavemente a los 2.5 segundos de soltar
+    }
 
     function formato(num) {
       return Number(num).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -680,6 +710,9 @@
         usdt: document.getElementById('input-tasa-usdt').value,
         eur: document.getElementById('input-tasa-eur').value,
         cop: document.getElementById('input-tasa-cop').value,
+        prevBCV: prevBCV,
+        prevUSDT: prevUSDT,
+        prevEUR: prevEUR,
         bancos: listaBancos,
         binance: listaBinance,
         historial: historial
@@ -694,13 +727,17 @@
         if(datos.usdt) document.getElementById('input-tasa-usdt').value = datos.usdt;
         if(datos.eur) document.getElementById('input-tasa-eur').value = datos.eur;
         if(datos.cop) document.getElementById('input-tasa-cop').value = datos.cop;
+        
+        if(datos.prevBCV) prevBCV = datos.prevBCV;
+        if(datos.prevUSDT) prevUSDT = datos.prevUSDT;
+        if(datos.prevEUR) prevEUR = datos.prevEUR;
+
         if(datos.bancos) listaBancos = datos.bancos;
         if(datos.binance) listaBinance = datos.binance;
         if(datos.historial) { historial = datos.historial; renderHistorial(); }
       }
     }
 
-    // RENDERIZAR Y EDITAR BANCOS DINÁMICOS
     function renderBancos() {
       var grid = document.getElementById('grid-bancos');
       grid.innerHTML = '';
@@ -744,7 +781,6 @@
       }
     }
 
-    // RENDERIZAR Y EDITAR BINANCE DINÁMICOS
     function renderBinance() {
       var grid = document.getElementById('grid-binance');
       grid.innerHTML = '';
@@ -831,6 +867,10 @@
       document.getElementById('rate-eur').innerText = formato(tasaEUR) + ' Bs';
       document.getElementById('rate-cop').innerText = formato(tasaCOP) + ' Bs';
 
+      calcularVariacion('var-bcv', tasaBCV, prevBCV);
+      calcularVariacion('var-usdt', tasaUSDT, prevUSDT);
+      calcularVariacion('var-eur', tasaEUR, prevEUR);
+
       var spread = tasaBCV > 0 ? ((tasaUSDT - tasaBCV) / tasaBCV) * 100 : 0;
       document.getElementById('rate-spread').innerText = spread.toFixed(2) + '%';
 
@@ -843,15 +883,39 @@
       guardarDatos();
     }
 
+    function calcularVariacion(elementId, actual, previo) {
+      var el = document.getElementById(elementId);
+      if (!previo || previo === actual) {
+        el.innerText = 'Sin cambios';
+        el.className = 'trend neutral';
+        return;
+      }
+      var diff = ((actual - previo) / previo) * 100;
+      if (diff > 0) {
+        el.innerText = `▲ +${diff.toFixed(2)}%`;
+        el.className = 'trend up';
+      } else {
+        el.innerText = `▼ ${diff.toFixed(2)}%`;
+        el.className = 'trend down';
+      }
+    }
+
     async function sincronizarDolarVzlaAPI(mostrarAlerta = false) {
       try {
         var response = await fetch('https://rates.dolarvzla.com/bcv/current.json');
         var data = await response.json();
         if (data.current) {
-          if (data.current.usd) document.getElementById('input-tasa-bcv').value = data.current.usd;
-          if (data.current.eur) document.getElementById('input-tasa-eur').value = data.current.eur;
+          if (data.current.usd && data.current.usd !== tasaBCV) {
+            prevBCV = tasaBCV;
+            document.getElementById('input-tasa-bcv').value = data.current.usd;
+          }
+          if (data.current.eur && data.current.eur !== tasaEUR) {
+            prevEUR = tasaEUR;
+            document.getElementById('input-tasa-eur').value = data.current.eur;
+          }
         }
         actualizarTasasManuales();
+        document.getElementById('sync-status').innerText = '✅ Tasas BCV actualizadas en vivo';
         if (mostrarAlerta) alert('¡Tasas oficiales BCV sincronizadas!');
       } catch (error) {
         if (mostrarAlerta) alert('Error al conectar con BCV.');
@@ -873,8 +937,13 @@
             if (item.adv && item.adv.price) { sum += parseFloat(item.adv.price); count++; }
           });
           if (count > 0) {
-            document.getElementById('input-tasa-usdt').value = (sum / count).toFixed(2);
+            var nuevaTasa = parseFloat((sum / count).toFixed(2));
+            if (nuevaTasa !== tasaUSDT) {
+              prevUSDT = tasaUSDT;
+              document.getElementById('input-tasa-usdt').value = nuevaTasa;
+            }
             actualizarTasasManuales();
+            document.getElementById('sync-status').innerText = '✅ Tasas Binance P2P actualizadas';
             if (mostrarAlerta) alert('¡Tasa Binance P2P sincronizada!');
           }
         }
