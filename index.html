@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Calculadora Financiera PRO</title>
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#00e676">
@@ -11,12 +11,34 @@
 </head>
 <body>
 
+  <!-- PANTALLA DE LOGIN / LICENCIA CON FIREBASE -->
+  <div id="auth-overlay" class="auth-overlay">
+    <div class="auth-card">
+      <div class="logo-container" style="margin: 0 auto 15px auto;">
+        <div class="spinner-ring"></div>
+        <div class="money-icon">🔐</div>
+      </div>
+      <h2 style="color:var(--neon-green); font-size:18px; margin-bottom:6px;">Acceso con Licencia</h2>
+      <p style="color:var(--text-muted); font-size:11px; margin-bottom:15px;">Ingresa tus credenciales vinculadas a este dispositivo.</p>
+      
+      <input type="email" id="auth-email" placeholder="Correo electrónico">
+      <input type="password" id="auth-password" placeholder="Contraseña">
+      
+      <div id="auth-error" style="color:var(--danger-color); font-size:11px; margin-bottom:10px; display:none;"></div>
+      
+      <button class="btn-action" onclick="iniciarSesionFirebase()">🔓 Iniciar Sesión</button>
+    </div>
+  </div>
+
   <header>
     <div class="logo-container">
       <div class="spinner-ring"></div>
       <div class="money-icon">💸</div>
     </div>
-    <button class="theme-toggle-btn" onclick="toggleTheme()" id="theme-btn" title="Cambiar Tema">☀️</button>
+    <div style="display:flex; gap:8px; align-items:center;">
+      <button class="theme-toggle-btn" onclick="toggleTheme()" id="theme-btn" title="Cambiar Tema">☀️</button>
+      <button class="theme-toggle-btn" onclick="cerrarSesionFirebase()" title="Cerrar Sesión" style="color:var(--danger-color);">🚪</button>
+    </div>
   </header>
 
   <div class="slider-container" id="rate-slider">
@@ -271,18 +293,18 @@
 
         <div style="background: rgba(0, 230, 118, 0.08); border: 1px solid var(--neon-green); padding: 10px; border-radius: 10px; margin-bottom: 12px;">
           <label style="color: var(--neon-green); font-weight: bold;">💼 Recargo / Mi Comisión Final (%):</label>
-          <input type="number" id="arb-com-personal" value="0" placeholder="Ej. 30%" oninput="calcularArbitraje()" style="margin-bottom:0;">
+          <input type="number" id="arb-com-personal" value="0" placeholder="Ej. -30 o +30%" oninput="calcularArbitraje()" style="margin-bottom:0;">
         </div>
 
         <div class="result-box">
           <div class="result-line"><span>Punto de Equilibrio:</span> <strong id="arb-res-breakeven">0,00 Bs</strong></div>
           <div class="result-line"><span>Monto Final Venta:</span> <strong id="arb-res-final">0,00 Bs</strong></div>
           <div class="result-line"><span>Comisiones Totales (Bs):</span> <strong id="arb-res-comision-bs" style="color:var(--danger-color);">0,00 Bs</strong></div>
-          <div class="result-line"><span>Ganancia Neta Real (Bs):</span> <strong id="arb-res-ganancia-bs">0,00 Bs</strong></div>
-          <div class="result-line"><span>Ganancia Neta (USDT):</span> <strong id="arb-res-ganancia-usdt">0,00 USDT</strong></div>
+          <div class="result-line"><span>Ganancia Neta Bruta (Bs):</span> <strong id="arb-res-ganancia-bs">0,00 Bs</strong></div>
+          <div class="result-line"><span>Ganancia Neta Bruta (USDT):</span> <strong id="arb-res-ganancia-usdt">0,00 USDT</strong></div>
           <div class="result-line" style="border-top:1px dashed var(--glass-border); padding-top:6px;">
-            <span>Ganancia Final + Mi Comisión ($):</span>
-            <strong id="arb-res-ganancia-usd" style="color:var(--neon-green); font-size:15px;">0,00 $</strong>
+            <span>Ganancia Final + Mi Comisión (USDT):</span>
+            <strong id="arb-res-ganancia-usd" style="color:var(--neon-green); font-size:15px;">0,00 USDT</strong>
           </div>
         </div>
 
@@ -323,6 +345,91 @@
     <div class="nav-item" onclick="switchTab('comisiones', this)"><span>⚙️</span><span>Comisión</span></div>
     <div class="nav-item" onclick="switchTab('arbitraje', this)"><span>📈</span><span>Arbitraje</span></div>
   </nav>
+
+  <!-- FIREBASE V10 SDK (MODULAR BUNDLED COMPAT) -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
+    import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAsBnD8C_E_o5oHzmw7bWmKrmW2JAjdcaU",
+      authDomain: "geomercado-9d642.firebaseapp.com",
+      projectId: "geomercado-9d642",
+      storageBucket: "geomercado-9d642.firebasestorage.app",
+      messagingSenderId: "521126834575",
+      appId: "1:521126834575:web:4c847dec3dd57d9a439bfa"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    function getDeviceId() {
+      let devId = localStorage.getItem('device_fingerprint_id');
+      if (!devId) {
+        devId = 'DEV-' + Math.random().toString(36).substring(2, 11) + '-' + Date.now();
+        localStorage.setItem('device_fingerprint_id', devId);
+      }
+      return devId;
+    }
+
+    window.iniciarSesionFirebase = async function() {
+      const email = document.getElementById('auth-email').value;
+      const pass = document.getElementById('auth-password').value;
+      const errDiv = document.getElementById('auth-error');
+      errDiv.style.display = 'none';
+
+      try {
+        const userCred = await signInWithEmailAndPassword(auth, email, pass);
+        const uid = userCred.user.uid;
+        const devId = getDeviceId();
+
+        const userDocRef = doc(db, 'licencias', uid);
+        const userDocSnap = await getDoc(userDocRef);
+
+        if (userDocSnap.exists()) {
+          const data = userDocSnap.data();
+          if (data.deviceId && data.deviceId !== devId) {
+            await signOut(auth);
+            errDiv.innerText = "❌ Esta cuenta ya está vinculada a otro dispositivo móvil.";
+            errDiv.style.display = 'block';
+            return;
+          }
+        } else {
+          await setDoc(userDocRef, {
+            email: email,
+            deviceId: devId,
+            activadoEn: new Date().toISOString()
+          });
+        }
+
+        document.getElementById('auth-overlay').style.display = 'none';
+      } catch (err) {
+        errDiv.innerText = "❌ Credenciales o licencia inválida: " + err.message;
+        errDiv.style.display = 'block';
+      }
+    };
+
+    window.cerrarSesionFirebase = async function() {
+      await signOut(auth);
+      document.getElementById('auth-overlay').style.display = 'flex';
+    };
+
+    onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        const devId = getDeviceId();
+        const userDocSnap = await getDoc(doc(db, 'licencias', user.uid));
+        if (userDocSnap.exists() && userDocSnap.data().deviceId === devId) {
+          document.getElementById('auth-overlay').style.display = 'none';
+        } else {
+          document.getElementById('auth-overlay').style.display = 'flex';
+        }
+      } else {
+        document.getElementById('auth-overlay').style.display = 'flex';
+      }
+    });
+  </script>
 
   <script src="app.js"></script>
 </body>
