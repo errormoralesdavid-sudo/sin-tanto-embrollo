@@ -47,7 +47,18 @@ window.onload = function() {
   iniciarSmoothSlider();
   renderGraficoD3();
   iniciarRelojNotificaciones();
+  iniciarAutoScrollEnInputs();
 };
+
+function iniciarAutoScrollEnInputs() {
+  document.querySelectorAll('input').forEach(input => {
+    input.addEventListener('focus', function() {
+      setTimeout(() => {
+        this.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 300);
+    });
+  });
+}
 
 function toggleTheme() {
   var currentTheme = document.documentElement.getAttribute("data-theme");
@@ -506,23 +517,25 @@ function calcularArbitraje() {
     var usdBrutos = bs / tCompra;
     var usdtNetos = usdBrutos * factorComision;
     var bsFinales = usdtNetos * tVenta;
-    var gananciaBs = bsFinales - bs;
-    var gananciaUSD = (gananciaBs / tCompra) * (1 + (pPersonal / 100));
-    var colorRes = gananciaBs >= 0 ? 'var(--neon-green)' : 'var(--danger-color)';
+    var gananciaBsBruta = bsFinales - bs;
+    var gananciaUsdtBruta = tVenta > 0 ? gananciaBsBruta / tVenta : 0;
+    var gananciaUsdtFinal = gananciaUsdtBruta * (1 + (pPersonal / 100));
+
+    var colorRes = gananciaBsBruta >= 0 ? 'var(--neon-green)' : 'var(--danger-color)';
 
     document.getElementById('arb-res-final').innerText = formato(bsFinales) + ' Bs';
     document.getElementById('arb-res-comision-bs').innerText = formato(bs - (usdtNetos * tCompra)) + ' Bs';
     
     var elBs = document.getElementById('arb-res-ganancia-bs');
-    elBs.innerText = formato(gananciaBs) + ' Bs';
+    elBs.innerText = formato(gananciaBsBruta) + ' Bs';
     elBs.style.color = colorRes;
 
     var elUsdt = document.getElementById('arb-res-ganancia-usdt');
-    elUsdt.innerText = formato(gananciaBs / tVenta) + ' USDT';
+    elUsdt.innerText = formato(gananciaUsdtBruta) + ' USDT';
     elUsdt.style.color = colorRes;
 
     var elUsd = document.getElementById('arb-res-ganancia-usd');
-    elUsd.innerText = formato(gananciaUSD) + ' $';
+    elUsd.innerText = formato(gananciaUsdtFinal) + ' USDT';
     elUsd.style.color = colorRes;
   }
 }
@@ -546,9 +559,9 @@ function registrarOperacion() {
     puntoEquilibrio: document.getElementById('arb-res-breakeven').innerText,
     montoFinalVenta: document.getElementById('arb-res-final').innerText,
     comisionesBs: document.getElementById('arb-res-comision-bs').innerText,
-    gananciaBs: ganBs,
-    gananciaUsdt: document.getElementById('arb-res-ganancia-usdt').innerText,
-    gananciaUsdFinal: document.getElementById('arb-res-ganancia-usd').innerText,
+    gananciaBsBruta: ganBs,
+    gananciaUsdtBruta: document.getElementById('arb-res-ganancia-usdt').innerText,
+    gananciaUsdtFinal: document.getElementById('arb-res-ganancia-usd').innerText,
     nota: document.getElementById('arb-nota').value || 'Sin notas'
   });
 
@@ -573,8 +586,8 @@ function renderHistorial(filtro = '') {
         <div style="font-size:11px; color:var(--text-muted); margin-top:2px;">Inv: ${formato(h.inversionBs)} Bs</div>
       </div>
       <div style="text-align:right;">
-        <div style="font-size:13px; font-weight:bold; color:var(--neon-green);">${h.gananciaBs}</div>
-        <div style="font-size:10px; color:var(--text-muted);">${h.gananciaUsdFinal}</div>
+        <div style="font-size:13px; font-weight:bold; color:var(--neon-green);">${h.gananciaUsdtFinal}</div>
+        <div style="font-size:10px; color:var(--text-muted);">${h.gananciaBsBruta}</div>
       </div>
     `;
     container.appendChild(card);
@@ -596,10 +609,10 @@ function abrirModalDetalle(id) {
     <div class="result-line"><span>Punto de Equilibrio:</span> <strong>${item.puntoEquilibrio}</strong></div>
     <div class="result-line"><span>Monto Final Venta:</span> <strong>${item.montoFinalVenta}</strong></div>
     <div class="result-line"><span>Comisiones Totales:</span> <strong style="color:var(--danger-color);">${item.comisionesBs}</strong></div>
-    <div class="result-line"><span>Ganancia Neta Real:</span> <strong style="color:var(--neon-green);">${item.gananciaBs}</strong></div>
-    <div class="result-line"><span>Ganancia Neta USDT:</span> <strong>${item.gananciaUsdt}</strong></div>
-    <div class="result-line"><span>Ganancia + Mi Comisión:</span> <strong style="color:var(--neon-green);">${item.gananciaUsdFinal}</strong></div>
-    <div class="result-line" style="border-top:1px dashed var(--glass-border); padding-top:6px;"><span>Nota:</span> <strong>${item.nota}</strong></div>
+    <div class="result-line"><span>Ganancia Neta Bruta (Bs):</span> <strong>${item.gananciaBsBruta}</strong></div>
+    <div class="result-line"><span>Ganancia Neta Bruta (USDT):</span> <strong>${item.gananciaUsdtBruta}</strong></div>
+    <div class="result-line" style="border-top:1px dashed var(--glass-border); padding-top:6px;"><span>Ganancia Final + Mi Comisión:</span> <strong style="color:var(--neon-green);">${item.gananciaUsdtFinal}</strong></div>
+    <div class="result-line"><span>Nota:</span> <strong>${item.nota}</strong></div>
   `;
 
   document.getElementById('modal-detalle').style.display = 'flex';
@@ -627,11 +640,11 @@ function copiarDetalleWhatsApp() {
     `🏛️ *Canal:* ${h.canal}\n` +
     `💵 *Inversión Inicial:* ${formato(h.inversionBs)} Bs\n` +
     `📈 *Tasas (Compra/Venta):* ${h.tasaCompra} / ${h.tasaVenta}\n` +
-    `💼 *Mi Comisión:* ${h.recargoPersonal}%\n` +
+    `💼 *Mi Recargo/Comisión:* ${h.recargoPersonal}%\n` +
     `💰 *Monto Final Venta:* ${h.montoFinalVenta}\n` +
-    `🔻 *Comisiones:* ${h.comisionesBs}\n` +
-    `✅ *Ganancia Neta:* ${h.gananciaBs} (${h.gananciaUsdt})\n` +
-    `🎯 *Total Final ($):* ${h.gananciaUsdFinal}\n` +
+    `🔻 *Comisiones Totales:* ${h.comisionesBs}\n` +
+    `📊 *Ganancia Neta Bruta:* ${h.gananciaBsBruta} (${h.gananciaUsdtBruta})\n` +
+    `🎯 *Ganancia Final (USDT):* ${h.gananciaUsdtFinal}\n` +
     `📝 *Nota:* ${h.nota}`;
 
   navigator.clipboard.writeText(texto);
