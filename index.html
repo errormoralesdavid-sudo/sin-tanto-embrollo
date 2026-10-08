@@ -121,23 +121,27 @@
 
     <!-- PESTAÑA 1: INICIO -->
     <div id="tab-inicio" class="tab-content active">
-      <div class="calc-section">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-          <h2 style="margin-bottom:0;" id="calc-title">Calculadora Rápida ($)</h2>
-          <button class="btn-toggle" onclick="toggleModoCalculadora()" title="Cambiar moneda base">
-            <span id="toggle-icon">🔄 VES ⇄ USD</span>
-          </button>
-        </div>
+      <div class="calc-section desktop-layout">
+        <div class="calc-inputs-col">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+            <h2 style="margin-bottom:0;" id="calc-title">Calculadora Rápida ($)</h2>
+            <button class="btn-toggle" onclick="toggleModoCalculadora()" title="Cambiar moneda base">
+              <span id="toggle-icon">🔄 VES ⇄ USD</span>
+            </button>
+          </div>
 
-        <label id="main-input-label">Monto en Dólares ($):</label>
-        <input type="number" id="usd-input" placeholder="Ej. 10" oninput="calcularDirecto()">
+          <label id="main-input-label">Monto en Dólares ($):</label>
+          <input type="number" id="usd-input" placeholder="Ej. 10" oninput="calcularDirecto()">
+        </div>
         
-        <div class="result-box">
-          <div class="result-line"><span id="lbl-res-bcv">Al cambio BCV:</span> <strong id="res-bcv">0,00 Bs</strong></div>
-          <div class="result-line"><span id="lbl-res-usdt">Al cambio USDT P2P:</span> <strong id="res-usdt">0,00 Bs</strong></div>
-          <div class="result-line"><span id="lbl-res-eur">En Euros (€):</span> <strong id="res-eur">0,00 €</strong></div>
-          <div class="result-line"><span id="lbl-res-cop">En Pesos (COP):</span> <strong id="res-cop">0 COP</strong></div>
-          <button class="btn-copy" onclick="copiarTexto('resumen-rapido')">📋 Copiar Resumen</button>
+        <div class="calc-results-col">
+          <div class="result-box">
+            <div class="result-line"><span id="lbl-res-bcv">Al cambio BCV:</span> <strong id="res-bcv">0,00 Bs</strong></div>
+            <div class="result-line"><span id="lbl-res-usdt">Al cambio USDT P2P:</span> <strong id="res-usdt">0,00 Bs</strong></div>
+            <div class="result-line"><span id="lbl-res-eur">En Euros (€):</span> <strong id="res-eur">0,00 €</strong></div>
+            <div class="result-line"><span id="lbl-res-cop">En Pesos (COP):</span> <strong id="res-cop">0 COP</strong></div>
+            <button class="btn-copy" onclick="copiarTexto('resumen-rapido')">📋 Copiar Resumen</button>
+          </div>
         </div>
       </div>
 
@@ -149,69 +153,85 @@
 
     <!-- PESTAÑA 2: CRUZADA Y IGTF -->
     <div id="tab-cruzada" class="tab-content">
-      <div class="calc-section">
-        <h2>Calculadora Cruzada</h2>
-        <label>De:</label>
-        <input type="number" id="cross-val-1" placeholder="Monto" oninput="calcularCruzado(1)">
-        <select id="cross-mon-1" onchange="calcularCruzado(1)">
-          <option value="USD">Dólares ($)</option>
-          <option value="USDT">USDT (Cripto)</option>
-          <option value="BCV">Bolívares (Bs)</option>
-          <option value="EUR">Euros (€)</option>
-          <option value="COP">Pesos (COP)</option>
-        </select>
+      <div class="calc-section desktop-layout">
+        <div class="calc-inputs-col">
+          <h2>Calculadora Cruzada</h2>
+          <label>De:</label>
+          <input type="number" id="cross-val-1" placeholder="Monto" oninput="calcularCruzado(1)">
+          <select id="cross-mon-1" onchange="calcularCruzado(1)">
+            <option value="USD">Dólares ($)</option>
+            <option value="USDT">USDT (Cripto)</option>
+            <option value="BCV">Bolívares (Bs)</option>
+            <option value="EUR">Euros (€)</option>
+            <option value="COP">Pesos (COP)</option>
+          </select>
+        </div>
         
-        <label>A:</label>
-        <input type="number" id="cross-val-2" placeholder="Resultado" oninput="calcularCruzado(2)">
-        <select id="cross-mon-2" onchange="calcularCruzado(2)">
-          <option value="COP">Pesos (COP)</option>
-          <option value="USDT">USDT (Cripto)</option>
-          <option value="USD">Dólares ($)</option>
-          <option value="BCV">Bolívares (Bs)</option>
-          <option value="EUR">Euros (€)</option>
-        </select>
+        <div class="calc-results-col">
+          <label>A:</label>
+          <input type="number" id="cross-val-2" placeholder="Resultado" oninput="calcularCruzado(2)">
+          <select id="cross-mon-2" onchange="calcularCruzado(2)">
+            <option value="COP">Pesos (COP)</option>
+            <option value="USDT">USDT (Cripto)</option>
+            <option value="USD">Dólares ($)</option>
+            <option value="BCV">Bolívares (Bs)</option>
+            <option value="EUR">Euros (€)</option>
+          </select>
+        </div>
       </div>
 
-      <div class="calc-section">
-        <h2>🧾 Impuestos / IGTF (3%)</h2>
-        <label>Precio del Producto ($):</label>
-        <input type="number" id="igtf-monto-usd" placeholder="Ej. 50" oninput="calcularIGTF()">
-        <div class="result-box">
-          <div class="result-line"><span>Monto Base en Bs (BCV):</span> <strong id="igtf-res-base">0,00 Bs</strong></div>
-          <div class="result-line"><span>IGTF 3% (Divisa):</span> <strong id="igtf-res-3pct">0,00 $</strong></div>
-          <div class="result-line"><span>Total a Cobrar/Pagar:</span> <strong id="igtf-res-total" style="color:var(--neon-green);">0,00 $ / 0,00 Bs</strong></div>
+      <div class="calc-section desktop-layout">
+        <div class="calc-inputs-col">
+          <h2>🧾 Impuestos / IGTF (3%)</h2>
+          <label>Precio del Producto ($):</label>
+          <input type="number" id="igtf-monto-usd" placeholder="Ej. 50" oninput="calcularIGTF()">
+        </div>
+        <div class="calc-results-col">
+          <div class="result-box">
+            <div class="result-line"><span>Monto Base en Bs (BCV):</span> <strong id="igtf-res-base">0,00 Bs</strong></div>
+            <div class="result-line"><span>IGTF 3% (Divisa):</span> <strong id="igtf-res-3pct">0,00 $</strong></div>
+            <div class="result-line"><span>Total a Cobrar/Pagar:</span> <strong id="igtf-res-total" style="color:var(--neon-green);">0,00 $ / 0,00 Bs</strong></div>
+          </div>
         </div>
       </div>
     </div>
 
     <!-- PESTAÑA 3: COMISIONES -->
     <div id="tab-comisiones" class="tab-content">
-      <div class="calc-section">
-        <h2>Comisiones Interbancarias (0.3%)</h2>
-        <label>Monto a Transferir o Pago Móvil (Bs):</label>
-        <input type="number" id="transf-monto-bs" placeholder="Ej. 58700" oninput="calcularComisionTransf()">
-        
-        <label>Tipo de Operación:</label>
-        <select id="transf-tipo" onchange="calcularComisionTransf()">
-          <option value="0.3">Transferencia Interbancaria Otros Bancos (0.3%)</option>
-          <option value="0.3">Pago Móvil Otro Banco (0.3%)</option>
-          <option value="0.0">Mismo Banco (0%)</option>
-        </select>
+      <div class="calc-section desktop-layout">
+        <div class="calc-inputs-col">
+          <h2>Comisiones Interbancarias (0.3%)</h2>
+          <label>Monto a Transferir o Pago Móvil (Bs):</label>
+          <input type="number" id="transf-monto-bs" placeholder="Ej. 58700" oninput="calcularComisionTransf()">
+          
+          <label>Tipo de Operación:</label>
+          <select id="transf-tipo" onchange="calcularComisionTransf()">
+            <option value="0.3">Transferencia Interbancaria Otros Bancos (0.3%)</option>
+            <option value="0.3">Pago Móvil Otro Banco (0.3%)</option>
+            <option value="0.0">Mismo Banco (0%)</option>
+          </select>
+        </div>
 
-        <div class="result-box">
-          <div class="result-line"><span>Comisión a Cobrar:</span> <strong id="transf-res-comision" style="color:var(--danger-color);">0,00 Bs</strong></div>
-          <div class="result-line"><span>Total Debitado de la Cuenta:</span> <strong id="transf-res-total" style="color:var(--neon-green);">0,00 Bs</strong></div>
+        <div class="calc-results-col">
+          <div class="result-box">
+            <div class="result-line"><span>Comisión a Cobrar:</span> <strong id="transf-res-comision" style="color:var(--danger-color);">0,00 Bs</strong></div>
+            <div class="result-line"><span>Total Debitado de la Cuenta:</span> <strong id="transf-res-total" style="color:var(--neon-green);">0,00 Bs</strong></div>
+          </div>
         </div>
       </div>
 
-      <div class="calc-section">
-        <h2>🎯 Meta Neta (¿Cuánto enviar para recibir X?)</h2>
-        <label>Monto Neto Deseado a Recibir ($):</label>
-        <input type="number" id="meta-usd" placeholder="Ej. 50" oninput="calcularMetaNeta()">
+      <div class="calc-section desktop-layout">
+        <div class="calc-inputs-col">
+          <h2>🎯 Meta Neta (¿Cuánto enviar para recibir X?)</h2>
+          <label>Monto Neto Deseado a Recibir ($):</label>
+          <input type="number" id="meta-usd" placeholder="Ej. 50" oninput="calcularMetaNeta()">
+        </div>
         
-        <div class="result-box">
-          <div class="result-line"><span>Monto a Transferir en Bs:</span> <strong id="meta-res-bs" style="color:var(--neon-green);">0,00 Bs</strong></div>
-          <button class="btn-copy" onclick="copiarTexto('meta-neta')">📋 Copiar para Enviar</button>
+        <div class="calc-results-col">
+          <div class="result-box">
+            <div class="result-line"><span>Monto a Transferir en Bs:</span> <strong id="meta-res-bs" style="color:var(--neon-green);">0,00 Bs</strong></div>
+            <button class="btn-copy" onclick="copiarTexto('meta-neta')">📋 Copiar para Enviar</button>
+          </div>
         </div>
       </div>
 
@@ -269,49 +289,53 @@
 
     <!-- PESTAÑA 4: ARBITRAJE -->
     <div id="tab-arbitraje" class="tab-content">
-      <div class="calc-section">
-        <h2>Arbitraje y Ganancias Integradas</h2>
-        
-        <div style="background:var(--input-bg); border:1px solid var(--neon-green); padding:10px; border-radius:8px; margin-bottom:12px;">
-          <div style="font-size:11px; color:var(--text-muted); text-transform:uppercase;">Canal de Operación Activo:</div>
-          <div id="resumen-canal-activo" style="font-size:12px; font-weight:bold; color:var(--neon-green); margin-top:2px;">Banco de Venezuela (BdV) [2.5%] + Binance Maker (0%)</div>
-        </div>
-
-        <label>Monto Inicial en Banco (Bs):</label>
-        <input type="number" id="arb-bs-inicial" placeholder="Ej. 5000" oninput="calcularArbitraje()">
-        
-        <div style="display:flex; gap:10px;">
-          <div style="flex:1;">
-            <label>Tasa Compra Banco:</label>
-            <input type="number" id="arb-tasa-compra" value="832.48" oninput="calcularArbitraje()">
+      <div class="calc-section desktop-layout">
+        <div class="calc-inputs-col">
+          <h2>Arbitraje y Ganancias Integradas</h2>
+          
+          <div style="background:var(--input-bg); border:1px solid var(--neon-green); padding:10px; border-radius:8px; margin-bottom:12px;">
+            <div style="font-size:11px; color:var(--text-muted); text-transform:uppercase;">Canal de Operación Activo:</div>
+            <div id="resumen-canal-activo" style="font-size:12px; font-weight:bold; color:var(--neon-green); margin-top:2px;">Banco de Venezuela (BdV) [2.5%] + Binance Maker (0%)</div>
           </div>
-          <div style="flex:1;">
-            <label>Tasa Venta P2P:</label>
-            <input type="number" id="arb-tasa-venta" value="885.10" oninput="calcularArbitraje()">
+
+          <label>Monto Inicial en Banco (Bs):</label>
+          <input type="number" id="arb-bs-inicial" placeholder="Ej. 5000" oninput="calcularArbitraje()">
+          
+          <div style="display:flex; gap:10px;">
+            <div style="flex:1;">
+              <label>Tasa Compra Banco:</label>
+              <input type="number" id="arb-tasa-compra" value="832.48" oninput="calcularArbitraje()">
+            </div>
+            <div style="flex:1;">
+              <label>Tasa Venta P2P:</label>
+              <input type="number" id="arb-tasa-venta" value="885.10" oninput="calcularArbitraje()">
+            </div>
+          </div>
+
+          <div style="background: rgba(0, 230, 118, 0.08); border: 1px solid var(--neon-green); padding: 10px; border-radius: 10px; margin-bottom: 12px;">
+            <label style="color: var(--neon-green); font-weight: bold;">💼 Recargo / Mi Comisión Final (%):</label>
+            <input type="number" id="arb-com-personal" value="0" placeholder="Ej. -30 o +30%" oninput="calcularArbitraje()" style="margin-bottom:0;">
+          </div>
+
+          <label style="margin-top:10px;">Nota / Descripción de la operación:</label>
+          <input type="text" id="arb-nota" placeholder="Ej. Cambio a cliente X con mi comisión">
+
+          <button class="btn-action" style="margin-top:5px;" onclick="registrarOperacion()">💾 Registrar Operación</button>
+        </div>
+
+        <div class="calc-results-col">
+          <div class="result-box">
+            <div class="result-line"><span>Punto de Equilibrio:</span> <strong id="arb-res-breakeven">0,00 Bs</strong></div>
+            <div class="result-line"><span>Monto Final Venta:</span> <strong id="arb-res-final">0,00 Bs</strong></div>
+            <div class="result-line"><span>Comisiones Totales (Bs):</span> <strong id="arb-res-comision-bs" style="color:var(--danger-color);">0,00 Bs</strong></div>
+            <div class="result-line"><span>Ganancia Neta Bruta (Bs):</span> <strong id="arb-res-ganancia-bs">0,00 Bs</strong></div>
+            <div class="result-line"><span>Ganancia Neta Bruta (USDT):</span> <strong id="arb-res-ganancia-usdt">0,00 USDT</strong></div>
+            <div class="result-line" style="border-top:1px dashed var(--glass-border); padding-top:6px;">
+              <span>Ganancia Final + Mi Comisión (USDT):</span>
+              <strong id="arb-res-ganancia-usd" style="color:var(--neon-green); font-size:15px;">0,00 USDT</strong>
+            </div>
           </div>
         </div>
-
-        <div style="background: rgba(0, 230, 118, 0.08); border: 1px solid var(--neon-green); padding: 10px; border-radius: 10px; margin-bottom: 12px;">
-          <label style="color: var(--neon-green); font-weight: bold;">💼 Recargo / Mi Comisión Final (%):</label>
-          <input type="number" id="arb-com-personal" value="0" placeholder="Ej. -30 o +30%" oninput="calcularArbitraje()" style="margin-bottom:0;">
-        </div>
-
-        <div class="result-box">
-          <div class="result-line"><span>Punto de Equilibrio:</span> <strong id="arb-res-breakeven">0,00 Bs</strong></div>
-          <div class="result-line"><span>Monto Final Venta:</span> <strong id="arb-res-final">0,00 Bs</strong></div>
-          <div class="result-line"><span>Comisiones Totales (Bs):</span> <strong id="arb-res-comision-bs" style="color:var(--danger-color);">0,00 Bs</strong></div>
-          <div class="result-line"><span>Ganancia Neta Bruta (Bs):</span> <strong id="arb-res-ganancia-bs">0,00 Bs</strong></div>
-          <div class="result-line"><span>Ganancia Neta Bruta (USDT):</span> <strong id="arb-res-ganancia-usdt">0,00 USDT</strong></div>
-          <div class="result-line" style="border-top:1px dashed var(--glass-border); padding-top:6px;">
-            <span>Ganancia Final + Mi Comisión (USDT):</span>
-            <strong id="arb-res-ganancia-usd" style="color:var(--neon-green); font-size:15px;">0,00 USDT</strong>
-          </div>
-        </div>
-
-        <label style="margin-top:10px;">Nota / Descripción de la operación:</label>
-        <input type="text" id="arb-nota" placeholder="Ej. Cambio a cliente X con mi comisión">
-
-        <button class="btn-action" style="margin-top:5px;" onclick="registrarOperacion()">💾 Registrar Operación</button>
       </div>
 
       <div class="calc-section">
@@ -346,11 +370,11 @@
     <div class="nav-item" onclick="switchTab('arbitraje', this)"><span>📈</span><span>Arbitraje</span></div>
   </nav>
 
-  <!-- FIREBASE V10 SDK (MODULAR BUNDLED COMPAT) -->
+  <!-- FIREBASE V10 SDK -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
     import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
-    import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
+    import { getFirestore, doc, getDoc, setDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyAsBnD8C_E_o5oHzmw7bWmKrmW2JAjdcaU",
@@ -374,6 +398,10 @@
       return devId;
     }
 
+    if (localStorage.getItem('user_session_active') === 'true') {
+      document.getElementById('auth-overlay').style.display = 'none';
+    }
+
     window.iniciarSesionFirebase = async function() {
       const email = document.getElementById('auth-email').value;
       const pass = document.getElementById('auth-password').value;
@@ -390,11 +418,13 @@
 
         if (userDocSnap.exists()) {
           const data = userDocSnap.data();
-          if (data.deviceId && data.deviceId !== devId) {
+          if (data.deviceId && data.deviceId !== '' && data.deviceId !== devId) {
             await signOut(auth);
-            errDiv.innerText = "❌ Esta cuenta ya está vinculada a otro dispositivo móvil.";
+            errDiv.innerText = "❌ Esta cuenta ya está vinculada a otro dispositivo móvil. Cierra sesión en el otro equipo primero.";
             errDiv.style.display = 'block';
             return;
+          } else {
+            await updateDoc(userDocRef, { deviceId: devId });
           }
         } else {
           await setDoc(userDocRef, {
@@ -404,6 +434,7 @@
           });
         }
 
+        localStorage.setItem('user_session_active', 'true');
         document.getElementById('auth-overlay').style.display = 'none';
       } catch (err) {
         errDiv.innerText = "❌ Credenciales o licencia inválida: " + err.message;
@@ -412,6 +443,14 @@
     };
 
     window.cerrarSesionFirebase = async function() {
+      const currentUser = auth.currentUser;
+      if (currentUser) {
+        try {
+          const userDocRef = doc(db, 'licencias', currentUser.uid);
+          await updateDoc(userDocRef, { deviceId: '' });
+        } catch(e) { console.log(e); }
+      }
+      localStorage.removeItem('user_session_active');
       await signOut(auth);
       document.getElementById('auth-overlay').style.display = 'flex';
     };
@@ -420,14 +459,20 @@
       if (user) {
         const devId = getDeviceId();
         const userDocSnap = await getDoc(doc(db, 'licencias', user.uid));
-        if (userDocSnap.exists() && userDocSnap.data().deviceId === devId) {
-          document.getElementById('auth-overlay').style.display = 'none';
-        } else {
-          document.getElementById('auth-overlay').style.display = 'flex';
+        if (userDocSnap.exists()) {
+          const data = userDocSnap.data();
+          if (data.deviceId === devId || data.deviceId === '') {
+            if (data.deviceId === '') {
+              await updateDoc(doc(db, 'licencias', user.uid), { deviceId: devId });
+            }
+            localStorage.setItem('user_session_active', 'true');
+            document.getElementById('auth-overlay').style.display = 'none';
+            return;
+          }
         }
-      } else {
-        document.getElementById('auth-overlay').style.display = 'flex';
       }
+      localStorage.removeItem('user_session_active');
+      document.getElementById('auth-overlay').style.display = 'flex';
     });
   </script>
 
