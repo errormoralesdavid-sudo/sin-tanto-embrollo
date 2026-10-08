@@ -45,10 +45,21 @@ window.onload = function() {
   sincronizarBinanceP2P(false);
   
   iniciarSmoothSlider();
+  iniciarScrollWheelSlider();
   renderGraficoD3();
   iniciarRelojNotificaciones();
   iniciarAutoScrollEnInputs();
 };
+
+function iniciarScrollWheelSlider() {
+  var slider = document.getElementById('rate-slider');
+  slider.addEventListener('wheel', function(e) {
+    if (e.deltaY !== 0) {
+      e.preventDefault();
+      slider.scrollLeft += e.deltaY;
+    }
+  }, { passive: false });
+}
 
 function iniciarAutoScrollEnInputs() {
   document.querySelectorAll('input').forEach(input => {
