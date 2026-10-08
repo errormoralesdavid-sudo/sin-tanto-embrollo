@@ -27,6 +27,7 @@ var listaBinance = [
 ];
 
 var modoBaseUSD = true;
+var itemSeleccionadoModal = null;
 var isUserInteracting = false;
 var resumeTimeout = null;
 
@@ -47,6 +48,14 @@ window.onload = function() {
   renderGraficoD3();
   iniciarRelojNotificaciones();
 };
+
+function toggleTheme() {
+  var currentTheme = document.documentElement.getAttribute("data-theme");
+  var newTheme = currentTheme === "light" ? "dark" : "light";
+  document.documentElement.setAttribute("data-theme", newTheme);
+  document.getElementById("theme-btn").innerText = newTheme === "light" ? "🌙" : "☀️";
+  localStorage.setItem("embrollo_theme", newTheme);
+}
 
 function iniciarSmoothSlider() {
   var slider = document.getElementById('rate-slider');
@@ -109,6 +118,10 @@ function guardarDatos() {
 }
 
 function cargarDatosGuardados() {
+  var theme = localStorage.getItem("embrollo_theme") || "dark";
+  document.documentElement.setAttribute("data-theme", theme);
+  document.getElementById("theme-btn").innerText = theme === "light" ? "🌙" : "☀️";
+
   var datos = JSON.parse(localStorage.getItem('embrollo_data_pro_v2'));
   if (datos) {
     if(datos.bcv) document.getElementById('input-tasa-bcv').value = datos.bcv;
@@ -131,13 +144,6 @@ function cargarDatosGuardados() {
 
     if(datos.notifTime1) document.getElementById('notif-time-1').value = datos.notifTime1;
     if(datos.notifTime2) document.getElementById('notif-time-2').value = datos.notifTime2;
-  }
-  
-  if (historicoGrafico.length === 0) {
-    historicoGrafico = [
-      { fecha: 'Ayer', bcv: tasaBCV * 0.99, usdt: tasaUSDT * 0.99 },
-      { fecha: 'Hoy', bcv: tasaBCV, usdt: tasaUSDT }
-    ];
   }
 }
 
@@ -321,7 +327,6 @@ async function sincronizarDolarVzlaAPI(mostrarAlerta = false) {
     if (mostrarAlerta) alert('¡Tasas oficiales BCV sincronizadas!');
   } catch (error) {
     document.getElementById('sync-status').innerText = '⚡ Modo Offline (Datos locales)';
-    if (mostrarAlerta) alert('Modo Offline: usando última tasa guardada.');
   }
 }
 
@@ -343,7 +348,6 @@ async function sincronizarBinanceP2P(mostrarAlerta = false) {
     }
   } catch (e) {
     document.getElementById('sync-status').innerText = '⚡ Modo Offline (Datos locales)';
-    if (mostrarAlerta) alert('Modo Offline: usando última tasa guardada.');
   }
 }
 
@@ -528,41 +532,110 @@ function registrarOperacion() {
   var ganBs = document.getElementById('arb-res-ganancia-bs').innerText;
   if (!bs || ganBs === '0,00 Bs') return;
 
+  var now = new Date();
+  var fechaHoraStr = now.toLocaleDateString() + ' ' + now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
   historial.unshift({
     id: Date.now(),
-    fecha: new Date().toLocaleDateString(),
-    detalle: `${document.getElementById('resumen-canal-activo').innerText} <br><span style="color:var(--neon-green);">+${document.getElementById('arb-com-personal').value || 0}% Mi Comisión</span>`,
-    inversion: bs + ' Bs',
-    ganancia: ganBs,
-    comision: document.getElementById('arb-res-comision-bs').innerText
+    fechaHora: fechaHoraStr,
+    canal: document.getElementById('resumen-canal-activo').innerText,
+    inversionBs: bs,
+    tasaCompra: document.getElementById('arb-tasa-compra').value,
+    tasaVenta: document.getElementById('arb-tasa-venta').value,
+    recargoPersonal: document.getElementById('arb-com-personal').value || '0',
+    puntoEquilibrio: document.getElementById('arb-res-breakeven').innerText,
+    montoFinalVenta: document.getElementById('arb-res-final').innerText,
+    comisionesBs: document.getElementById('arb-res-comision-bs').innerText,
+    gananciaBs: ganBs,
+    gananciaUsdt: document.getElementById('arb-res-ganancia-usdt').innerText,
+    gananciaUsdFinal: document.getElementById('arb-res-ganancia-usd').innerText,
+    nota: document.getElementById('arb-nota').value || 'Sin notas'
   });
 
   document.getElementById('arb-nota').value = '';
   renderHistorial();
   guardarDatos();
-  alert('¡Operación guardada!');
+  alert('¡Operación registrada!');
 }
 
 function renderHistorial(filtro = '') {
-  var tbody = document.getElementById('historial-rows');
-  tbody.innerHTML = '';
-  historial.filter(h => h.detalle.toLowerCase().includes(filtro.toLowerCase())).forEach(h => {
-    var tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td>${h.fecha}</td>
-      <td>${h.detalle} <div class="status-badge" style="margin-top:4px;">Com: ${h.comision}</div></td>
-      <td>${h.inversion}</td>
-      <td style="color:var(--neon-green); font-weight:bold;">${h.ganancia}</td>
-      <td><button style="background:transparent; border:none; color:var(--danger-color); cursor:pointer;" onclick="eliminarHistorial(${h.id})">🗑️</button></td>
+  var container = document.getElementById('historial-cards-container');
+  container.innerHTML = '';
+
+  historial.filter(h => h.canal.toLowerCase().includes(filtro.toLowerCase()) || h.nota.toLowerCase().includes(filtro.toLowerCase())).forEach(h => {
+    var card = document.createElement('div');
+    card.className = 'history-card';
+    card.onclick = function() { abrirModalDetalle(h.id); };
+    card.innerHTML = `
+      <div>
+        <div style="font-size:10px; color:var(--text-muted);">${h.fechaHora}</div>
+        <div style="font-size:12px; font-weight:bold; margin-top:2px;">${h.canal}</div>
+        <div style="font-size:11px; color:var(--text-muted); margin-top:2px;">Inv: ${formato(h.inversionBs)} Bs</div>
+      </div>
+      <div style="text-align:right;">
+        <div style="font-size:13px; font-weight:bold; color:var(--neon-green);">${h.gananciaBs}</div>
+        <div style="font-size:10px; color:var(--text-muted);">${h.gananciaUsdFinal}</div>
+      </div>
     `;
-    tbody.appendChild(tr);
+    container.appendChild(card);
   });
 }
 
-function eliminarHistorial(id) {
-  historial = historial.filter(h => h.id !== id);
+function abrirModalDetalle(id) {
+  var item = historial.find(h => h.id === id);
+  if (!item) return;
+  itemSeleccionadoModal = item;
+
+  var body = document.getElementById('modal-body-content');
+  body.innerHTML = `
+    <div class="result-line"><span>Fecha / Hora:</span> <strong>${item.fechaHora}</strong></div>
+    <div class="result-line"><span>Canal:</span> <strong style="font-size:11px;">${item.canal}</strong></div>
+    <div class="result-line"><span>Monto Inicial Banco:</span> <strong>${formato(item.inversionBs)} Bs</strong></div>
+    <div class="result-line"><span>Tasa Compra / Venta:</span> <strong>${item.tasaCompra} / ${item.tasaVenta}</strong></div>
+    <div class="result-line"><span>Mi Recargo / Comisión:</span> <strong>${item.recargoPersonal}%</strong></div>
+    <div class="result-line"><span>Punto de Equilibrio:</span> <strong>${item.puntoEquilibrio}</strong></div>
+    <div class="result-line"><span>Monto Final Venta:</span> <strong>${item.montoFinalVenta}</strong></div>
+    <div class="result-line"><span>Comisiones Totales:</span> <strong style="color:var(--danger-color);">${item.comisionesBs}</strong></div>
+    <div class="result-line"><span>Ganancia Neta Real:</span> <strong style="color:var(--neon-green);">${item.gananciaBs}</strong></div>
+    <div class="result-line"><span>Ganancia Neta USDT:</span> <strong>${item.gananciaUsdt}</strong></div>
+    <div class="result-line"><span>Ganancia + Mi Comisión:</span> <strong style="color:var(--neon-green);">${item.gananciaUsdFinal}</strong></div>
+    <div class="result-line" style="border-top:1px dashed var(--glass-border); padding-top:6px;"><span>Nota:</span> <strong>${item.nota}</strong></div>
+  `;
+
+  document.getElementById('modal-detalle').style.display = 'flex';
+}
+
+function cerrarModalDetalle(e) {
+  if (!e || e.target.id === 'modal-detalle') {
+    document.getElementById('modal-detalle').style.display = 'none';
+  }
+}
+
+function eliminarDesdeModal() {
+  if (!itemSeleccionadoModal) return;
+  historial = historial.filter(h => h.id !== itemSeleccionadoModal.id);
   renderHistorial();
   guardarDatos();
+  cerrarModalDetalle(null);
+}
+
+function copiarDetalleWhatsApp() {
+  if (!itemSeleccionadoModal) return;
+  var h = itemSeleccionadoModal;
+  var texto = `📊 *REPORTE DE OPERACIÓN*\n` +
+    `📅 *Fecha:* ${h.fechaHora}\n` +
+    `🏛️ *Canal:* ${h.canal}\n` +
+    `💵 *Inversión Inicial:* ${formato(h.inversionBs)} Bs\n` +
+    `📈 *Tasas (Compra/Venta):* ${h.tasaCompra} / ${h.tasaVenta}\n` +
+    `💼 *Mi Comisión:* ${h.recargoPersonal}%\n` +
+    `💰 *Monto Final Venta:* ${h.montoFinalVenta}\n` +
+    `🔻 *Comisiones:* ${h.comisionesBs}\n` +
+    `✅ *Ganancia Neta:* ${h.gananciaBs} (${h.gananciaUsdt})\n` +
+    `🎯 *Total Final ($):* ${h.gananciaUsdFinal}\n` +
+    `📝 *Nota:* ${h.nota}`;
+
+  navigator.clipboard.writeText(texto);
+  alert('¡Reporte copiado listo para WhatsApp!');
 }
 
 function filtrarHistorial() {
@@ -596,7 +669,6 @@ function limpiarTodo() {
   actualizarTasasManuales();
 }
 
-// GRÁFICO TENDENCIA D3.JS
 function renderGraficoD3() {
   var container = d3.select("#chart-container");
   container.html("");
@@ -653,7 +725,6 @@ function renderGraficoD3() {
     .attr("d", lineUSDT);
 }
 
-// SISTEMA NOTIFICACIONES LOCALES
 function solicitarPermisoNotificaciones() {
   if (!("Notification" in window)) {
     alert("Tu navegador no soporta notificaciones.");
