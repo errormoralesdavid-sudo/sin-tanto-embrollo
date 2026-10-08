@@ -24,14 +24,48 @@
   --danger-color: #e53e3e;
 }
 
-* { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; transition: background 0.25s, color 0.25s, border-color 0.25s; }
+* { 
+  box-sizing: border-box; 
+  margin: 0; 
+  padding: 0; 
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+  transition: background 0.25s, color 0.25s, border-color 0.25s; 
+}
+
+html, body {
+  height: 100dvh;
+  overflow-y: auto;
+}
 
 body {
   background: var(--bg-color);
   color: var(--text-color);
   padding-bottom: 90px;
   overflow-x: hidden;
-  min-height: 100vh;
+}
+
+/* OVERLAY AUTENTICACIÓN FIREBASE */
+.auth-overlay {
+  position: fixed;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(13, 15, 18, 0.96);
+  backdrop-filter: blur(15px);
+  z-index: 999;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+}
+
+.auth-card {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  border-radius: 20px;
+  padding: 25px;
+  width: 100%;
+  max-width: 380px;
+  text-align: center;
 }
 
 header {
@@ -52,7 +86,7 @@ header {
 .theme-toggle-btn {
   background: var(--input-bg);
   border: 1px solid var(--glass-border);
-  font-size: 18px;
+  font-size: 16px;
   padding: 6px 12px;
   border-radius: 20px;
   cursor: pointer;
@@ -345,7 +379,6 @@ input:focus, select:focus {
 
 .status-badge { font-size: 10px; padding: 3px 8px; border-radius: 6px; background: var(--input-bg); color: var(--neon-green); border: 1px solid var(--glass-border); display: inline-block; }
 
-/* MODAL DETALLE HISTORIAL */
 .modal-overlay {
   display: none;
   position: fixed;
@@ -377,7 +410,6 @@ input:focus, select:focus {
   cursor: pointer;
 }
 
-/* HISTORIAL CARDS */
 .history-card {
   background: var(--glass-bg);
   border: 1px solid var(--glass-border);
@@ -388,6 +420,4 @@ input:focus, select:focus {
   align-items: center;
   cursor: pointer;
 }
-.history-card:hover {
-  border-color: var(--neon-green);
-}
+.history-card:hover { border-color: var(--neon-green); }
