@@ -16,6 +16,7 @@
       <div class="spinner-ring"></div>
       <div class="money-icon">💸</div>
     </div>
+    <button class="theme-toggle-btn" onclick="toggleTheme()" id="theme-btn" title="Cambiar Tema">☀️</button>
   </header>
 
   <div class="slider-container" id="rate-slider">
@@ -294,17 +295,26 @@
       <div class="calc-section">
         <h2>Historial Integrado</h2>
         <input type="text" id="buscar-historial" placeholder="🔍 Filtrar historial..." oninput="filtrarHistorial()">
-        <div style="overflow-x:auto;">
-          <table class="history-table">
-            <thead>
-              <tr><th>Fecha</th><th>Detalles / Canal</th><th>Inversión</th><th>Ganancia Real</th><th>Acción</th></tr>
-            </thead>
-            <tbody id="historial-rows"></tbody>
-          </table>
-        </div>
+        
+        <div id="historial-cards-container" style="display:flex; flex-direction:column; gap:10px; margin-top:12px;"></div>
       </div>
     </div>
 
+  </div>
+
+  <!-- MODAL DETALLE OPERACIÓN -->
+  <div id="modal-detalle" class="modal-overlay" onclick="cerrarModalDetalle(event)">
+    <div class="modal-content" onclick="event.stopPropagation()">
+      <button class="modal-close" onclick="cerrarModalDetalle(null)">✕</button>
+      <h3 style="color:var(--neon-green); margin-bottom:12px; font-size:16px;">🧾 Detalle de Operación</h3>
+      
+      <div id="modal-body-content" class="result-box" style="margin-top:0;"></div>
+
+      <div style="display:flex; gap:8px; margin-top:14px;">
+        <button class="btn-action" style="background:#25D366; color:#fff;" onclick="copiarDetalleWhatsApp()">📲 Copiar para WhatsApp</button>
+        <button class="btn-action" style="background:var(--danger-color); color:#fff; max-width:80px;" onclick="eliminarDesdeModal()">🗑️</button>
+      </div>
+    </div>
   </div>
 
   <nav class="nav-bar">
