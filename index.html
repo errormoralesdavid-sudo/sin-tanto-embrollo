@@ -104,14 +104,20 @@
           </div>
         </div>
 
+        <!-- PANEL DE HORARIOS DE NOTIFICACIONES PERSONALIZADAS -->
         <div style="background:var(--input-bg); padding:12px; border-radius:10px; margin-top:12px; border:1px solid var(--glass-border);">
-          <label style="color:var(--neon-green); font-weight:bold;">🔔 Alertas de Precio</label>
-          <div style="display:flex; gap:8px; margin-top:6px; align-items:center;">
-            <input type="time" id="notif-time-1" value="09:00" style="margin-bottom:0;" onchange="guardarDatos()">
-            <input type="time" id="notif-time-2" value="13:00" style="margin-bottom:0;" onchange="guardarDatos()">
-            <button class="btn-action" style="font-size:11px; padding:10px; min-width:100px;" onclick="solicitarPermisoNotificaciones()">Activar</button>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <label style="color:var(--neon-green); font-weight:bold; margin-bottom:0;">🔔 Horarios de Alerta</label>
+            <button class="btn-toggle" onclick="solicitarPermisoNotificaciones()">Permisos 🔔</button>
           </div>
-          <div id="notif-status" style="font-size:10px; color:var(--text-muted); margin-top:6px; text-align:center;">Notificaciones desactivadas</div>
+          
+          <div style="display:flex; gap:8px; align-items:center; margin-bottom:10px;">
+            <input type="time" id="nuevo-horario" value="04:00" style="margin-bottom:0; flex:1;">
+            <button class="btn-action" style="font-size:11px; padding:10px; width:auto; white-space:nowrap;" onclick="agregarHorarioNotificacion()">➕ Agregar</button>
+          </div>
+
+          <div id="lista-horarios" style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:8px;"></div>
+          <div id="notif-status" style="font-size:10px; color:var(--text-muted); text-align:center;">Notificaciones desactivadas</div>
         </div>
 
       </div>
@@ -370,10 +376,17 @@
     <div class="nav-item" onclick="switchTab('arbitraje', this)"><span>📈</span><span>Arbitraje</span></div>
   </nav>
 
-  <!-- FIREBASE V10 SDK -->
+  <!-- FIREBASE V10 SDK CON PERSISTENCIA LOCAL FIJA -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
-    import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
+    import { 
+      getAuth, 
+      setPersistence, 
+      browserLocalPersistence, 
+      signInWithEmailAndPassword, 
+      signOut, 
+      onAuthStateChanged 
+    } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
     import { getFirestore, doc, getDoc, setDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
 
     const firebaseConfig = {
@@ -389,10 +402,12 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    function getDeviceId() {
+    setPersistence(auth, browserLocalPersistence).catch(err => console.error("Error persistencia:", err));
+
+    function getOrCreateDeviceId() {
       let devId = localStorage.getItem('device_fingerprint_id');
       if (!devId) {
-        devId = 'DEV-' + Math.random().toString(36).substring(2, 11) + '-' + Date.now();
+        devId = 'DEV-' + Math.random().toString(36).substring(2, 9) + '-' + Date.now();
         localStorage.setItem('device_fingerprint_id', devId);
       }
       return devId;
@@ -403,7 +418,7 @@
     }
 
     window.iniciarSesionFirebase = async function() {
-      const email = document.getElementById('auth-email').value;
+      const email = document.getElementById('auth-email').value.trim();
       const pass = document.getElementById('auth-password').value;
       const errDiv = document.getElementById('auth-error');
       errDiv.style.display = 'none';
@@ -411,7 +426,7 @@
       try {
         const userCred = await signInWithEmailAndPassword(auth, email, pass);
         const uid = userCred.user.uid;
-        const devId = getDeviceId();
+        const devId = getOrCreateDeviceId();
 
         const userDocRef = doc(db, 'licencias', uid);
         const userDocSnap = await getDoc(userDocRef);
@@ -420,24 +435,25 @@
           const data = userDocSnap.data();
           if (data.deviceId && data.deviceId !== '' && data.deviceId !== devId) {
             await signOut(auth);
-            errDiv.innerText = "❌ Esta cuenta ya está vinculada a otro dispositivo móvil. Cierra sesión en el otro equipo primero.";
+            errDiv.innerText = "❌ Esta cuenta ya está activa en otro teléfono o computadora. Cierra sesión con la puertica 🚪 en el otro equipo primero.";
             errDiv.style.display = 'block';
             return;
           } else {
-            await updateDoc(userDocRef, { deviceId: devId });
+            await updateDoc(userDocRef, { deviceId: devId, ultimoAcceso: new Date().toISOString() });
           }
         } else {
           await setDoc(userDocRef, {
             email: email,
             deviceId: devId,
-            activadoEn: new Date().toISOString()
+            activadoEn: new Date().toISOString(),
+            ultimoAcceso: new Date().toISOString()
           });
         }
 
         localStorage.setItem('user_session_active', 'true');
         document.getElementById('auth-overlay').style.display = 'none';
       } catch (err) {
-        errDiv.innerText = "❌ Credenciales o licencia inválida: " + err.message;
+        errDiv.innerText = "❌ Error de acceso: " + err.message;
         errDiv.style.display = 'block';
       }
     };
@@ -448,7 +464,7 @@
         try {
           const userDocRef = doc(db, 'licencias', currentUser.uid);
           await updateDoc(userDocRef, { deviceId: '' });
-        } catch(e) { console.log(e); }
+        } catch(e) { console.error("Error liberando licencia:", e); }
       }
       localStorage.removeItem('user_session_active');
       await signOut(auth);
@@ -457,22 +473,32 @@
 
     onAuthStateChanged(auth, async (user) => {
       if (user) {
-        const devId = getDeviceId();
-        const userDocSnap = await getDoc(doc(db, 'licencias', user.uid));
-        if (userDocSnap.exists()) {
-          const data = userDocSnap.data();
-          if (data.deviceId === devId || data.deviceId === '') {
-            if (data.deviceId === '') {
-              await updateDoc(doc(db, 'licencias', user.uid), { deviceId: devId });
+        const devId = getOrCreateDeviceId();
+        try {
+          const userDocSnap = await getDoc(doc(db, 'licencias', user.uid));
+          if (userDocSnap.exists()) {
+            const data = userDocSnap.data();
+            if (data.deviceId === devId || data.deviceId === '' || !data.deviceId) {
+              if (data.deviceId !== devId) {
+                await updateDoc(doc(db, 'licencias', user.uid), { deviceId: devId });
+              }
+              localStorage.setItem('user_session_active', 'true');
+              document.getElementById('auth-overlay').style.display = 'none';
+              return;
             }
-            localStorage.setItem('user_session_active', 'true');
+          }
+        } catch(e) {
+          console.warn("Validación offline/background:", e);
+          if (localStorage.getItem('user_session_active') === 'true') {
             document.getElementById('auth-overlay').style.display = 'none';
             return;
           }
         }
+      } else {
+        if (localStorage.getItem('user_session_active') !== 'true') {
+          document.getElementById('auth-overlay').style.display = 'flex';
+        }
       }
-      localStorage.removeItem('user_session_active');
-      document.getElementById('auth-overlay').style.display = 'flex';
     });
   </script>
 
