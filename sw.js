@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dolar-pro-v2';
+const CACHE_NAME = 'dolar-pro-v3';
 const ASSETS = [
   './',
   './index.html',
@@ -41,7 +41,8 @@ self.addEventListener('message', (e) => {
     self.registration.showNotification(e.data.title, {
       body: e.data.body,
       icon: 'https://cdn-icons-png.flaticon.com/512/2489/2489756.png',
-      badge: 'https://cdn-icons-png.flaticon.com/512/2489/2489756.png'
+      badge: 'https://cdn-icons-png.flaticon.com/512/2489/2489756.png',
+      vibrate: [200, 100, 200]
     });
   }
 });
