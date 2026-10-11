@@ -9,6 +9,7 @@ var prevEUR = null;
 
 var historial = [];
 var historicoGrafico = [];
+var listaHorariosNotif = ["04:00", "09:00", "13:00"];
 
 var listaBancos = [
   { id: 1, nombre: 'BdV', comision: 2.5 },
@@ -39,6 +40,7 @@ window.onload = function() {
   cargarDatosGuardados();
   renderBancos();
   renderBinance();
+  renderHorariosNotificaciones();
   actualizarTasasManuales();
   
   sincronizarDolarVzlaAPI(false);
@@ -133,8 +135,7 @@ function guardarDatos() {
     crossMon1: document.getElementById('cross-mon-1').value,
     crossMon2: document.getElementById('cross-mon-2').value,
     crossVal1: document.getElementById('cross-val-1').value,
-    notifTime1: document.getElementById('notif-time-1').value,
-    notifTime2: document.getElementById('notif-time-2').value
+    horariosNotif: listaHorariosNotif
   };
   localStorage.setItem('embrollo_data_pro_v2', JSON.stringify(datos));
 }
@@ -163,10 +164,37 @@ function cargarDatosGuardados() {
     if(datos.crossMon1) document.getElementById('cross-mon-1').value = datos.crossMon1;
     if(datos.crossMon2) document.getElementById('cross-mon-2').value = datos.crossMon2;
     if(datos.crossVal1) document.getElementById('cross-val-1').value = datos.crossVal1;
-
-    if(datos.notifTime1) document.getElementById('notif-time-1').value = datos.notifTime1;
-    if(datos.notifTime2) document.getElementById('notif-time-2').value = datos.notifTime2;
+    if(datos.horariosNotif && Array.isArray(datos.horariosNotif)) listaHorariosNotif = datos.horariosNotif;
   }
+}
+
+// GESTIÓN DINÁMICA DE HORARIOS DE NOTIFICACIÓN
+function renderHorariosNotificaciones() {
+  var cont = document.getElementById('lista-horarios');
+  cont.innerHTML = '';
+  listaHorariosNotif.forEach((hora, idx) => {
+    var tag = document.createElement('div');
+    tag.style = 'background:rgba(0,230,118,0.15); border:1px solid var(--neon-green); color:#fff; font-size:11px; padding:4px 8px; border-radius:6px; display:flex; align-items:center; gap:6px;';
+    tag.innerHTML = `<span>⏰ ${hora}</span> <span style="cursor:pointer; color:var(--danger-color); font-weight:bold;" onclick="eliminarHorarioNotificacion(${idx})">✕</span>`;
+    cont.appendChild(tag);
+  });
+}
+
+function agregarHorarioNotificacion() {
+  var nuevo = document.getElementById('nuevo-horario').value;
+  if (!nuevo) return;
+  if (!listaHorariosNotif.includes(nuevo)) {
+    listaHorariosNotif.push(nuevo);
+    listaHorariosNotif.sort();
+    renderHorariosNotificaciones();
+    guardarDatos();
+  }
+}
+
+function eliminarHorarioNotificacion(idx) {
+  listaHorariosNotif.splice(idx, 1);
+  renderHorariosNotificaciones();
+  guardarDatos();
 }
 
 function renderBancos() {
@@ -684,7 +712,7 @@ function copiarTexto(tipo) {
 
 function limpiarTodo() {
   document.querySelectorAll('input').forEach(i => {
-    if(!['input-tasa-bcv','input-tasa-usdt','input-tasa-eur','input-tasa-cop','notif-time-1','notif-time-2'].includes(i.id)) i.value = '';
+    if(!['input-tasa-bcv','input-tasa-usdt','input-tasa-eur','input-tasa-cop','nuevo-horario'].includes(i.id)) i.value = '';
   });
   document.getElementById('com-porc-banco').value = '2.5';
   document.getElementById('com-porc-binance').value = '0.0';
@@ -760,7 +788,7 @@ function solicitarPermisoNotificaciones() {
       if (navigator.serviceWorker.controller) {
         navigator.serviceWorker.controller.postMessage({
           type: 'NOTIFY',
-          title: 'Calculadora Financial PRO',
+          title: 'Calculadora Financiera PRO',
           body: `BCV: ${tasaBCV} Bs | USDT: ${tasaUSDT} Bs`
         });
       }
@@ -776,11 +804,8 @@ function iniciarRelojNotificaciones() {
     
     var now = new Date();
     var currentTime = now.toTimeString().substring(0, 5);
-    
-    var t1 = document.getElementById('notif-time-1').value;
-    var t2 = document.getElementById('notif-time-2').value;
 
-    if ((currentTime === t1 || currentTime === t2) && now.getSeconds() === 0) {
+    if (listaHorariosNotif.includes(currentTime) && now.getSeconds() === 0) {
       if (navigator.serviceWorker.controller) {
         navigator.serviceWorker.controller.postMessage({
           type: 'NOTIFY',
