@@ -1,20 +1,22 @@
 {
   "name": "Calculadora Financiera PRO",
-  "short_name": "Dólar PRO",
+  "short_name": "Finance PRO",
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#0d0f12",
+  "background_color": "#0b0e11",
   "theme_color": "#00e676",
   "icons": [
     {
-      "src": "https://cdn-icons-png.flaticon.com/512/2489/2489756.png",
+      "src": "https://files.catbox.moe/gdnebi.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     },
     {
-      "src": "https://cdn-icons-png.flaticon.com/512/2489/2489756.png",
+      "src": "https://files.catbox.moe/gdnebi.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ]
 }
