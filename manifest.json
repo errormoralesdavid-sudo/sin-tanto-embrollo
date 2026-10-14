@@ -4,7 +4,7 @@
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#0b0e11",
-  "theme_color": "#00e676",
+  "theme_color": "#0b0e11",
   "icons": [
     {
       "src": "https://files.catbox.moe/gdnebi.png",
