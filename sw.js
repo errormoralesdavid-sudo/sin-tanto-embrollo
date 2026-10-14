@@ -1,10 +1,12 @@
-const CACHE_NAME = 'dolar-pro-v3';
+const CACHE_NAME = 'finance-pro-v4';
+const LOGO_URL = 'https://files.catbox.moe/gdnebi.png';
 const ASSETS = [
   './',
   './index.html',
   './styles.css',
   './app.js',
   './manifest.json',
+  LOGO_URL,
   'https://d3js.org/d3.v7.min.js'
 ];
 
@@ -40,8 +42,8 @@ self.addEventListener('message', (e) => {
   if (e.data && e.data.type === 'NOTIFY') {
     self.registration.showNotification(e.data.title, {
       body: e.data.body,
-      icon: 'https://cdn-icons-png.flaticon.com/512/2489/2489756.png',
-      badge: 'https://cdn-icons-png.flaticon.com/512/2489/2489756.png',
+      icon: LOGO_URL,
+      badge: LOGO_URL,
       vibrate: [200, 100, 200]
     });
   }
