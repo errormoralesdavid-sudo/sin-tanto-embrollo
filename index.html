@@ -1,85 +1,191 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" data-theme="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' https: data: 'unsafe-inline' 'unsafe-eval'; img-src 'self' https: data:;">
   <title>Calculadora Financiera PRO</title>
   <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/png" href="https://files.catbox.moe/gdnebi.png">
+  <link rel="apple-touch-icon" href="https://files.catbox.moe/gdnebi.png">
   <meta name="theme-color" content="#00e676">
   <link rel="stylesheet" href="styles.css">
   <script src="https://d3js.org/d3.v7.min.js"></script>
 </head>
-<body>
+<body oncontextmenu="return false;">
 
-  <!-- PANTALLA DE LOGIN / LICENCIA CON FIREBASE -->
-  <div id="auth-overlay" class="auth-overlay">
-    <div class="auth-card">
-      <div class="logo-container" style="margin: 0 auto 15px auto;">
-        <div class="spinner-ring"></div>
-        <div class="money-icon">🔐</div>
+  <!-- SISTEMA DE NOTIFICACIONES TOAST (SIN ALERTS NATIVOS) -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <!-- MODAL PERSONALIZADO PARA AGREGAR/EDITAR COMISIONES (SIN PROMPTS NATIVOS) -->
+  <div id="modal-input-custom" class="modal-overlay">
+    <div class="modal-content" style="max-width: 360px;">
+      <h3 id="modal-input-title" style="color:var(--neon-green); margin-bottom:14px; font-size:15px;">Configurar</h3>
+      <div id="modal-input-name-wrap">
+        <label>Nombre de la Entidad:</label>
+        <input type="text" id="modal-input-name" maxlength="25" placeholder="Ej. Mercantil">
       </div>
-      <h2 style="color:var(--neon-green); font-size:18px; margin-bottom:6px;">Acceso con Licencia</h2>
-      <p style="color:var(--text-muted); font-size:11px; margin-bottom:15px;">Ingresa tus credenciales vinculadas a este dispositivo.</p>
-      
-      <input type="email" id="auth-email" placeholder="Correo electrónico">
-      <input type="password" id="auth-password" placeholder="Contraseña">
-      
-      <div id="auth-error" style="color:var(--danger-color); font-size:11px; margin-bottom:10px; display:none;"></div>
-      
-      <button class="btn-action" onclick="iniciarSesionFirebase()">🔓 Iniciar Sesión</button>
+      <label>Comisión (%):</label>
+      <input type="number" id="modal-input-pct" step="0.01" placeholder="Ej. 1.5">
+      <div style="display:flex; gap:10px; margin-top:10px;">
+        <button class="btn-action" id="modal-input-save">Guardar</button>
+        <button class="btn-limpiar" style="margin-bottom:0;" onclick="cerrarModalInput()">Cancelar</button>
+      </div>
     </div>
   </div>
 
-  <header>
-    <div class="logo-container">
-      <div class="spinner-ring"></div>
-      <div class="money-icon">💸</div>
+  <!-- PANTALLA DE LOGIN / LICENCIA CON FONDO BURSÁTIL SVG ANIMADO -->
+  <div id="auth-overlay" class="auth-overlay">
+    <svg class="bg-stock-svg" viewBox="0 0 800 400" preserveAspectRatio="none">
+      <defs>
+        <linearGradient id="stockGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#00e676" stop-opacity="0.25"/>
+          <stop offset="100%" stop-color="#00e676" stop-opacity="0.0"/>
+        </linearGradient>
+      </defs>
+      <!-- Velas japonesas animadas -->
+      <g class="candles-group">
+        <line x1="80" y1="180" x2="80" y2="280" stroke="#ff5252" stroke-width="2"/>
+        <rect x="74" y="200" width="12" height="50" fill="#ff5252" rx="2"/>
+        <line x1="160" y1="150" x2="160" y2="250" stroke="#00e676" stroke-width="2"/>
+        <rect x="154" y="170" width="12" height="60" fill="#00e676" rx="2"/>
+        <line x1="240" y1="120" x2="240" y2="220" stroke="#00e676" stroke-width="2"/>
+        <rect x="234" y="140" width="12" height="55" fill="#00e676" rx="2"/>
+        <line x1="320" y1="160" x2="320" y2="260" stroke="#ff5252" stroke-width="2"/>
+        <rect x="314" y="180" width="12" height="45" fill="#ff5252" rx="2"/>
+        <line x1="400" y1="100" x2="400" y2="210" stroke="#00e676" stroke-width="2"/>
+        <rect x="394" y="120" width="12" height="65" fill="#00e676" rx="2"/>
+        <line x1="480" y1="80" x2="480" y2="180" stroke="#00e676" stroke-width="2"/>
+        <rect x="474" y="95" width="12" height="60" fill="#00e676" rx="2"/>
+        <line x1="560" y1="110" x2="560" y2="200" stroke="#ff5252" stroke-width="2"/>
+        <rect x="554" y="130" width="12" height="40" fill="#ff5252" rx="2"/>
+        <line x1="640" y1="60" x2="640" y2="160" stroke="#00e676" stroke-width="2"/>
+        <rect x="634" y="75" width="12" height="65" fill="#00e676" rx="2"/>
+        <line x1="720" y1="40" x2="720" y2="130" stroke="#00e676" stroke-width="2"/>
+        <rect x="714" y="55" width="12" height="55" fill="#00e676" rx="2"/>
+      </g>
+      <path class="stock-line-anim" d="M0,320 Q120,240 200,260 T380,170 T560,190 T800,70 L800,400 L0,400 Z" fill="url(#stockGrad)"/>
+      <path class="stock-stroke-anim" d="M0,320 Q120,240 200,260 T380,170 T560,190 T800,70" fill="none" stroke="#00e676" stroke-width="3"/>
+    </svg>
+
+    <div class="auth-card">
+      <div class="logo-container" style="margin: 0 auto 16px auto; width:72px; height:72px;">
+        <div class="spinner-ring" style="width:68px; height:68px;"></div>
+        <img src="https://files.catbox.moe/gdnebi.png" alt="Logo Oficial" class="app-logo-img" style="width:52px; height:52px;">
+      </div>
+      <h2 style="color:var(--neon-green); font-size:18px; margin-bottom:6px; letter-spacing:0.5px;">TERMINAL FINANCIERO PRO</h2>
+      <p style="color:var(--text-muted); font-size:11px; margin-bottom:18px;">Acceso blindado por licencia única de dispositivo</p>
+      
+      <input type="email" id="auth-email" placeholder="Correo electrónico autorizado" autocomplete="email">
+      <input type="password" id="auth-password" placeholder="Clave de acceso" autocomplete="current-password">
+      
+      <div id="auth-error" style="color:var(--danger-color); font-size:11px; margin-bottom:12px; display:none;"></div>
+      
+      <button class="btn-action" onclick="iniciarSesionFirebase()" style="display:flex; align-items:center; justify-content:center; gap:8px;">
+        <svg class="icon-svg" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        <span>Desbloquear Terminal</span>
+      </button>
     </div>
-    <div style="display:flex; gap:8px; align-items:center;">
-      <button class="theme-toggle-btn" onclick="toggleTheme()" id="theme-btn" title="Cambiar Tema">☀️</button>
-      <button class="theme-toggle-btn" onclick="cerrarSesionFirebase()" title="Cerrar Sesión" style="color:var(--danger-color);">🚪</button>
+  </div>
+
+  <!-- HEADER ANIMADO CON GRÁFICO BURSÁTIL EN VIVO Y LOGO OFICIAL -->
+  <header>
+    <svg class="header-ticker-svg" viewBox="0 0 600 60" preserveAspectRatio="none">
+      <path class="ticker-wave" d="M0,45 L50,38 L100,42 L150,25 L200,32 L250,18 L300,28 L350,12 L400,24 L450,15 L500,22 L550,8 L600,16" fill="none" stroke="var(--neon-green)" stroke-width="1.5" stroke-opacity="0.28"/>
+    </svg>
+
+    <div style="display:flex; align-items:center; gap:12px; z-index:2;">
+      <div class="logo-container">
+        <div class="spinner-ring"></div>
+        <img src="https://files.catbox.moe/gdnebi.png" alt="Logo" class="app-logo-img">
+      </div>
+      <div>
+        <div style="font-size:13px; font-weight:800; letter-spacing:0.6px; color:var(--text-color);">FINANCE PRO</div>
+        <div style="font-size:10px; color:var(--neon-green); display:flex; align-items:center; gap:4px;">
+          <span class="live-dot"></span> MERCADO EN VIVO
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex; gap:8px; align-items:center; z-index:2;">
+      <button class="theme-toggle-btn" onclick="toggleTheme()" id="theme-btn" title="Cambiar Tema" aria-label="Cambiar Tema">
+        <!-- SVG Sol/Luna inyectado por JS -->
+      </button>
+      <button class="theme-toggle-btn" onclick="cerrarSesionFirebase()" title="Cerrar Sesión" style="color:var(--danger-color);">
+        <svg class="icon-svg" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      </button>
     </div>
   </header>
 
+  <!-- CARRUSEL BURSÁTIL CON ICONOS SVG -->
   <div class="slider-container" id="rate-slider">
     <div class="card-rate">
-      <h3>🏛️ BCV (Oficial)</h3>
-      <div class="price" id="rate-bcv">Cargando...</div>
-      <div class="trend neutral" id="var-bcv">Sin cambios</div>
+      <div class="card-rate-header">
+        <svg class="icon-svg-sm" viewBox="0 0 24 24"><line x1="3" y1="22" x2="21" y2="22"/><line x1="6" y1="18" x2="6" y2="11"/><line x1="10" y1="18" x2="10" y2="11"/><line x1="14" y1="18" x2="14" y2="11"/><line x1="18" y1="18" x2="18" y2="11"/><polygon points="12 2 20 7 4 7"/></svg>
+        <h3>BCV OFICIAL</h3>
+      </div>
+      <div class="price" id="rate-bcv">0,00 Bs</div>
+      <div class="trend neutral" id="var-bcv">Estable</div>
     </div>
+
     <div class="card-rate">
-      <h3>🔶 USDT (Binance P2P)</h3>
-      <div class="price" id="rate-usdt">Cargando...</div>
-      <div class="trend neutral" id="var-usdt">Sin cambios</div>
+      <div class="card-rate-header">
+        <svg class="icon-svg-sm" style="color:#f0b90b;" viewBox="0 0 24 24"><polygon points="12 2 19 9 12 16 5 9"/><polygon points="12 8 19 15 12 22 5 15"/></svg>
+        <h3>USDT P2P</h3>
+      </div>
+      <div class="price" id="rate-usdt">0,00 Bs</div>
+      <div class="trend neutral" id="var-usdt">Estable</div>
     </div>
+
     <div class="card-rate">
-      <h3>📊 Brecha (BCV/USDT)</h3>
+      <div class="card-rate-header">
+        <svg class="icon-svg-sm" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        <h3>BRECHA CAMBIARIA</h3>
+      </div>
       <div class="price" id="rate-spread" style="color:var(--neon-green);">0,00%</div>
-      <div class="trend" style="color:var(--text-muted);">Diferencia</div>
+      <div class="trend" style="color:var(--text-muted);">Spread BCV/USDT</div>
     </div>
+
     <div class="card-rate">
-      <h3>💶 Euro (€)</h3>
-      <div class="price" id="rate-eur">Cargando...</div>
-      <div class="trend neutral" id="var-eur">Sin cambios</div>
+      <div class="card-rate-header">
+        <svg class="icon-svg-sm" viewBox="0 0 24 24"><path d="M4 10h12"/><path d="M4 14h9"/><path d="M19 6a7.7 7.7 0 0 0-5.2-2A7.9 7.9 0 0 0 6 12c0 4.4 3.5 8 7.8 8 2 0 3.8-.8 5.2-2"/></svg>
+        <h3>EURO BCV</h3>
+      </div>
+      <div class="price" id="rate-eur">0,00 Bs</div>
+      <div class="trend neutral" id="var-eur">Estable</div>
     </div>
+
     <div class="card-rate">
-      <h3>🇨🇴 Peso Col. (COP)</h3>
-      <div class="price" id="rate-cop">3.102,00 Bs</div>
-      <div class="trend" style="color:var(--text-muted);">Por 1$ (aprox)</div>
+      <div class="card-rate-header">
+        <svg class="icon-svg-sm" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 18V6"/></svg>
+        <h3>PESO COL (COP)</h3>
+      </div>
+      <div class="price" id="rate-cop">3.102,00</div>
+      <div class="trend" style="color:var(--text-muted);">Por 1 USD</div>
     </div>
   </div>
 
   <div class="container">
 
+    <!-- PANEL DESPLEGABLE DE CONFIGURACIÓN Y ALERTAS -->
     <details class="calc-section" style="cursor:pointer;">
-      <summary style="color:var(--neon-green); font-weight:bold; font-size:13px; text-align:center;">⚙️ Configuración y Tasas del Día</summary>
+      <summary class="config-summary">
+        <svg class="icon-svg-sm" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        <span>Panel de Tasas y Alertas Programadas</span>
+      </summary>
       <div style="margin-top:14px;">
         
         <div style="background:var(--input-bg); padding:12px; border-radius:10px; margin-bottom:12px; border:1px dashed var(--neon-green); text-align:center;">
-          <div id="sync-status" class="status-badge">🔄 Actualizando tasas automáticamente...</div>
+          <div id="sync-status" class="status-badge">Sincronizando mercado...</div>
           <div style="display:flex; gap:8px; margin-top:10px;">
-            <button class="btn-action" style="font-size:11px; padding:8px;" onclick="sincronizarDolarVzlaAPI(true)">🔄 Reintentar BCV</button>
-            <button class="btn-action" style="font-size:11px; padding:8px; background:#f0b90b; color:#000;" onclick="sincronizarBinanceP2P(true)">🔶 Reintentar Binance</button>
+            <button class="btn-action" style="font-size:11px; padding:9px; display:flex; align-items:center; justify-content:center; gap:6px;" onclick="sincronizarDolarVzlaAPI(true)">
+              <svg class="icon-svg-sm" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+              <span>Sincronizar BCV</span>
+            </button>
+            <button class="btn-action" style="font-size:11px; padding:9px; background:#f0b90b; color:#000; display:flex; align-items:center; justify-content:center; gap:6px;" onclick="sincronizarBinanceP2P(true)">
+              <svg class="icon-svg-sm" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+              <span>Sincronizar P2P</span>
+            </button>
           </div>
         </div>
 
@@ -104,164 +210,157 @@
           </div>
         </div>
 
-        <!-- PANEL DE HORARIOS DE NOTIFICACIONES PERSONALIZADAS -->
-        <div style="background:var(--input-bg); padding:12px; border-radius:10px; margin-top:12px; border:1px solid var(--glass-border);">
+        <div style="background:var(--input-bg); padding:12px; border-radius:10px; margin-top:8px; border:1px solid var(--glass-border);">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-            <label style="color:var(--neon-green); font-weight:bold; margin-bottom:0;">🔔 Horarios de Alerta</label>
-            <button class="btn-toggle" onclick="solicitarPermisoNotificaciones()">Permisos 🔔</button>
+            <label style="color:var(--neon-green); font-weight:bold; margin-bottom:0; display:flex; align-items:center; gap:6px;">
+              <svg class="icon-svg-sm" viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+              <span>Horarios de Alerta Push</span>
+            </label>
+            <button class="btn-toggle" onclick="solicitarPermisoNotificaciones()">Activar Permiso</button>
           </div>
           
           <div style="display:flex; gap:8px; align-items:center; margin-bottom:10px;">
             <input type="time" id="nuevo-horario" value="04:00" style="margin-bottom:0; flex:1;">
-            <button class="btn-action" style="font-size:11px; padding:10px; width:auto; white-space:nowrap;" onclick="agregarHorarioNotificacion()">➕ Agregar</button>
+            <button class="btn-action" style="font-size:11px; padding:10px 14px; width:auto;" onclick="agregarHorarioNotificacion()">+ Hora</button>
           </div>
 
           <div id="lista-horarios" style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:8px;"></div>
-          <div id="notif-status" style="font-size:10px; color:var(--text-muted); text-align:center;">Notificaciones desactivadas</div>
+          <div id="notif-status" style="font-size:10px; color:var(--text-muted); text-align:center;">Configure sus horas de reporte automático</div>
         </div>
 
       </div>
     </details>
 
-    <button class="btn-limpiar" onclick="limpiarTodo()">🧹 Limpiar Todos los Campos</button>
+    <button class="btn-limpiar" onclick="limpiarTodo()">
+      <svg class="icon-svg-sm" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+      <span>Restablecer Campos de Cálculo</span>
+    </button>
 
-    <!-- PESTAÑA 1: INICIO -->
+    <!-- PESTAÑA 1: INICIO (SUPER CONVERTIDOR MULTIMONEDA INTERACTIVO + GRÁFICO) -->
     <div id="tab-inicio" class="tab-content active">
       <div class="calc-section desktop-layout">
         <div class="calc-inputs-col">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-            <h2 style="margin-bottom:0;" id="calc-title">Calculadora Rápida ($)</h2>
-            <button class="btn-toggle" onclick="toggleModoCalculadora()" title="Cambiar moneda base">
-              <span id="toggle-icon">🔄 VES ⇄ USD</span>
+          <h2 style="text-align:left; display:flex; align-items:center; gap:8px;">
+            <svg class="icon-svg" viewBox="0 0 24 24"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+            <span>Convertidor Multimoneda</span>
+          </h2>
+          
+          <label>Selecciona tu Moneda de Entrada:</label>
+          <div class="currency-selector-grid" id="currency-buttons">
+            <button class="curr-btn active" data-curr="USD" onclick="seleccionarMonedaBase('USD', this)">
+              <svg class="curr-svg" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 18V6"/></svg>
+              <span>USD BCV</span>
+            </button>
+            <button class="curr-btn" data-curr="USDT" onclick="seleccionarMonedaBase('USDT', this)">
+              <svg class="curr-svg" style="color:#f0b90b;" viewBox="0 0 24 24"><polygon points="12 2 19 9 12 16 5 9"/><polygon points="12 8 19 15 12 22 5 15"/></svg>
+              <span>USDT P2P</span>
+            </button>
+            <button class="curr-btn" data-curr="VES" onclick="seleccionarMonedaBase('VES', this)">
+              <svg class="curr-svg" style="color:#00e676;" viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="3"/><path d="M6 12h.01M18 12h.01"/></svg>
+              <span>BOLÍVARES</span>
+            </button>
+            <button class="curr-btn" data-curr="EUR" onclick="seleccionarMonedaBase('EUR', this)">
+              <svg class="curr-svg" style="color:#3b82f6;" viewBox="0 0 24 24"><path d="M4 10h12"/><path d="M4 14h9"/><path d="M19 6a7.7 7.7 0 0 0-5.2-2A7.9 7.9 0 0 0 6 12c0 4.4 3.5 8 7.8 8 2 0 3.8-.8 5.2-2"/></svg>
+              <span>EUROS</span>
+            </button>
+            <button class="curr-btn" data-curr="COP" onclick="seleccionarMonedaBase('COP', this)">
+              <svg class="curr-svg" style="color:#ec4899;" viewBox="0 0 24 24"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+              <span>PESOS COP</span>
             </button>
           </div>
 
-          <label id="main-input-label">Monto en Dólares ($):</label>
-          <input type="number" id="usd-input" placeholder="Ej. 10" oninput="calcularDirecto()">
+          <label id="main-input-label" style="margin-top:8px;">Monto en Dólares BCV ($):</label>
+          <input type="number" id="main-amount-input" placeholder="Ingresa cantidad..." oninput="calcularMultimoneda()">
         </div>
         
         <div class="calc-results-col">
-          <div class="result-box">
-            <div class="result-line"><span id="lbl-res-bcv">Al cambio BCV:</span> <strong id="res-bcv">0,00 Bs</strong></div>
-            <div class="result-line"><span id="lbl-res-usdt">Al cambio USDT P2P:</span> <strong id="res-usdt">0,00 Bs</strong></div>
-            <div class="result-line"><span id="lbl-res-eur">En Euros (€):</span> <strong id="res-eur">0,00 €</strong></div>
-            <div class="result-line"><span id="lbl-res-cop">En Pesos (COP):</span> <strong id="res-cop">0 COP</strong></div>
-            <button class="btn-copy" onclick="copiarTexto('resumen-rapido')">📋 Copiar Resumen</button>
+          <div class="result-box" id="multi-results-box">
+            <div class="result-line"><span>En Bolívares (Tasa BCV):</span> <strong id="res-multi-ves-bcv">0,00 Bs</strong></div>
+            <div class="result-line"><span>En Bolívares (Tasa P2P):</span> <strong id="res-multi-ves-usdt">0,00 Bs</strong></div>
+            <div class="result-line"><span>En Dólares Oficiales (BCV):</span> <strong id="res-multi-usd">0,00 $</strong></div>
+            <div class="result-line"><span>En Cripto USDT (P2P):</span> <strong id="res-multi-usdt" style="color:var(--neon-green);">0,00 USDT</strong></div>
+            <div class="result-line"><span>En Euros Oficiales (€):</span> <strong id="res-multi-eur">0,00 €</strong></div>
+            <div class="result-line"><span>En Pesos Colombianos:</span> <strong id="res-multi-cop">0,00 COP</strong></div>
+            <button class="btn-copy" onclick="copiarTexto('resumen-rapido')">
+              <svg class="icon-svg-sm" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              <span>Copiar Cotización Completa</span>
+            </button>
           </div>
         </div>
       </div>
 
       <div class="calc-section">
-        <h2>📈 Histórico de Tasas (D3.js)</h2>
+        <h2 style="display:flex; align-items:center; justify-content:center; gap:8px;">
+          <svg class="icon-svg" viewBox="0 0 24 24"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+          <span>Curva de Rendimiento BCV vs USDT</span>
+        </h2>
         <div id="chart-container" style="width:100%; height:180px;"></div>
       </div>
     </div>
 
-    <!-- PESTAÑA 2: CRUZADA Y IGTF -->
-    <div id="tab-cruzada" class="tab-content">
-      <div class="calc-section desktop-layout">
-        <div class="calc-inputs-col">
-          <h2>Calculadora Cruzada</h2>
-          <label>De:</label>
-          <input type="number" id="cross-val-1" placeholder="Monto" oninput="calcularCruzado(1)">
-          <select id="cross-mon-1" onchange="calcularCruzado(1)">
-            <option value="USD">Dólares ($)</option>
-            <option value="USDT">USDT (Cripto)</option>
-            <option value="BCV">Bolívares (Bs)</option>
-            <option value="EUR">Euros (€)</option>
-            <option value="COP">Pesos (COP)</option>
-          </select>
-        </div>
-        
-        <div class="calc-results-col">
-          <label>A:</label>
-          <input type="number" id="cross-val-2" placeholder="Resultado" oninput="calcularCruzado(2)">
-          <select id="cross-mon-2" onchange="calcularCruzado(2)">
-            <option value="COP">Pesos (COP)</option>
-            <option value="USDT">USDT (Cripto)</option>
-            <option value="USD">Dólares ($)</option>
-            <option value="BCV">Bolívares (Bs)</option>
-            <option value="EUR">Euros (€)</option>
-          </select>
-        </div>
-      </div>
-
-      <div class="calc-section desktop-layout">
-        <div class="calc-inputs-col">
-          <h2>🧾 Impuestos / IGTF (3%)</h2>
-          <label>Precio del Producto ($):</label>
-          <input type="number" id="igtf-monto-usd" placeholder="Ej. 50" oninput="calcularIGTF()">
-        </div>
-        <div class="calc-results-col">
-          <div class="result-box">
-            <div class="result-line"><span>Monto Base en Bs (BCV):</span> <strong id="igtf-res-base">0,00 Bs</strong></div>
-            <div class="result-line"><span>IGTF 3% (Divisa):</span> <strong id="igtf-res-3pct">0,00 $</strong></div>
-            <div class="result-line"><span>Total a Cobrar/Pagar:</span> <strong id="igtf-res-total" style="color:var(--neon-green);">0,00 $ / 0,00 Bs</strong></div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- PESTAÑA 3: COMISIONES -->
+    <!-- PESTAÑA 2: COMISIONES, IGTF Y META NETA -->
     <div id="tab-comisiones" class="tab-content">
       <div class="calc-section desktop-layout">
         <div class="calc-inputs-col">
-          <h2>Comisiones Interbancarias (0.3%)</h2>
-          <label>Monto a Transferir o Pago Móvil (Bs):</label>
-          <input type="number" id="transf-monto-bs" placeholder="Ej. 58700" oninput="calcularComisionTransf()">
+          <h2>Impuesto IGTF (3%) y Bancos (0.3%)</h2>
+          <label>Monto en Divisas para IGTF ($):</label>
+          <input type="number" id="igtf-monto-usd" placeholder="Ej. 100" oninput="calcularIGTF()">
           
-          <label>Tipo de Operación:</label>
-          <select id="transf-tipo" onchange="calcularComisionTransf()">
-            <option value="0.3">Transferencia Interbancaria Otros Bancos (0.3%)</option>
-            <option value="0.3">Pago Móvil Otro Banco (0.3%)</option>
-            <option value="0.0">Mismo Banco (0%)</option>
-          </select>
+          <label>Monto en Bs para Pago Móvil / Transf (0.3%):</label>
+          <input type="number" id="transf-monto-bs" placeholder="Ej. 50000" oninput="calcularComisionTransf()">
         </div>
-
         <div class="calc-results-col">
           <div class="result-box">
-            <div class="result-line"><span>Comisión a Cobrar:</span> <strong id="transf-res-comision" style="color:var(--danger-color);">0,00 Bs</strong></div>
-            <div class="result-line"><span>Total Debitado de la Cuenta:</span> <strong id="transf-res-total" style="color:var(--neon-green);">0,00 Bs</strong></div>
+            <div class="result-line"><span>IGTF 3% recargo ($):</span> <strong id="igtf-res-3pct">0,00 $</strong></div>
+            <div class="result-line"><span>Total con IGTF ($ / Bs):</span> <strong id="igtf-res-total" style="color:var(--neon-green);">0,00 $ / 0,00 Bs</strong></div>
+            <div class="result-line" style="border-top:1px dashed var(--glass-border); padding-top:8px;"><span>Comisión Bancaria (0.3%):</span> <strong id="transf-res-comision" style="color:var(--danger-color);">0,00 Bs</strong></div>
+            <div class="result-line"><span>Total Debitado en Cuenta:</span> <strong id="transf-res-total" style="color:var(--neon-green);">0,00 Bs</strong></div>
           </div>
         </div>
       </div>
 
       <div class="calc-section desktop-layout">
         <div class="calc-inputs-col">
-          <h2>🎯 Meta Neta (¿Cuánto enviar para recibir X?)</h2>
-          <label>Monto Neto Deseado a Recibir ($):</label>
+          <h2>Objetivo Neto (Meta de Recepción)</h2>
+          <label>Monto Exacto Neto que deseas recibir ($):</label>
           <input type="number" id="meta-usd" placeholder="Ej. 50" oninput="calcularMetaNeta()">
         </div>
         
         <div class="calc-results-col">
           <div class="result-box">
-            <div class="result-line"><span>Monto a Transferir en Bs:</span> <strong id="meta-res-bs" style="color:var(--neon-green);">0,00 Bs</strong></div>
-            <button class="btn-copy" onclick="copiarTexto('meta-neta')">📋 Copiar para Enviar</button>
+            <div class="result-line"><span>Debes Transferir en Bs:</span> <strong id="meta-res-bs" style="color:var(--neon-green);">0,00 Bs</strong></div>
+            <button class="btn-copy" onclick="copiarTexto('meta-neta')">
+              <svg class="icon-svg-sm" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              <span>Copiar Monto a Enviar</span>
+            </button>
           </div>
         </div>
       </div>
 
       <div class="calc-section">
-        <h2>Comisiones de Compra Divisas / P2P</h2>
+        <h2>Gestor de Comisiones Bancarias y P2P</h2>
         
         <button class="accordion-btn" onclick="toggleAccordion('acc-bancos')">
-          <span>🏛️ Seleccionar / Editar Banco</span>
-          <span id="label-banco-activo">BdV (2.5%) ▾</span>
+          <span style="display:flex; align-items:center; gap:6px;">
+            <svg class="icon-svg-sm" viewBox="0 0 24 24"><polygon points="12 2 20 7 4 7"/><line x1="6" y1="18" x2="6" y2="11"/><line x1="12" y1="18" x2="12" y2="11"/><line x1="18" y1="18" x2="18" y2="11"/><line x1="3" y1="22" x2="21" y2="22"/></svg>
+            <span>Entidad Bancaria</span>
+          </span>
+          <span id="label-banco-activo">BdV (2.5%)</span>
         </button>
         <div id="acc-bancos" class="accordion-content">
           <div class="bank-grid" id="grid-bancos"></div>
         </div>
 
         <button class="accordion-btn" onclick="toggleAccordion('acc-binance')">
-          <span>⚡ Seleccionar / Editar Binance</span>
-          <span id="label-binance-activo">Maker (0%) ▾</span>
+          <span style="display:flex; align-items:center; gap:6px;">
+            <svg class="icon-svg-sm" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+            <span>Modalidad Binance P2P</span>
+          </span>
+          <span id="label-binance-activo">Maker (0%)</span>
         </button>
         <div id="acc-binance" class="accordion-content">
           <div class="bank-grid" id="grid-binance"></div>
         </div>
-
-        <input type="hidden" id="banco-seleccionado-nombre" value="Banco de Venezuela (BdV)">
-        <input type="hidden" id="binance-seleccionado-nombre" value="Binance Maker (0%)">
 
         <div style="display:flex; gap:10px; margin-top: 10px;">
           <div style="flex:1;">
@@ -275,37 +374,37 @@
         </div>
 
         <div style="background: rgba(0, 230, 118, 0.08); border: 1px solid var(--neon-green); padding: 12px; border-radius: 12px; margin-top: 10px;">
-          <label style="color: var(--neon-green); font-weight: bold;">💼 Mi Comisión / Margen Personal (Al Final):</label>
-          <input type="number" id="com-porc-personal" value="0" placeholder="Ej. 10, 30 o 50%" oninput="calcularComisiones(1)" style="margin-bottom:0;">
+          <label style="color: var(--neon-green); font-weight: bold;">Margen / Comisión Personal (%):</label>
+          <input type="number" id="com-porc-personal" value="0" placeholder="Ej. 10, 30 o -30%" oninput="calcularComisiones(1)" style="margin-bottom:0;">
         </div>
 
         <div class="result-box">
           <label>Envías desde el Banco ($):</label>
           <input type="number" id="com-envio-usd" placeholder="Ej. 100" oninput="calcularComisiones(1)">
-          <label>Te llega en USDT:</label>
+          <label>Recibes Neto en USDT:</label>
           <input type="number" id="com-recibo-usdt" placeholder="Ej. 97.5" oninput="calcularComisiones(2)">
           
           <div class="result-line" style="margin-top:10px; border-top:1px dashed var(--glass-border); padding-top:8px;">
-            <span>Total Final con Mi Comisión:</span>
-            <strong id="com-res-total-personal" style="color:var(--neon-green); font-size:16px;">0.00 $</strong>
+            <span>Liquidación Final con Margen:</span>
+            <strong id="com-res-total-personal" style="color:var(--neon-green); font-size:16px;">0,00 USDT</strong>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- PESTAÑA 4: ARBITRAJE -->
+    <!-- PESTAÑA 3: ARBITRAJE E HISTORIAL DETALLADO -->
     <div id="tab-arbitraje" class="tab-content">
       <div class="calc-section desktop-layout">
         <div class="calc-inputs-col">
-          <h2>Arbitraje y Ganancias Integradas</h2>
+          <h2>Simulador de Arbitraje Financiero</h2>
           
           <div style="background:var(--input-bg); border:1px solid var(--neon-green); padding:10px; border-radius:8px; margin-bottom:12px;">
-            <div style="font-size:11px; color:var(--text-muted); text-transform:uppercase;">Canal de Operación Activo:</div>
-            <div id="resumen-canal-activo" style="font-size:12px; font-weight:bold; color:var(--neon-green); margin-top:2px;">Banco de Venezuela (BdV) [2.5%] + Binance Maker (0%)</div>
+            <div style="font-size:10px; color:var(--text-muted); text-transform:uppercase;">Ruta de Liquidez Activa:</div>
+            <div id="resumen-canal-activo" style="font-size:12px; font-weight:bold; color:var(--neon-green); margin-top:2px;">BdV [2.5%] + Maker [0%]</div>
           </div>
 
-          <label>Monto Inicial en Banco (Bs):</label>
-          <input type="number" id="arb-bs-inicial" placeholder="Ej. 5000" oninput="calcularArbitraje()">
+          <label>Capital Inicial en Banco (Bs):</label>
+          <input type="number" id="arb-bs-inicial" placeholder="Ej. 128000" oninput="calcularArbitraje()">
           
           <div style="display:flex; gap:10px;">
             <div style="flex:1;">
@@ -319,25 +418,29 @@
           </div>
 
           <div style="background: rgba(0, 230, 118, 0.08); border: 1px solid var(--neon-green); padding: 10px; border-radius: 10px; margin-bottom: 12px;">
-            <label style="color: var(--neon-green); font-weight: bold;">💼 Recargo / Mi Comisión Final (%):</label>
+            <label style="color: var(--neon-green); font-weight: bold;">Recargo / Comisión Personal (%):</label>
             <input type="number" id="arb-com-personal" value="0" placeholder="Ej. -30 o +30%" oninput="calcularArbitraje()" style="margin-bottom:0;">
           </div>
 
-          <label style="margin-top:10px;">Nota / Descripción de la operación:</label>
-          <input type="text" id="arb-nota" placeholder="Ej. Cambio a cliente X con mi comisión">
+          <label style="margin-top:10px;">Concepto / Cliente:</label>
+          <input type="text" id="arb-nota" maxlength="80" placeholder="Ej. Operación Cliente Mayorista">
 
-          <button class="btn-action" style="margin-top:5px;" onclick="registrarOperacion()">💾 Registrar Operación</button>
+          <button class="btn-action" style="margin-top:5px; display:flex; align-items:center; justify-content:center; gap:8px;" onclick="registrarOperacion()">
+            <svg class="icon-svg-sm" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+            <span>Guardar Operación en Libro</span>
+          </button>
         </div>
 
         <div class="calc-results-col">
           <div class="result-box">
             <div class="result-line"><span>Punto de Equilibrio:</span> <strong id="arb-res-breakeven">0,00 Bs</strong></div>
-            <div class="result-line"><span>Monto Final Venta:</span> <strong id="arb-res-final">0,00 Bs</strong></div>
-            <div class="result-line"><span>Comisiones Totales (Bs):</span> <strong id="arb-res-comision-bs" style="color:var(--danger-color);">0,00 Bs</strong></div>
-            <div class="result-line"><span>Ganancia Neta Bruta (Bs):</span> <strong id="arb-res-ganancia-bs">0,00 Bs</strong></div>
-            <div class="result-line"><span>Ganancia Neta Bruta (USDT):</span> <strong id="arb-res-ganancia-usdt">0,00 USDT</strong></div>
-            <div class="result-line" style="border-top:1px dashed var(--glass-border); padding-top:6px;">
-              <span>Ganancia Final + Mi Comisión (USDT):</span>
+            <div class="result-line"><span>Retorno Bruto Venta:</span> <strong id="arb-res-final">0,00 Bs</strong></div>
+            <div class="result-line"><span>Deducible Comisiones (Bs):</span> <strong id="arb-res-comision-bs" style="color:var(--danger-color);">0,00 Bs</strong></div>
+            <div class="result-line"><span>Ganancia Neta Base (Bs):</span> <strong id="arb-res-ganancia-bs">0,00 Bs</strong></div>
+            <div class="result-line"><span>Ganancia Neta Base (USD BCV):</span> <strong id="arb-res-ganancia-usd-bcv">0,00 $</strong></div>
+            <div class="result-line"><span>Ganancia Neta Base (USDT):</span> <strong id="arb-res-ganancia-usdt">0,00 USDT</strong></div>
+            <div class="result-line" style="border-top:1px dashed var(--glass-border); padding-top:8px; margin-top:8px;">
+              <span>Liquidación Final + Comisión (USDT):</span>
               <strong id="arb-res-ganancia-usd" style="color:var(--neon-green); font-size:15px;">0,00 USDT</strong>
             </div>
           </div>
@@ -345,8 +448,8 @@
       </div>
 
       <div class="calc-section">
-        <h2>Historial Integrado</h2>
-        <input type="text" id="buscar-historial" placeholder="🔍 Filtrar historial..." oninput="filtrarHistorial()">
+        <h2>Libro Contable de Operaciones</h2>
+        <input type="text" id="buscar-historial" maxlength="50" placeholder="Buscar por canal o nota..." oninput="filtrarHistorial()">
         
         <div id="historial-cards-container" style="display:flex; flex-direction:column; gap:10px; margin-top:12px;"></div>
       </div>
@@ -354,29 +457,46 @@
 
   </div>
 
-  <!-- MODAL DETALLE OPERACIÓN -->
+  <!-- MODAL DETALLE DE OPERACIÓN -->
   <div id="modal-detalle" class="modal-overlay" onclick="cerrarModalDetalle(event)">
     <div class="modal-content" onclick="event.stopPropagation()">
       <button class="modal-close" onclick="cerrarModalDetalle(null)">✕</button>
-      <h3 style="color:var(--neon-green); margin-bottom:12px; font-size:16px;">🧾 Detalle de Operación</h3>
+      <h3 style="color:var(--neon-green); margin-bottom:12px; font-size:15px; display:flex; align-items:center; gap:8px;">
+        <svg class="icon-svg" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        <span>Comprobante de Operación</span>
+      </h3>
       
       <div id="modal-body-content" class="result-box" style="margin-top:0;"></div>
 
       <div style="display:flex; gap:8px; margin-top:14px;">
-        <button class="btn-action" style="background:#25D366; color:#fff;" onclick="copiarDetalleWhatsApp()">📲 Copiar para WhatsApp</button>
-        <button class="btn-action" style="background:var(--danger-color); color:#fff; max-width:80px;" onclick="eliminarDesdeModal()">🗑️</button>
+        <button class="btn-action" style="background:#25D366; color:#fff; display:flex; align-items:center; justify-content:center; gap:8px;" onclick="copiarDetalleWhatsApp()">
+          <svg class="icon-svg-sm" viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+          <span>Copiar para WhatsApp</span>
+        </button>
+        <button class="btn-action" style="background:var(--danger-color); color:#fff; max-width:60px; display:flex; align-items:center; justify-content:center;" onclick="eliminarDesdeModal()">
+          <svg class="icon-svg-sm" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+        </button>
       </div>
     </div>
   </div>
 
+  <!-- BARRA DE NAVEGACIÓN INFERIOR 100% SVG SIN EMOJIS -->
   <nav class="nav-bar">
-    <div class="nav-item active" onclick="switchTab('inicio', this)"><span>🏠</span><span>Inicio</span></div>
-    <div class="nav-item" onclick="switchTab('cruzada', this)"><span>↕️</span><span>Cruzada</span></div>
-    <div class="nav-item" onclick="switchTab('comisiones', this)"><span>⚙️</span><span>Comisión</span></div>
-    <div class="nav-item" onclick="switchTab('arbitraje', this)"><span>📈</span><span>Arbitraje</span></div>
+    <div class="nav-item active" onclick="switchTab('inicio', this)">
+      <svg class="nav-svg" viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="16" y1="14" x2="16" y2="18"/><path d="M16 10h.01"/><path d="M12 10h.01"/><path d="M8 10h.01"/><path d="M12 14h.01"/><path d="M8 14h.01"/><path d="M12 18h.01"/><path d="M8 18h.01"/></svg>
+      <span>Divisas</span>
+    </div>
+    <div class="nav-item" onclick="switchTab('comisiones', this)">
+      <svg class="nav-svg" viewBox="0 0 24 24"><line x1="19" y1="5" x2="5" y2="19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg>
+      <span>Comisiones</span>
+    </div>
+    <div class="nav-item" onclick="switchTab('arbitraje', this)">
+      <svg class="nav-svg" viewBox="0 0 24 24"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
+      <span>Arbitraje</span>
+    </div>
   </nav>
 
-  <!-- FIREBASE V10 SDK CON PERSISTENCIA LOCAL FIJA -->
+  <!-- FIREBASE V10 SDK CON PERSISTENCIA ROBUSTA -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
     import { 
@@ -402,7 +522,7 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    setPersistence(auth, browserLocalPersistence).catch(err => console.error("Error persistencia:", err));
+    setPersistence(auth, browserLocalPersistence).catch(() => {});
 
     function getOrCreateDeviceId() {
       let devId = localStorage.getItem('device_fingerprint_id');
@@ -423,6 +543,12 @@
       const errDiv = document.getElementById('auth-error');
       errDiv.style.display = 'none';
 
+      if (!email || !pass) {
+        errDiv.textContent = "Ingrese su correo y clave de acceso.";
+        errDiv.style.display = 'block';
+        return;
+      }
+
       try {
         const userCred = await signInWithEmailAndPassword(auth, email, pass);
         const uid = userCred.user.uid;
@@ -435,7 +561,7 @@
           const data = userDocSnap.data();
           if (data.deviceId && data.deviceId !== '' && data.deviceId !== devId) {
             await signOut(auth);
-            errDiv.innerText = "❌ Esta cuenta ya está activa en otro teléfono o computadora. Cierra sesión con la puertica 🚪 en el otro equipo primero.";
+            errDiv.textContent = "Licencia en uso en otro equipo. Cierre sesión allá primero.";
             errDiv.style.display = 'block';
             return;
           } else {
@@ -452,8 +578,9 @@
 
         localStorage.setItem('user_session_active', 'true');
         document.getElementById('auth-overlay').style.display = 'none';
+        if (window.mostrarToast) window.mostrarToast("Acceso verificado correctamente");
       } catch (err) {
-        errDiv.innerText = "❌ Error de acceso: " + err.message;
+        errDiv.textContent = "Credenciales inválidas o error de red.";
         errDiv.style.display = 'block';
       }
     };
@@ -464,7 +591,7 @@
         try {
           const userDocRef = doc(db, 'licencias', currentUser.uid);
           await updateDoc(userDocRef, { deviceId: '' });
-        } catch(e) { console.error("Error liberando licencia:", e); }
+        } catch(e) {}
       }
       localStorage.removeItem('user_session_active');
       await signOut(auth);
@@ -488,7 +615,6 @@
             }
           }
         } catch(e) {
-          console.warn("Validación offline/background:", e);
           if (localStorage.getItem('user_session_active') === 'true') {
             document.getElementById('auth-overlay').style.display = 'none';
             return;
