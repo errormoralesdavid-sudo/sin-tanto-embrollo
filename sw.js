@@ -1,4 +1,4 @@
-const CACHE_NAME = 'finance-pro-v4';
+const CACHE_NAME = 'finance-pro-v5';
 const LOGO_URL = 'https://files.catbox.moe/gdnebi.png';
 const ASSETS = [
   './',
