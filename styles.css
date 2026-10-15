@@ -1,27 +1,14 @@
 :root {
   --bg-color: #0b0e11;
-  --glass-bg: rgba(24, 29, 35, 0.75);
+  --glass-bg: rgba(18, 23, 29, 0.82);
   --glass-border: rgba(255, 255, 255, 0.1);
-  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.45);
-  --input-bg: rgba(11, 14, 17, 0.65);
+  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+  --input-bg: rgba(10, 13, 17, 0.78);
   --neon-green: #00e676;
-  --neon-green-glow: rgba(0, 230, 118, 0.28);
-  --text-color: #f1f5f9;
+  --neon-green-glow: rgba(0, 230, 118, 0.32);
+  --text-color: #f8fafc;
   --text-muted: #94a3b8;
   --danger-color: #ff5252;
-}
-
-[data-theme="light"] {
-  --bg-color: #f1f5f9;
-  --glass-bg: rgba(255, 255, 255, 0.9);
-  --glass-border: rgba(15, 23, 42, 0.1);
-  --glass-shadow: 0 8px 24px 0 rgba(15, 23, 42, 0.08);
-  --input-bg: #ffffff;
-  --neon-green: #00a854;
-  --neon-green-glow: rgba(0, 168, 84, 0.2);
-  --text-color: #0f172a;
-  --text-muted: #64748b;
-  --danger-color: #e11d48;
 }
 
 * { 
@@ -29,7 +16,7 @@
   margin: 0; 
   padding: 0; 
   font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; 
-  transition: background 0.2s, color 0.2s, border-color 0.2s, transform 0.15s; 
+  transition: background 0.2s, color 0.2s, border-color 0.2s, transform 0.2s; 
 }
 
 html, body {
@@ -44,7 +31,7 @@ body {
   overflow-x: hidden;
 }
 
-/* ICONOS SVG GENERALES */
+/* ICONOS SVG */
 .icon-svg {
   width: 18px;
   height: 18px;
@@ -65,6 +52,37 @@ body {
   fill: none;
 }
 
+/* FONDO DE VELAS BURSÁTILES EN VIVO EN TODA LA APP */
+.bg-stock-svg {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 75vh;
+  z-index: 0;
+  opacity: 0.38;
+  pointer-events: none;
+}
+
+.candles-group {
+  animation: floatCandles 3.5s ease-in-out infinite alternate;
+}
+
+.stock-stroke-anim {
+  stroke-dasharray: 1200;
+  stroke-dashoffset: 1200;
+  animation: drawStockLine 3s ease-out forwards;
+}
+
+@keyframes drawStockLine {
+  to { stroke-dashoffset: 0; }
+}
+
+@keyframes floatCandles {
+  0% { transform: translateY(4px); }
+  100% { transform: translateY(-12px); }
+}
+
 /* TOAST NOTIFICATIONS */
 .toast-container {
   position: fixed;
@@ -80,10 +98,8 @@ body {
 .toast-msg {
   background: var(--glass-bg);
   backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
   border-left: 4px solid var(--neon-green);
-  border-top: 1px solid var(--glass-border);
-  border-right: 1px solid var(--glass-border);
-  border-bottom: 1px solid var(--glass-border);
   color: var(--text-color);
   padding: 10px 16px;
   border-radius: 10px;
@@ -98,64 +114,58 @@ body {
   to { opacity: 1; transform: translateX(0); }
 }
 
-/* PORTADA LOGIN Y ANIMACIÓN BURSÁTIL */
+/* PANTALLA DE ENTRADA CON LOGO GRANDE FLOTANTE APARTE */
 .auth-overlay {
   position: fixed;
   top: 0; left: 0; width: 100%; height: 100%;
-  background: #080a0d;
+  background: rgba(8, 10, 13, 0.86);
+  backdrop-filter: blur(10px);
   z-index: 999;
   display: flex;
   justify-content: center;
   align-items: center;
   padding: 20px;
-  overflow: hidden;
 }
 
-.bg-stock-svg {
-  position: absolute;
-  bottom: 0;
-  left: 0;
+.auth-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   width: 100%;
-  height: 65%;
-  z-index: 1;
-  opacity: 0.45;
-  pointer-events: none;
+  max-width: 380px;
+  z-index: 2;
 }
 
-.candles-group {
-  animation: pulseCandles 4s ease-in-out infinite alternate;
+.floating-hero-logo {
+  margin-bottom: 22px;
+  animation: logoFloatBig 3.2s ease-in-out infinite alternate;
+  filter: drop-shadow(0 10px 25px rgba(0, 230, 118, 0.4));
 }
 
-.stock-stroke-anim {
-  stroke-dasharray: 1200;
-  stroke-dashoffset: 1200;
-  animation: drawStockLine 3.5s ease-out forwards;
+.hero-logo-img {
+  width: 115px;
+  height: 115px;
+  border-radius: 26px;
+  object-fit: contain;
 }
 
-@keyframes drawStockLine {
-  to { stroke-dashoffset: 0; }
-}
-
-@keyframes pulseCandles {
-  0% { transform: translateY(0px); }
-  100% { transform: translateY(-8px); }
+@keyframes logoFloatBig {
+  0% { transform: translateY(0px) scale(1); }
+  100% { transform: translateY(-12px) scale(1.04); }
 }
 
 .auth-card {
-  position: relative;
-  z-index: 2;
-  background: rgba(18, 22, 28, 0.88);
-  backdrop-filter: blur(16px);
+  background: var(--glass-bg);
+  backdrop-filter: blur(18px);
   border: 1px solid var(--glass-border);
   box-shadow: var(--glass-shadow);
   border-radius: 22px;
-  padding: 28px 24px;
+  padding: 26px 22px;
   width: 100%;
-  max-width: 380px;
   text-align: center;
 }
 
-/* HEADER CON FONDO BURSÁTIL */
+/* HEADER MINIMALISTA */
 header {
   position: sticky;
   top: 0;
@@ -167,63 +177,40 @@ header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  overflow: hidden;
 }
 
-.header-ticker-svg {
-  position: absolute;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
-  pointer-events: none;
-  z-index: 1;
-}
-
-.live-dot {
-  width: 7px;
-  height: 7px;
-  background: var(--neon-green);
-  border-radius: 50%;
-  display: inline-block;
-  box-shadow: 0 0 8px var(--neon-green);
-  animation: blinkDot 1.5s infinite;
-}
-
-@keyframes blinkDot {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.3; }
-}
-
-.logo-container {
-  position: relative;
-  width: 44px;
-  height: 44px;
+.header-logo-wrap {
   display: flex;
-  justify-content: center;
   align-items: center;
 }
 
-.app-logo-img {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  object-fit: cover;
-  z-index: 2;
-}
-
-.spinner-ring {
-  position: absolute;
+.header-logo-floating {
   width: 42px;
   height: 42px;
-  border: 2px dashed var(--neon-green);
-  border-top-color: transparent;
-  border-radius: 50%;
-  animation: spinSlow 12s linear infinite;
-  box-shadow: 0 0 10px var(--neon-green-glow);
+  border-radius: 12px;
+  object-fit: contain;
+  animation: floatHeaderLogo 3s ease-in-out infinite alternate;
+  filter: drop-shadow(0 0 8px var(--neon-green-glow));
 }
 
-@keyframes spinSlow {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+@keyframes floatHeaderLogo {
+  0% { transform: translateY(-2px); }
+  100% { transform: translateY(3px); }
+}
+
+.btn-install-app {
+  background: rgba(0, 230, 118, 0.16);
+  border: 1px solid var(--neon-green);
+  color: var(--neon-green);
+  padding: 7px 12px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 0 12px var(--neon-green-glow);
 }
 
 .theme-toggle-btn {
@@ -238,8 +225,10 @@ header {
   justify-content: center;
 }
 
-/* CARRUSEL DE TASAS */
+/* CARRUSEL DE TASAS Y MONEDAS ANIMADAS */
 .slider-container {
+  position: relative;
+  z-index: 2;
   display: flex;
   gap: 12px;
   overflow-x: auto;
@@ -253,7 +242,7 @@ header {
 .card-rate {
   flex: 0 0 62%;
   background: var(--glass-bg);
-  backdrop-filter: blur(10px);
+  backdrop-filter: blur(12px);
   border: 1px solid var(--glass-border);
   box-shadow: var(--glass-shadow);
   padding: 14px;
@@ -266,8 +255,21 @@ header {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: 8px;
   color: var(--neon-green);
+}
+
+.coin-icon-anim {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+  animation: coinFloat 2.6s ease-in-out infinite alternate;
+  filter: drop-shadow(0 2px 6px rgba(0,0,0,0.5));
+}
+
+@keyframes coinFloat {
+  0% { transform: translateY(-2px) rotate(-3deg); }
+  100% { transform: translateY(3px) rotate(3deg); }
 }
 
 .card-rate h3 { font-size: 11px; color: var(--text-muted); letter-spacing: 0.7px; }
@@ -279,6 +281,8 @@ header {
 
 /* CONTENEDOR PRINCIPAL */
 .container {
+  position: relative;
+  z-index: 2;
   padding: 12px 15px;
   max-width: 1020px;
   margin: 0 auto;
@@ -286,7 +290,7 @@ header {
 
 .calc-section {
   background: var(--glass-bg);
-  backdrop-filter: blur(12px);
+  backdrop-filter: blur(14px);
   border: 1px solid var(--glass-border);
   box-shadow: var(--glass-shadow);
   padding: 18px;
@@ -306,12 +310,12 @@ header {
 }
 .config-summary::-webkit-details-marker { display: none; }
 
-/* BOTONERA INTERACTIVA DE MONEDAS */
+/* BOTONERA MULTIMONEDA CON EFECTO INTERACTIVO */
 .currency-selector-grid {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
-  gap: 6px;
-  margin-bottom: 12px;
+  gap: 7px;
+  margin-bottom: 14px;
 }
 
 .curr-btn {
@@ -319,30 +323,54 @@ header {
   border: 1px solid var(--glass-border);
   color: var(--text-muted);
   padding: 10px 4px;
-  border-radius: 12px;
+  border-radius: 14px;
   cursor: pointer;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 5px;
+  gap: 6px;
   font-size: 10px;
   font-weight: 700;
+  position: relative;
+  overflow: hidden;
 }
 
-.curr-svg {
-  width: 20px;
-  height: 20px;
-  stroke: currentColor;
-  stroke-width: 2;
-  fill: none;
+.curr-coin-img {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  animation: coinFloat 2.8s ease-in-out infinite alternate;
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.curr-btn:active .curr-coin-img {
+  transform: scale(1.25) rotate(12deg);
 }
 
 .curr-btn.active, .curr-btn:hover {
   border-color: var(--neon-green);
-  background: rgba(0, 230, 118, 0.14);
+  background: rgba(0, 230, 118, 0.16);
   color: var(--text-color);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px var(--neon-green-glow);
+  transform: translateY(-3px);
+  box-shadow: 0 6px 16px var(--neon-green-glow);
+}
+
+.curr-btn.active .curr-coin-img {
+  transform: scale(1.12);
+  filter: drop-shadow(0 0 8px var(--neon-green-glow));
+}
+
+.res-label-with-coin {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.res-coin-mini {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+  animation: coinFloat 3s ease-in-out infinite alternate;
 }
 
 @media (min-width: 768px) {
@@ -388,7 +416,7 @@ input:focus, select:focus {
   border-radius: 12px;
   border-left: 4px solid var(--neon-green);
 }
-.result-line { margin: 8px 0; font-size: 13px; display: flex; justify-content: space-between; align-items: center; }
+.result-line { margin: 9px 0; font-size: 13px; display: flex; justify-content: space-between; align-items: center; }
 .result-line span { color: var(--text-muted); }
 .result-line strong { color: var(--text-color); }
 
@@ -570,8 +598,8 @@ input:focus, select:focus {
   display: none;
   position: fixed;
   top: 0; left: 0; width: 100%; height: 100%;
-  background: rgba(0,0,0,0.75);
-  backdrop-filter: blur(5px);
+  background: rgba(0,0,0,0.78);
+  backdrop-filter: blur(6px);
   z-index: 300;
   justify-content: center;
   align-items: center;
