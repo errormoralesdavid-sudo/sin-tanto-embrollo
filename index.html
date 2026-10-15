@@ -126,7 +126,7 @@
       <path class="ticker-wave" d="M0,45 L50,38 L100,42 L150,25 L200,32 L250,18 L300,28 L350,12 L400,24 L450,15 L500,22 L550,8 L600,16" fill="none" stroke="var(--neon-green)" stroke-width="1.5" stroke-opacity="0.32"/>
     </svg>
 
-    <div style="display:flex; align-items:center; gap:12px; z-index:2; cursor:pointer;" onclick="forzarSincronizacionManual()" title="Toca para sincronizar con la nube">
+    <div style="display:flex; align-items:center; gap:12px; z-index:2; cursor:pointer;" onclick="forzarSincronizacionManual()" title="Toca para respaldar en la nube">
       <img src="https://files.catbox.moe/gdnebi.png" alt="Logo" class="header-logo-floating">
       <div>
         <div style="font-size:13px; font-weight:800; letter-spacing:0.6px; color:var(--text-color);">FINANCE PRO</div>
@@ -552,7 +552,7 @@
     </div>
   </nav>
 
-  <!-- FIREBASE V10 SDK + SINCRONIZACIÓN GARANTIZADA CON COLA PENDIENTE -->
+  <!-- FIREBASE V10 SDK VINCULADO POR CORREO ELECTRÓNICO EN FINANZAS_USUARIOS -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
     import { 
@@ -584,31 +584,31 @@
     const db = getFirestore(app);
 
     let unsubscribeCloud = null;
+    let currentDocId = null;
     let currentUserUid = null;
-    let currentUserEmail = null;
     let pendingCloudPayload = null;
 
     setPersistence(auth, browserLocalPersistence).catch(() => {});
 
-    // GUARDAR EN LA NUBE (FIRESTORE) CON COLA DE RESPALDO SI AÚN ESTÁ CONECTANDO
+    // GUARDAR DIRECTAMENTE EN EL DOCUMENTO CON EL CORREO DEL USUARIO (EJ: davidmoraleserror@gmail.com)
     window.guardarDatosEnFirebase = async function(payload, mostrarConfirmacion = false) {
-      if (!currentUserUid) {
+      if (!currentDocId) {
         pendingCloudPayload = payload;
         return;
       }
       try {
-        const userRef = doc(db, 'finanzas_usuarios', currentUserUid);
+        const userRef = doc(db, 'finanzas_usuarios', currentDocId);
         await setDoc(userRef, {
           ...payload,
-          email: currentUserEmail || '',
-          uid: currentUserUid,
+          email: currentDocId,
+          uid: currentUserUid || '',
           actualizadoEn: new Date().toISOString()
         }, { merge: true });
 
         const ind = document.getElementById('cloud-sync-indicator');
         if (ind) ind.textContent = "NUBE SINCRONIZADA";
         if (mostrarConfirmacion && window.mostrarToast) {
-          window.mostrarToast("Datos respaldados en Firebase");
+          window.mostrarToast("Sincronizado con " + currentDocId);
         }
       } catch (e) {
         console.error("Error guardando en Firestore:", e);
@@ -624,13 +624,12 @@
     };
 
     function iniciarEscuchaNube(user) {
+      currentDocId = (user.email || user.uid).toLowerCase().trim();
       currentUserUid = user.uid;
-      currentUserEmail = user.email || '';
 
       if (unsubscribeCloud) unsubscribeCloud();
-      const userRef = doc(db, 'finanzas_usuarios', user.uid);
+      const userRef = doc(db, 'finanzas_usuarios', currentDocId);
 
-      // Si había cambios hechos antes de conectar, subirlos de inmediato
       if (pendingCloudPayload) {
         const temp = pendingCloudPayload;
         pendingCloudPayload = null;
@@ -646,7 +645,6 @@
           const ind = document.getElementById('cloud-sync-indicator');
           if (ind) ind.textContent = "NUBE SINCRONIZADA";
         } else {
-          // Crear inmediatamente el documento del usuario en finanzas_usuarios al primer ingreso
           if (window.obtenerPayloadActual) {
             window.guardarDatosEnFirebase(window.obtenerPayloadActual(), false);
           }
@@ -673,7 +671,7 @@
         localStorage.setItem('user_session_active', 'true');
         document.getElementById('auth-overlay').style.display = 'none';
         iniciarEscuchaNube(cred.user);
-        if (window.mostrarToast) window.mostrarToast("Conectado a Firebase Cloud");
+        if (window.mostrarToast) window.mostrarToast("Cuenta sincronizada en la nube");
       } catch (err) {
         errDiv.textContent = "Correo o clave de acceso incorrectos.";
         errDiv.style.display = 'block';
@@ -682,8 +680,8 @@
 
     window.cerrarSesionFirebase = async function() {
       if (unsubscribeCloud) unsubscribeCloud();
+      currentDocId = null;
       currentUserUid = null;
-      currentUserEmail = null;
       localStorage.removeItem('user_session_active');
       await signOut(auth);
       document.getElementById('auth-overlay').style.display = 'flex';
@@ -695,7 +693,6 @@
         document.getElementById('auth-overlay').style.display = 'none';
         iniciarEscuchaNube(user);
       } else {
-        // Si no hay sesión real en Firebase Auth, mostrar el login para garantizar que conecte el UID
         localStorage.removeItem('user_session_active');
         document.getElementById('auth-overlay').style.display = 'flex';
       }
