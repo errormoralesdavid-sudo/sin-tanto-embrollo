@@ -1029,6 +1029,7 @@ function iniciarRelojNotificaciones() {
     }
   }, 15000);
 }
+
 // === RESPALDO OFFLINE AUTOMÁTICO Y AVISO VISUAL ===
 const CAMPOS_TASAS = ['tasa-bcv', 'tasa-usdt', 'tasa-euro', 'tasa-cop'];
 
