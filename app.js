@@ -129,7 +129,7 @@ function dispararNotificacion(titulo, cuerpo) {
     navigator.serviceWorker.ready.then(function(reg) {
       reg.showNotification(titulo, {
         body: cuerpo,
-        icon: './logo.png'
+        icon: 
         badge: './logo.png'
         vibrate: [250, 120, 250],
         renotify: true,
