@@ -1,12 +1,18 @@
-const CACHE_NAME = 'finance-pro-v11';
-const API_CACHE_NAME = 'finance-pro-api-v3';
+const CACHE_NAME = 'finance-pro-v13';
+const API_CACHE_NAME = 'finance-pro-api-v5';
 
 const CORE_ASSETS = [
   './',
   './index.html',
   './styles.css',
   './app.js',
-  './manifest.json'
+  './manifest.json',
+  './logo.png',
+  './bcv.png',
+  './usdt.png',
+  './bs.png',
+  './euro.png',
+  './cop.png'
 ];
 
 function abrirDB() {
@@ -73,8 +79,8 @@ async function verificarMercadoYAlertarEnFondo() {
           const subio = nuevoBCV > bcvActual;
           await self.registration.showNotification('Actualización Dólar BCV Oficial', {
             body: `Nueva tasa BCV: ${formatNum(nuevoBCV)} Bs (anterior: ${formatNum(bcvActual)} Bs) ${subio ? '📈' : '📉'}`,
-            icon: 'https://files.catbox.moe/ww1gm2.png',
-            badge: 'https://files.catbox.moe/ww1gm2.png',
+            icon: './logo.png',
+            badge: './logo.png',
             vibrate: [200, 100, 200],
             requireInteraction: true,
             tag: 'bcv-change-alert'
@@ -95,8 +101,8 @@ async function verificarMercadoYAlertarEnFondo() {
           const subio = nuevoUSDT > usdtActual;
           await self.registration.showNotification('Movimiento en USDT P2P', {
             body: `USDT se ubica en ${formatNum(nuevoUSDT)} Bs (antes: ${formatNum(usdtActual)} Bs) ${subio ? '🚀' : '🔻'}`,
-            icon: 'https://files.catbox.moe/ww1gm2.png',
-            badge: 'https://files.catbox.moe/ww1gm2.png',
+            icon: './logo.png',
+            badge: './logo.png',
             vibrate: [200, 100, 200],
             requireInteraction: true,
             tag: 'usdt-change-alert'
@@ -121,8 +127,8 @@ async function verificarMercadoYAlertarEnFondo() {
       }
       await self.registration.showNotification(`Reporte Financiero (${currentHM})`, {
         body: `BCV: ${formatNum(bcvActual)} Bs | USDT P2P: ${formatNum(usdtActual)} Bs | Brecha: ${formatNum(brecha)}%`,
-        icon: 'https://files.catbox.moe/ww1gm2.png',
-        badge: 'https://files.catbox.moe/ww1gm2.png',
+        icon: './logo.png',
+        badge: './logo.png',
         vibrate: [300, 100, 300],
         requireInteraction: true,
         tag: 'scheduled-report-' + currentHM
@@ -156,13 +162,11 @@ self.addEventListener('activate', (e) => {
   self.clients.claim();
 });
 
-// Interceptor de red SEGURO (No bloquea Login en la nube ni imágenes de Catbox)
 self.addEventListener('fetch', (e) => {
   if (e.request.method !== 'GET') return;
 
   const url = new URL(e.request.url);
 
-  // 1. Si es la API del dólar: guarda respaldo para modo offline
   if (url.hostname.includes('dolarapi.com')) {
     e.respondWith(
       fetch(e.request)
@@ -176,13 +180,10 @@ self.addEventListener('fetch', (e) => {
     return;
   }
 
-  // 2. IMPORTANTE: Si es cualquier otro servidor externo (Catbox, Firebase, Google, etc.),
-  // NO lo interceptamos para que el Logo y el Login funcionen sin bloqueos.
   if (url.origin !== self.location.origin) {
     return;
   }
 
-  // 3. Si es navegación o recarga de la página principal de la app
   if (e.request.mode === 'navigate') {
     e.respondWith(
       fetch(e.request)
@@ -203,7 +204,6 @@ self.addEventListener('fetch', (e) => {
     return;
   }
 
-  // 4. Archivos propios de la app (index.html, styles.css, app.js, manifest.json)
   e.respondWith(
     caches.match(e.request, { ignoreSearch: true }).then((cachedResponse) => {
       const fetchPromise = fetch(e.request)
@@ -246,6 +246,17 @@ self.addEventListener('message', (e) => {
 
   if (e.data.type === 'CHECK_NOW') {
     e.waitUntil(verificarMercadoYAlertarEnFondo());
+  }
+
+  if (e.data.type === 'SHOW_NOTIFICATION') {
+    self.registration.showNotification(e.data.title, {
+      body: e.data.body,
+      icon: './logo.png',
+      badge: './logo.png',
+      vibrate: [200, 100, 200],
+      requireInteraction: true,
+      tag: e.data.tag || 'finance-pro-direct'
+    });
   }
 });
 
