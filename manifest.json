@@ -1,19 +1,21 @@
 {
-  "name": "Terminal Financiero PRO",
+  "name": "Finance PRO",
   "short_name": "Finance PRO",
+  "description": "Terminal Financiero y Calculadora Multimoneda",
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#0b0e11",
-  "theme_color": "#0b0e11",
+  "background_color": "#070b0e",
+  "theme_color": "#00ff88",
+  "orientation": "portrait",
   "icons": [
     {
-      "src": "https://files.catbox.moe/gdnebi.png",
+      "src": "./logo.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "https://files.catbox.moe/gdnebi.png",
+      "src": "./logo.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
