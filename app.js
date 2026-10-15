@@ -34,6 +34,7 @@ var listaBinance = [
 var itemSeleccionadoModal = null;
 var isUserInteracting = false;
 var resumeTimeout = null;
+var aplicandoNube = false;
 
 function sanitizarTexto(str) {
   if (!str) return '';
@@ -58,25 +59,85 @@ window.mostrarToast = function(mensaje) {
 };
 
 window.onload = function() {
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js').catch(function() {});
-  }
+  registrarServiceWorkerYBackgroundSync();
 
   cargarDatosGuardados();
   renderBancos();
   renderBinance();
   renderHorariosNotificaciones();
-  actualizarTasasManuales();
+  actualizarTasasManuales(false);
   
   sincronizarDolarVzlaAPI(false);
   sincronizarBinanceP2P(false);
   
+  // Revisión periódica automática de cambios en el mercado cambiario
+  setInterval(function() {
+    sincronizarDolarVzlaAPI(false);
+    sincronizarBinanceP2P(false);
+  }, 180000); // Cada 3 minutos mientras esté activa o en background
+
   iniciarSmoothSlider();
   iniciarScrollWheelSlider();
   renderGraficoD3();
   iniciarRelojNotificaciones();
   iniciarAutoScrollEnInputs();
 };
+
+async function registrarServiceWorkerYBackgroundSync() {
+  if ('serviceWorker' in navigator) {
+    try {
+      var reg = await navigator.serviceWorker.register('sw.js');
+      sincronizarConfigConServiceWorker();
+
+      if ('periodicSync' in reg) {
+        try {
+          await reg.periodicSync.register('check-rates-and-alarms', {
+            minInterval: 15 * 60 * 1000
+          });
+        } catch(e) {}
+      }
+    } catch (err) {}
+  }
+}
+
+function sincronizarConfigConServiceWorker() {
+  var payloadSW = {
+    type: 'SYNC_CONFIG',
+    horarios: listaHorariosNotif,
+    tasaBCV: tasaBCV,
+    tasaUSDT: tasaUSDT,
+    tasaEUR: tasaEUR
+  };
+  if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+    navigator.serviceWorker.controller.postMessage(payloadSW);
+  } else if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.ready.then(function(reg) {
+      if (reg.active) reg.active.postMessage(payloadSW);
+    });
+  }
+}
+
+function dispararNotificacion(titulo, cuerpo) {
+  if (!("Notification" in window) || Notification.permission !== "granted") return;
+  if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+    navigator.serviceWorker.controller.postMessage({
+      type: 'NOTIFY',
+      title: titulo,
+      body: cuerpo
+    });
+  } else if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.ready.then(function(reg) {
+      reg.showNotification(titulo, {
+        body: cuerpo,
+        icon: 'https://files.catbox.moe/gdnebi.png',
+        badge: 'https://files.catbox.moe/gdnebi.png',
+        vibrate: [250, 120, 250],
+        renotify: true,
+        tag: 'finance-pro-alert'
+      });
+    });
+  }
+}
 
 function iniciarScrollWheelSlider() {
   var slider = document.getElementById('rate-slider');
@@ -138,8 +199,9 @@ function toggleAccordion(id) {
   document.getElementById(id).classList.toggle('open');
 }
 
-function guardarDatos() {
-  var datos = {
+// ESTRUCTURA UNIFICADA PARA LOCALSTORAGE Y FIREBASE FIRESTORE
+window.obtenerPayloadActual = function() {
+  return {
     bcv: document.getElementById('input-tasa-bcv').value,
     usdt: document.getElementById('input-tasa-usdt').value,
     eur: document.getElementById('input-tasa-eur').value,
@@ -152,33 +214,78 @@ function guardarDatos() {
     historial: historial,
     historicoGrafico: historicoGrafico,
     horariosNotif: listaHorariosNotif,
-    monedaActiva: monedaActiva
+    monedaActiva: monedaActiva,
+    comPorcBanco: document.getElementById('com-porc-banco').value,
+    comPorcBinance: document.getElementById('com-porc-binance').value,
+    comPorcPersonal: document.getElementById('com-porc-personal').value,
+    arbComPersonal: document.getElementById('arb-com-personal').value,
+    bancoActivoNombre: bancoActivoNombre,
+    binanceActivoNombre: binanceActivoNombre
   };
-  localStorage.setItem('embrollo_data_pro_v4', JSON.stringify(datos));
+};
+
+function guardarDatos(subirANube = true) {
+  var datos = window.obtenerPayloadActual();
+  localStorage.setItem('embrollo_data_pro_v5', JSON.stringify(datos));
+  sincronizarConfigConServiceWorker();
+
+  if (subirANube && !aplicandoNube && window.guardarDatosEnFirebase) {
+    window.guardarDatosEnFirebase(datos);
+  }
 }
+
+// RECIBIR Y APLICAR AJUSTES Y LIBRO CONTABLE DESDE FIREBASE
+window.aplicarDatosDesdeNube = function(datos) {
+  if (!datos) return;
+  aplicandoNube = true;
+  try {
+    if(datos.bcv) document.getElementById('input-tasa-bcv').value = datos.bcv;
+    if(datos.usdt) document.getElementById('input-tasa-usdt').value = datos.usdt;
+    if(datos.eur) document.getElementById('input-tasa-eur').value = datos.eur;
+    if(datos.cop) document.getElementById('input-tasa-cop').value = datos.cop;
+    
+    if(datos.prevBCV !== undefined) prevBCV = datos.prevBCV;
+    if(datos.prevUSDT !== undefined) prevUSDT = datos.prevUSDT;
+    if(datos.prevEUR !== undefined) prevEUR = datos.prevEUR;
+
+    if(Array.isArray(datos.bancos)) { listaBancos = datos.bancos; renderBancos(); }
+    if(Array.isArray(datos.binance)) { listaBinance = datos.binance; renderBinance(); }
+    if(Array.isArray(datos.historial)) { historial = datos.historial; renderHistorial(); }
+    if(Array.isArray(datos.historicoGrafico)) { historicoGrafico = datos.historicoGrafico; renderGraficoD3(); }
+    if(Array.isArray(datos.horariosNotif)) { listaHorariosNotif = datos.horariosNotif; renderHorariosNotificaciones(); }
+
+    if(datos.comPorcBanco !== undefined) document.getElementById('com-porc-banco').value = datos.comPorcBanco;
+    if(datos.comPorcBinance !== undefined) document.getElementById('com-porc-binance').value = datos.comPorcBinance;
+    if(datos.comPorcPersonal !== undefined) document.getElementById('com-porc-personal').value = datos.comPorcPersonal;
+    if(datos.arbComPersonal !== undefined) document.getElementById('arb-com-personal').value = datos.arbComPersonal;
+
+    if(datos.bancoActivoNombre) {
+      bancoActivoNombre = datos.bancoActivoNombre;
+      document.getElementById('label-banco-activo').textContent = bancoActivoNombre + ' (' + document.getElementById('com-porc-banco').value + '%)';
+    }
+    if(datos.binanceActivoNombre) {
+      binanceActivoNombre = datos.binanceActivoNombre;
+      document.getElementById('label-binance-activo').textContent = binanceActivoNombre + ' (' + document.getElementById('com-porc-binance').value + '%)';
+    }
+
+    if(datos.monedaActiva) {
+      var btn = document.querySelector('.curr-btn[data-curr="' + datos.monedaActiva + '"]');
+      if (btn) seleccionarMonedaBase(datos.monedaActiva, btn, false);
+    }
+
+    actualizarResumenCanal();
+    actualizarTasasManuales(false);
+    localStorage.setItem('embrollo_data_pro_v5', JSON.stringify(window.obtenerPayloadActual()));
+    sincronizarConfigConServiceWorker();
+  } catch(e) {}
+  aplicandoNube = false;
+};
 
 function cargarDatosGuardados() {
   try {
-    var datos = JSON.parse(localStorage.getItem('embrollo_data_pro_v4'));
+    var datos = JSON.parse(localStorage.getItem('embrollo_data_pro_v5'));
     if (datos) {
-      if(datos.bcv) document.getElementById('input-tasa-bcv').value = datos.bcv;
-      if(datos.usdt) document.getElementById('input-tasa-usdt').value = datos.usdt;
-      if(datos.eur) document.getElementById('input-tasa-eur').value = datos.eur;
-      if(datos.cop) document.getElementById('input-tasa-cop').value = datos.cop;
-      
-      if(datos.prevBCV) prevBCV = datos.prevBCV;
-      if(datos.prevUSDT) prevUSDT = datos.prevUSDT;
-      if(datos.prevEUR) prevEUR = datos.prevEUR;
-
-      if(Array.isArray(datos.bancos)) listaBancos = datos.bancos;
-      if(Array.isArray(datos.binance)) listaBinance = datos.binance;
-      if(Array.isArray(datos.historial)) { historial = datos.historial; renderHistorial(); }
-      if(Array.isArray(datos.historicoGrafico)) historicoGrafico = datos.historicoGrafico;
-      if(Array.isArray(datos.horariosNotif)) listaHorariosNotif = datos.horariosNotif;
-      if(datos.monedaActiva) {
-        var btn = document.querySelector('.curr-btn[data-curr="' + datos.monedaActiva + '"]');
-        if (btn) seleccionarMonedaBase(datos.monedaActiva, btn);
-      }
+      window.aplicarDatosDesdeNube(datos);
     }
   } catch(e) {}
 
@@ -192,8 +299,7 @@ function cargarDatosGuardados() {
   }
 }
 
-// CONVERTIDOR MULTIMONEDA SIN FILA BOLÍVARES P2P
-function seleccionarMonedaBase(moneda, el) {
+function seleccionarMonedaBase(moneda, el, guardar = true) {
   monedaActiva = moneda;
   document.querySelectorAll('.curr-btn').forEach(function(b) { b.classList.remove('active'); });
   if (el) el.classList.add('active');
@@ -207,7 +313,7 @@ function seleccionarMonedaBase(moneda, el) {
   };
   document.getElementById('main-input-label').textContent = labels[moneda] || 'Monto:';
   calcularMultimoneda();
-  guardarDatos();
+  if (guardar) guardarDatos(true);
 }
 
 function calcularMultimoneda() {
@@ -260,7 +366,7 @@ function agregarHorarioNotificacion() {
     listaHorariosNotif.push(nuevo);
     listaHorariosNotif.sort();
     renderHorariosNotificaciones();
-    guardarDatos();
+    guardarDatos(true);
     mostrarToast("Alerta programada a las " + nuevo);
   }
 }
@@ -268,7 +374,7 @@ function agregarHorarioNotificacion() {
 function eliminarHorarioNotificacion(idx) {
   listaHorariosNotif.splice(idx, 1);
   renderHorariosNotificaciones();
-  guardarDatos();
+  guardarDatos(true);
 }
 
 function abrirModalInput(titulo, mostrarNombre, valorNombre, valorPct, callback) {
@@ -302,9 +408,9 @@ function cerrarModalInput() {
 function renderBancos() {
   var grid = document.getElementById('grid-bancos');
   grid.innerHTML = '';
-  listaBancos.forEach(function(b, idx) {
+  listaBancos.forEach(function(b) {
     var div = document.createElement('div');
-    div.className = 'bank-btn' + (idx === 0 ? ' active' : '');
+    div.className = 'bank-btn' + (b.nombre === bancoActivoNombre ? ' active' : '');
     
     var spNombre = document.createElement('span');
     spNombre.textContent = b.nombre;
@@ -324,8 +430,8 @@ function renderBancos() {
       abrirModalInput('Editar ' + b.nombre, false, b.nombre, b.comision, function(_, nuevaCom) {
         b.comision = nuevaCom;
         renderBancos();
-        guardarDatos();
-        mostrarToast("Comisión actualizada");
+        guardarDatos(true);
+        mostrarToast("Comisión sincronizada en la nube");
       });
     };
 
@@ -345,8 +451,8 @@ function renderBancos() {
     abrirModalInput('Nuevo Banco', true, '', 1.5, function(nombre, comision) {
       listaBancos.push({ id: Date.now(), nombre: nombre, comision: comision });
       renderBancos();
-      guardarDatos();
-      mostrarToast("Banco agregado");
+      guardarDatos(true);
+      mostrarToast("Banco guardado en la nube");
     });
   };
   grid.appendChild(btnAdd);
@@ -355,9 +461,9 @@ function renderBancos() {
 function renderBinance() {
   var grid = document.getElementById('grid-binance');
   grid.innerHTML = '';
-  listaBinance.forEach(function(bin, idx) {
+  listaBinance.forEach(function(bin) {
     var div = document.createElement('div');
-    div.className = 'binance-btn' + (idx === 0 ? ' active' : '');
+    div.className = 'binance-btn' + (bin.nombre === binanceActivoNombre ? ' active' : '');
     
     var spNombre = document.createElement('span');
     spNombre.textContent = bin.nombre;
@@ -377,8 +483,8 @@ function renderBinance() {
       abrirModalInput('Editar ' + bin.nombre, false, bin.nombre, bin.comision, function(_, nuevaCom) {
         bin.comision = nuevaCom;
         renderBinance();
-        guardarDatos();
-        mostrarToast("Tarifa actualizada");
+        guardarDatos(true);
+        mostrarToast("Tarifa sincronizada en la nube");
       });
     };
 
@@ -398,8 +504,8 @@ function renderBinance() {
     abrirModalInput('Nueva Modalidad P2P', true, '', 0.15, function(nombre, comision) {
       listaBinance.push({ id: Date.now(), nombre: nombre, comision: comision });
       renderBinance();
-      guardarDatos();
-      mostrarToast("Modalidad agregada");
+      guardarDatos(true);
+      mostrarToast("Modalidad guardada en la nube");
     });
   };
   grid.appendChild(btnAdd);
@@ -415,6 +521,7 @@ function seleccionarBancoComision(comision, nombreBanco, el) {
   actualizarResumenCanal();
   calcularComisiones(1);
   calcularArbitraje();
+  guardarDatos(true);
 }
 
 function seleccionarBinanceComision(comision, nombreBinance, el) {
@@ -427,6 +534,7 @@ function seleccionarBinanceComision(comision, nombreBinance, el) {
   actualizarResumenCanal();
   calcularComisiones(1);
   calcularArbitraje();
+  guardarDatos(true);
 }
 
 function actualizarResumenCanal() {
@@ -435,7 +543,7 @@ function actualizarResumenCanal() {
   document.getElementById('resumen-canal-activo').textContent = bancoActivoNombre + ' [' + pb + '%] + ' + binanceActivoNombre + ' [' + pbin + '%]';
 }
 
-function actualizarTasasManuales() {
+function actualizarTasasManuales(subirNube = true) {
   tasaBCV = parseFloat(document.getElementById('input-tasa-bcv').value) || 0;
   tasaUSDT = parseFloat(document.getElementById('input-tasa-usdt').value) || 0;
   tasaEUR = parseFloat(document.getElementById('input-tasa-eur').value) || 0;
@@ -459,7 +567,7 @@ function actualizarTasasManuales() {
   calcularMultimoneda();
   calcularArbitraje();
   calcularMetaNeta();
-  guardarDatos();
+  guardarDatos(subirNube);
 }
 
 function calcularVariacion(elementId, actual, previo) {
@@ -483,17 +591,27 @@ async function sincronizarDolarVzlaAPI(mostrarAlerta) {
   try {
     var response = await fetch('https://rates.dolarvzla.com/bcv/current.json');
     var data = await response.json();
+    var huboCambio = false;
+
     if (data.current) {
-      if (data.current.usd && data.current.usd !== tasaBCV) {
+      var nuevoUsd = parseFloat(data.current.usd);
+      if (nuevoUsd && Math.abs(nuevoUsd - tasaBCV) >= 0.01) {
         prevBCV = tasaBCV;
-        document.getElementById('input-tasa-bcv').value = data.current.usd;
+        document.getElementById('input-tasa-bcv').value = nuevoUsd;
+        huboCambio = true;
+        dispararNotificacion(
+          'Cambio en Dólar BCV Oficial',
+          'Nueva tasa: ' + formato(nuevoUsd) + ' Bs (Antes: ' + formato(prevBCV) + ' Bs)'
+        );
       }
-      if (data.current.eur && data.current.eur !== tasaEUR) {
+      var nuevoEur = parseFloat(data.current.eur);
+      if (nuevoEur && Math.abs(nuevoEur - tasaEUR) >= 0.01) {
         prevEUR = tasaEUR;
-        document.getElementById('input-tasa-eur').value = data.current.eur;
+        document.getElementById('input-tasa-eur').value = nuevoEur;
+        huboCambio = true;
       }
     }
-    actualizarTasasManuales();
+    actualizarTasasManuales(huboCambio);
     document.getElementById('sync-status').textContent = 'Tasas Oficiales Sincronizadas';
     if (mostrarAlerta) mostrarToast('Tasas BCV actualizadas');
   } catch (error) {
@@ -509,11 +627,17 @@ async function sincronizarBinanceP2P(mostrarAlerta) {
     
     if (binanceObj && binanceObj.promedio) {
       var nuevaTasa = parseFloat(binanceObj.promedio);
-      if (nuevaTasa !== tasaUSDT) {
+      var huboCambio = false;
+      if (nuevaTasa && Math.abs(nuevaTasa - tasaUSDT) >= 0.01) {
         prevUSDT = tasaUSDT;
         document.getElementById('input-tasa-usdt').value = nuevaTasa;
+        huboCambio = true;
+        dispararNotificacion(
+          'Cambio en USDT P2P',
+          'Nueva cotización: ' + formato(nuevaTasa) + ' Bs | BCV: ' + formato(tasaBCV) + ' Bs'
+        );
       }
-      actualizarTasasManuales();
+      actualizarTasasManuales(huboCambio);
       document.getElementById('sync-status').textContent = 'Mercado P2P Sincronizado';
       if (mostrarAlerta) mostrarToast('Tasa USDT P2P actualizada');
     }
@@ -652,8 +776,8 @@ function registrarOperacion() {
 
   document.getElementById('arb-nota').value = '';
   renderHistorial();
-  guardarDatos();
-  mostrarToast('Operación archivada en el libro');
+  guardarDatos(true);
+  mostrarToast('Operación guardada en tu Libro en la Nube');
 }
 
 function renderHistorial(filtro) {
@@ -753,9 +877,9 @@ function eliminarDesdeModal() {
   if (!itemSeleccionadoModal) return;
   historial = historial.filter(function(h) { return h.id !== itemSeleccionadoModal.id; });
   renderHistorial();
-  guardarDatos();
+  guardarDatos(true);
   cerrarModalDetalle(null);
-  mostrarToast("Registro eliminado");
+  mostrarToast("Registro eliminado de la nube");
 }
 
 function copiarDetalleWhatsApp() {
@@ -809,7 +933,7 @@ function limpiarTodo() {
   document.getElementById('com-porc-binance').value = '0.0';
   document.getElementById('com-porc-personal').value = '0';
   document.getElementById('arb-com-personal').value = '0';
-  actualizarTasasManuales();
+  actualizarTasasManuales(true);
   mostrarToast("Campos restablecidos");
 }
 
@@ -873,35 +997,35 @@ function solicitarPermisoNotificaciones() {
   }
   Notification.requestPermission().then(function(permission) {
     if (permission === "granted") {
-      document.getElementById("notif-status").textContent = "Alertas Push Activas";
-      mostrarToast("Notificaciones activadas");
-      if (navigator.serviceWorker.controller) {
-        navigator.serviceWorker.controller.postMessage({
-          type: 'NOTIFY',
-          title: 'Terminal Financiero PRO',
-          body: 'BCV: ' + formato(tasaBCV) + ' Bs | USDT: ' + formato(tasaUSDT) + ' Bs'
-        });
-      }
+      document.getElementById("notif-status").textContent = "Alertas Activas (Horarios y Cambios de Tasa)";
+      mostrarToast("Alertas activadas en segundo plano");
+      sincronizarConfigConServiceWorker();
+      dispararNotificacion(
+        'Alertas Financieras Activas',
+        'BCV: ' + formato(tasaBCV) + ' Bs | USDT P2P: ' + formato(tasaUSDT) + ' Bs'
+      );
     } else {
       document.getElementById("notif-status").textContent = "Permiso de alerta denegado";
     }
   });
 }
 
+var ultimaHoraNotificada = '';
 function iniciarRelojNotificaciones() {
   setInterval(function() {
     if (!("Notification" in window) || Notification.permission !== "granted") return;
     var now = new Date();
-    var currentTime = now.toTimeString().substring(0, 5);
+    var hh = String(now.getHours()).padStart(2, '0');
+    var mm = String(now.getMinutes()).padStart(2, '0');
+    var currentTime = hh + ':' + mm;
+    var keyHoy = now.toDateString() + '_' + currentTime;
 
-    if (listaHorariosNotif.includes(currentTime) && now.getSeconds() === 0) {
-      if (navigator.serviceWorker.controller) {
-        navigator.serviceWorker.controller.postMessage({
-          type: 'NOTIFY',
-          title: 'Reporte Programado de Divisas',
-          body: 'BCV: ' + formato(tasaBCV) + ' Bs | USDT P2P: ' + formato(tasaUSDT) + ' Bs'
-        });
-      }
+    if (listaHorariosNotif.includes(currentTime) && ultimaHoraNotificada !== keyHoy) {
+      ultimaHoraNotificada = keyHoy;
+      dispararNotificacion(
+        'Reporte Programado (' + currentTime + ')',
+        'BCV: ' + formato(tasaBCV) + ' Bs | USDT P2P: ' + formato(tasaUSDT) + ' Bs | EUR: ' + formato(tasaEUR) + ' Bs'
+      );
     }
-  }, 1000);
+  }, 15000);
 }
