@@ -3,453 +3,746 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self' https: data: blob: 'unsafe-inline' 'unsafe-eval';">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' https: data: 'unsafe-inline' 'unsafe-eval'; img-src 'self' https: data:; connect-src 'self' https: wss:;">
   <title>Terminal Financiero PRO</title>
-  <link rel="stylesheet" href="./styles.css">
-  <link rel="manifest" href="./manifest.json">
+  <link rel="manifest" href="manifest.json">
   <link rel="icon" type="image/png" href="./logo.png">
   <link rel="apple-touch-icon" href="./logo.png">
-  <meta name="theme-color" content="#070b0e">
+  <meta name="theme-color" content="#0b0e11">
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://d3js.org/d3.v7.min.js"></script>
 </head>
 <body oncontextmenu="return false;">
 
-  <!-- FONDO DE VELAS JAPONESAS Y TENDENCIA EN VIVO EN TODA LA APP -->
-  <svg class="app-bg-candles" viewBox="0 0 1000 600" preserveAspectRatio="xMidYMid slice">
+  <!-- FONDO DE VELAS CHINAS Y TENDENCIA EN VIVO EN TODA LA APP -->
+  <svg class="bg-stock-svg" viewBox="0 0 800 400" preserveAspectRatio="none">
     <defs>
-      <linearGradient id="trendAreaApp" x1="0%" y1="0%" x2="0%" y2="100%">
-        <stop offset="0%" stop-color="#00ff88" stop-opacity="0.18"/>
-        <stop offset="100%" stop-color="#00ff88" stop-opacity="0.0"/>
+      <linearGradient id="stockGradApp" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#00e676" stop-opacity="0.24"/>
+        <stop offset="100%" stop-color="#00e676" stop-opacity="0.0"/>
       </linearGradient>
     </defs>
     <g class="candles-group">
-      <line x1="80" y1="420" x2="80" y2="520" stroke="#00ff88" stroke-width="2"/>
-      <rect x="70" y="450" width="20" height="45" fill="#00ff88" rx="2"/>
-      <line x1="160" y1="390" x2="160" y2="490" stroke="#ff3b5c" stroke-width="2"/>
-      <rect x="150" y="410" width="20" height="50" fill="#ff3b5c" rx="2"/>
-      <line x1="240" y1="350" x2="240" y2="460" stroke="#00ff88" stroke-width="2"/>
-      <rect x="230" y="370" width="20" height="65" fill="#00ff88" rx="2"/>
-      <line x1="320" y1="310" x2="320" y2="410" stroke="#00ff88" stroke-width="2"/>
-      <rect x="310" y="330" width="20" height="55" fill="#00ff88" rx="2"/>
-      <line x1="400" y1="340" x2="400" y2="440" stroke="#ff3b5c" stroke-width="2"/>
-      <rect x="390" y="360" width="20" height="50" fill="#ff3b5c" rx="2"/>
-      <line x1="480" y1="260" x2="480" y2="380" stroke="#00ff88" stroke-width="2"/>
-      <rect x="470" y="280" width="20" height="75" fill="#00ff88" rx="2"/>
-      <line x1="560" y1="220" x2="560" y2="330" stroke="#00ff88" stroke-width="2"/>
-      <rect x="550" y="240" width="20" height="60" fill="#00ff88" rx="2"/>
-      <line x1="640" y1="250" x2="640" y2="350" stroke="#ff3b5c" stroke-width="2"/>
-      <rect x="630" y="270" width="20" height="45" fill="#ff3b5c" rx="2"/>
-      <line x1="720" y1="180" x2="720" y2="300" stroke="#00ff88" stroke-width="2"/>
-      <rect x="710" y="200" width="20" height="70" fill="#00ff88" rx="2"/>
-      <line x1="800" y1="140" x2="800" y2="250" stroke="#00ff88" stroke-width="2"/>
-      <rect x="790" y="160" width="20" height="60" fill="#00ff88" rx="2"/>
-      <line x1="880" y1="100" x2="880" y2="210" stroke="#00ff88" stroke-width="2"/>
-      <rect x="870" y="120" width="20" height="65" fill="#00ff88" rx="2"/>
+      <line x1="70" y1="170" x2="70" y2="290" stroke="#ff5252" stroke-width="2.5"/>
+      <rect x="62" y="195" width="16" height="60" fill="#ff5252" rx="3"/>
+      <line x1="150" y1="140" x2="150" y2="260" stroke="#00e676" stroke-width="2.5"/>
+      <rect x="142" y="160" width="16" height="70" fill="#00e676" rx="3"/>
+      <line x1="230" y1="110" x2="230" y2="230" stroke="#00e676" stroke-width="2.5"/>
+      <rect x="222" y="130" width="16" height="65" fill="#00e676" rx="3"/>
+      <line x1="310" y1="150" x2="310" y2="270" stroke="#ff5252" stroke-width="2.5"/>
+      <rect x="302" y="175" width="16" height="55" fill="#ff5252" rx="3"/>
+      <line x1="390" y1="90" x2="390" y2="220" stroke="#00e676" stroke-width="2.5"/>
+      <rect x="382" y="115" width="16" height="75" fill="#00e676" rx="3"/>
+      <line x1="470" y1="70" x2="470" y2="190" stroke="#00e676" stroke-width="2.5"/>
+      <rect x="462" y="90" width="16" height="65" fill="#00e676" rx="3"/>
+      <line x1="550" y1="105" x2="550" y2="210" stroke="#ff5252" stroke-width="2.5"/>
+      <rect x="542" y="125" width="16" height="50" fill="#ff5252" rx="3"/>
+      <line x1="630" y1="55" x2="630" y2="170" stroke="#00e676" stroke-width="2.5"/>
+      <rect x="622" y="75" width="16" height="70" fill="#00e676" rx="3"/>
+      <line x1="710" y1="35" x2="710" y2="140" stroke="#00e676" stroke-width="2.5"/>
+      <rect x="702" y="50" width="16" height="65" fill="#00e676" rx="3"/>
     </g>
-    <path class="trend-line-anim" d="M 0,520 Q 160,440 280,380 T 520,290 T 760,200 T 1000,110" fill="none" stroke="#00ff88" stroke-width="3"/>
-    <path d="M 0,520 Q 160,440 280,380 T 520,290 T 760,200 T 1000,110 L 1000,600 L 0,600 Z" fill="url(#trendAreaApp)"/>
+    <path class="stock-line-anim" d="M0,320 Q120,240 200,260 T380,170 T560,190 T800,70 L800,400 L0,400 Z" fill="url(#stockGradApp)"/>
+    <path class="stock-stroke-anim" d="M0,320 Q120,240 200,260 T380,170 T560,190 T800,70" fill="none" stroke="#00e676" stroke-width="3.5"/>
   </svg>
 
-  <!-- CONTENEDOR DE NOTIFICACIONES FLOTANTES (TOASTS) -->
+  <!-- CONTENEDOR DE NOTIFICACIONES TOAST -->
   <div id="toast-container" class="toast-container"></div>
 
-  <!-- MODAL DE DETALLE DE OPERACIÓN -->
-  <div id="modal-detalle" class="modal-overlay" style="display:none;">
-    <div class="modal-card">
-      <div class="modal-header">
-        <h3>📊 Detalle de Operación</h3>
-        <button type="button" id="btn-cerrar-modal" class="btn-close-modal">&times;</button>
+  <!-- MODAL PERSONALIZADO PARA BANCOS Y P2P -->
+  <div id="modal-input-custom" class="modal-overlay">
+    <div class="modal-content" style="max-width: 360px;">
+      <h3 id="modal-input-title" style="color:var(--neon-green); margin-bottom:14px; font-size:15px;">Configurar</h3>
+      <div id="modal-input-name-wrap">
+        <label>Nombre de la Entidad:</label>
+        <input type="text" id="modal-input-name" maxlength="25" placeholder="Ej. Mercantil">
       </div>
-      <div id="modal-body-content" class="modal-body"></div>
-      <div class="modal-footer">
-        <button type="button" id="btn-eliminar-item" class="btn-danger-outline">🗑️ Eliminar Registro</button>
-        <button type="button" id="btn-copiar-reporte" class="btn-neon-small">📋 Copiar Reporte</button>
+      <label>Comisión (%):</label>
+      <input type="number" id="modal-input-pct" step="0.01" placeholder="Ej. 1.5">
+      <div style="display:flex; gap:10px; margin-top:10px;">
+        <button class="btn-action" id="modal-input-save">Guardar</button>
+        <button class="btn-limpiar" style="margin-bottom:0;" onclick="cerrarModalInput()">Cancelar</button>
       </div>
     </div>
   </div>
 
-  <!-- PANTALLA DE BLOQUEO DE TERMINAL (LOGIN) -->
-  <div id="login-screen" class="login-overlay" style="display:none;">
-    <div class="login-box">
-      <img src="./logo.png" alt="Logo Oficial" class="login-logo">
-      <h2 class="login-title">TERMINAL FINANCIERO PRO</h2>
-      <form id="form-login" autocomplete="off">
-        <input type="email" id="login-email" class="login-input" placeholder="Correo electrónico" required>
-        <input type="password" id="login-pass" class="login-input" placeholder="Clave de acceso" required>
-        <div id="login-error" class="login-error" style="display:none;">Correo o clave de acceso incorrectos.</div>
-        <button type="submit" class="btn-login-submit">🔓 Desbloquear Terminal</button>
-      </form>
+  <!-- PANTALLA DE ENTRADA CON VELAS CHINAS EN VIVO + LOGO FLOTANTE GRANDE -->
+  <div id="auth-overlay" class="auth-overlay">
+    <svg class="bg-stock-login-svg" viewBox="0 0 800 400" preserveAspectRatio="none">
+      <defs>
+        <linearGradient id="stockGradLogin" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#00e676" stop-opacity="0.3"/>
+          <stop offset="100%" stop-color="#00e676" stop-opacity="0.0"/>
+        </linearGradient>
+      </defs>
+      <g class="candles-group">
+        <line x1="70" y1="170" x2="70" y2="290" stroke="#ff5252" stroke-width="2.5"/>
+        <rect x="62" y="195" width="16" height="60" fill="#ff5252" rx="3"/>
+        <line x1="150" y1="140" x2="150" y2="260" stroke="#00e676" stroke-width="2.5"/>
+        <rect x="142" y="160" width="16" height="70" fill="#00e676" rx="3"/>
+        <line x1="230" y1="110" x2="230" y2="230" stroke="#00e676" stroke-width="2.5"/>
+        <rect x="222" y="130" width="16" height="65" fill="#00e676" rx="3"/>
+        <line x1="310" y1="150" x2="310" y2="270" stroke="#ff5252" stroke-width="2.5"/>
+        <rect x="302" y="175" width="16" height="55" fill="#ff5252" rx="3"/>
+        <line x1="390" y1="90" x2="390" y2="220" stroke="#00e676" stroke-width="2.5"/>
+        <rect x="382" y="115" width="16" height="75" fill="#00e676" rx="3"/>
+        <line x1="470" y1="70" x2="470" y2="190" stroke="#00e676" stroke-width="2.5"/>
+        <rect x="462" y="90" width="16" height="65" fill="#00e676" rx="3"/>
+        <line x1="550" y1="105" x2="550" y2="210" stroke="#ff5252" stroke-width="2.5"/>
+        <rect x="542" y="125" width="16" height="50" fill="#ff5252" rx="3"/>
+        <line x1="630" y1="55" x2="630" y2="170" stroke="#00e676" stroke-width="2.5"/>
+        <rect x="622" y="75" width="16" height="70" fill="#00e676" rx="3"/>
+        <line x1="710" y1="35" x2="710" y2="140" stroke="#00e676" stroke-width="2.5"/>
+        <rect x="702" y="50" width="16" height="65" fill="#00e676" rx="3"/>
+      </g>
+      <path class="stock-line-anim" d="M0,320 Q120,240 200,260 T380,170 T560,190 T800,70 L800,400 L0,400 Z" fill="url(#stockGradLogin)"/>
+      <path class="stock-stroke-anim" d="M0,320 Q120,240 200,260 T380,170 T560,190 T800,70" fill="none" stroke="#00e676" stroke-width="3.5"/>
+    </svg>
+
+    <div class="auth-wrapper">
+      <div class="floating-hero-logo">
+        <img src="./logo.png" alt="Logo Oficial" class="hero-logo-img">
+      </div>
+
+      <div class="auth-card">
+        <h2 style="color:var(--neon-green); font-size:18px; margin-bottom:16px; letter-spacing:0.6px;">TERMINAL FINANCIERO PRO</h2>
+        
+        <input type="email" id="auth-email" placeholder="Correo electrónico" autocomplete="email">
+        <input type="password" id="auth-password" placeholder="Clave de acceso" autocomplete="current-password">
+        
+        <div id="auth-error" style="color:var(--danger-color); font-size:11px; margin-bottom:12px; display:none;"></div>
+        
+        <button class="btn-action" onclick="iniciarSesionFirebase()" style="display:flex; align-items:center; justify-content:center; gap:8px;">
+          <svg class="icon-svg" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          <span>Desbloquear Terminal</span>
+        </button>
+      </div>
     </div>
   </div>
 
-  <!-- APLICACIÓN PRINCIPAL -->
-  <div class="app-wrapper">
+  <!-- CABECERA (HEADER) RESTAURADA CON DISEÑO DE ONDA Y ESTADO DE NUBE INTERACTIVO -->
+  <header>
+    <svg class="header-ticker-svg" viewBox="0 0 600 60" preserveAspectRatio="none">
+      <path class="ticker-wave" d="M0,45 L50,38 L100,42 L150,25 L200,32 L250,18 L300,28 L350,12 L400,24 L450,15 L500,22 L550,8 L600,16" fill="none" stroke="var(--neon-green)" stroke-width="1.5" stroke-opacity="0.32"/>
+    </svg>
 
-    <!-- CABECERA Y CARRUSEL DE TASAS EN VIVO -->
-    <header class="top-header">
-      <div class="brand-bar">
-        <div class="brand-left">
-          <img src="./logo.png" alt="Logo" class="header-logo">
-          <div>
-            <h1 class="app-title">FINANCE <span>PRO</span></h1>
-            <p id="sync-status-text" class="sync-subtitle">Sincronizado en tiempo real</p>
-          </div>
-        </div>
-        <button type="button" id="btn-refresh-rates" class="btn-icon-refresh" title="Sincronizar tasas ahora">🔄</button>
-      </div>
-
-      <!-- TARJETAS DESLIZABLES DE TASAS -->
-      <div class="ticker-scroll">
-        <div class="ticker-card">
-          <div class="ticker-top">
-            <img src="./bcv.png" alt="BCV" class="ticker-icon">
-            <span class="ticker-name">BCV OFICIAL</span>
-          </div>
-          <div id="header-val-bcv" class="ticker-price">0,00 Bs</div>
-          <div id="header-diff-bcv" class="ticker-badge positive">Oficial</div>
-        </div>
-
-        <div class="ticker-card">
-          <div class="ticker-top">
-            <img src="./usdt.png" alt="USDT" class="ticker-icon">
-            <span class="ticker-name">USDT P2P</span>
-          </div>
-          <div id="header-val-usdt" class="ticker-price">0,00 Bs</div>
-          <div id="header-brecha" class="ticker-badge positive">Brecha: 0,00%</div>
-        </div>
-
-        <div class="ticker-card">
-          <div class="ticker-top">
-            <img src="./euro.png" alt="EUR" class="ticker-icon">
-            <span class="ticker-name">EURO BCV</span>
-          </div>
-          <div id="header-val-euro" class="ticker-price">0,00 Bs</div>
-          <div class="ticker-badge neutral">Oficial EUR</div>
-        </div>
-
-        <div class="ticker-card">
-          <div class="ticker-top">
-            <img src="./cop.png" alt="COP" class="ticker-icon">
-            <span class="ticker-name">PESO COP</span>
-          </div>
-          <div id="header-val-cop" class="ticker-price">0,00 COP</div>
-          <div class="ticker-badge neutral">Ref. Cambio</div>
+    <div style="display:flex; align-items:center; gap:12px; z-index:2; cursor:pointer;" onclick="forzarSincronizacionManual()" title="Toca para respaldar en la nube">
+      <img src="./logo.png" alt="Logo" class="header-logo-floating">
+      <div>
+        <div style="font-size:13px; font-weight:800; letter-spacing:0.6px; color:var(--text-color);">FINANCE PRO</div>
+        <div style="font-size:10px; color:var(--neon-green); display:flex; align-items:center; gap:5px;">
+          <span class="live-dot"></span> <span id="cloud-sync-indicator">CONECTANDO NUBE...</span>
         </div>
       </div>
+    </div>
 
-      <!-- BOTONES RÁPIDOS DE PANEL Y LIMPIEZA -->
-      <div class="quick-actions-bar">
-        <button type="button" id="btn-toggle-settings" class="btn-panel-toggle">
-          ⚙️ Panel de Tasas y Alertas Programadas
+    <div style="display:flex; gap:8px; align-items:center; z-index:2;">
+      <button id="btn-install-pwa" class="btn-install-app" style="display:none;" onclick="instalarPWA()">
+        <svg class="icon-svg-sm" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        <span>Descargar App</span>
+      </button>
+      <button class="theme-toggle-btn" onclick="cerrarSesionFirebase()" title="Cerrar Sesión" style="color:var(--danger-color);">
+        <svg class="icon-svg" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- CARRUSEL DE TASAS CON LAS MONEDAS PERSONALIZADAS EN MOVIMIENTO -->
+  <div class="slider-container" id="rate-slider">
+    <div class="card-rate">
+      <div class="card-rate-header">
+        <img src="./bcv.png" alt="BCV" class="coin-icon-anim">
+        <h3>BCV OFICIAL</h3>
+      </div>
+      <div class="price" id="rate-bcv">0,00 Bs</div>
+      <div class="trend neutral" id="var-bcv">Estable</div>
+    </div>
+
+    <div class="card-rate">
+      <div class="card-rate-header">
+        <img src="./usdt.png" alt="USDT" class="coin-icon-anim">
+        <h3>USDT P2P</h3>
+      </div>
+      <div class="price" id="rate-usdt">0,00 Bs</div>
+      <div class="trend neutral" id="var-usdt">Estable</div>
+    </div>
+
+    <div class="card-rate">
+      <div class="card-rate-header">
+        <svg class="icon-svg-sm" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        <h3>BRECHA CAMBIARIA</h3>
+      </div>
+      <div class="price" id="rate-spread" style="color:var(--neon-green);">0,00%</div>
+      <div class="trend" style="color:var(--text-muted);">Spread BCV/USDT</div>
+    </div>
+
+    <div class="card-rate">
+      <div class="card-rate-header">
+        <img src="./euro.png" alt="EUR" class="coin-icon-anim">
+        <h3>EURO BCV</h3>
+      </div>
+      <div class="price" id="rate-eur">0,00 Bs</div>
+      <div class="trend neutral" id="var-eur">Estable</div>
+    </div>
+
+    <div class="card-rate">
+      <div class="card-rate-header">
+        <img src="./cop.png" alt="COP" class="coin-icon-anim">
+        <h3>PESO COL (COP)</h3>
+      </div>
+      <div class="price" id="rate-cop">3.102,00</div>
+      <div class="trend" style="color:var(--text-muted);">Por 1 USD</div>
+    </div>
+  </div>
+
+  <div class="container">
+
+    <!-- PANEL DESPLEGABLE DE CONFIGURACIÓN Y ALERTAS -->
+    <details class="calc-section" style="cursor:pointer;">
+      <summary class="config-summary">
+        <svg class="icon-svg-sm" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        <span>Panel de Tasas y Alertas Programadas</span>
+      </summary>
+      <div style="margin-top:14px;">
+        
+        <div style="background:var(--input-bg); padding:12px; border-radius:10px; margin-bottom:12px; border:1px dashed var(--neon-green); text-align:center;">
+          <div id="sync-status" class="status-badge">Sincronizando mercado...</div>
+          <div style="display:flex; gap:8px; margin-top:10px;">
+            <button class="btn-action" style="font-size:11px; padding:9px; display:flex; align-items:center; justify-content:center; gap:6px;" onclick="sincronizarDolarVzlaAPI(true)">
+              <img src="./bcv.png" alt="BCV" style="width:16px; height:16px;">
+              <span>Sincronizar BCV</span>
+            </button>
+            <button class="btn-action" style="font-size:11px; padding:9px; background:#f0b90b; color:#000; display:flex; align-items:center; justify-content:center; gap:6px;" onclick="sincronizarBinanceP2P(true)">
+              <img src="./usdt.png" alt="P2P" style="width:16px; height:16px;">
+              <span>Sincronizar P2P</span>
+            </button>
+          </div>
+        </div>
+
+        <div style="display:flex; gap:10px;">
+          <div style="flex:1;">
+            <label>Tasa BCV (Bs):</label>
+            <input type="number" id="input-tasa-bcv" value="832.48" step="0.01" oninput="actualizarTasasManuales()">
+          </div>
+          <div style="flex:1;">
+            <label>Tasa USDT (Bs):</label>
+            <input type="number" id="input-tasa-usdt" value="885.10" step="0.01" oninput="actualizarTasasManuales()">
+          </div>
+        </div>
+        <div style="display:flex; gap:10px;">
+          <div style="flex:1;">
+            <label>Tasa Euro (€):</label>
+            <input type="number" id="input-tasa-eur" value="968.06" step="0.01" oninput="actualizarTasasManuales()">
+          </div>
+          <div style="flex:1;">
+            <label>Valor 1$ en COP:</label>
+            <input type="number" id="input-tasa-cop" value="3102.00" step="0.01" oninput="actualizarTasasManuales()">
+          </div>
+        </div>
+
+        <div style="background:var(--input-bg); padding:12px; border-radius:10px; margin-top:8px; border:1px solid var(--glass-border);">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <label style="color:var(--neon-green); font-weight:bold; margin-bottom:0; display:flex; align-items:center; gap:6px;">
+              <svg class="icon-svg-sm" viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+              <span>Alertas Push (Horarios + Cambios de Tasa)</span>
+            </label>
+            <button class="btn-toggle" onclick="solicitarPermisoNotificaciones()">Activar Alertas</button>
+          </div>
+          
+          <div style="display:flex; gap:8px; align-items:center; margin-bottom:10px;">
+            <input type="time" id="nuevo-horario" value="04:00" style="margin-bottom:0; flex:1;">
+            <button class="btn-action" style="font-size:11px; padding:10px 14px; width:auto;" onclick="agregarHorarioNotificacion()">+ Hora</button>
+          </div>
+
+          <div id="lista-horarios" style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:8px;"></div>
+          <div id="notif-status" style="font-size:10px; color:var(--text-muted); text-align:center;">Recibe alertas a tus horas elegidas y cada vez que cambie el dólar</div>
+        </div>
+
+      </div>
+    </details>
+
+    <button class="btn-limpiar" onclick="limpiarTodo()">
+      <svg class="icon-svg-sm" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+      <span>Restablecer Campos de Cálculo</span>
+    </button>
+
+    <!-- PESTAÑA 1: INICIO (CONVERTIDOR MULTIMONEDA INTERACTIVO) -->
+    <div id="tab-inicio" class="tab-content active">
+      <div class="calc-section desktop-layout">
+        <div class="calc-inputs-col">
+          <h2 style="text-align:left; display:flex; align-items:center; gap:8px;">
+            <svg class="icon-svg" viewBox="0 0 24 24"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+            <span>Convertidor Multimoneda</span>
+          </h2>
+          
+          <label>Selecciona tu Moneda de Entrada:</label>
+          <div class="currency-selector-grid" id="currency-buttons">
+            <button class="curr-btn active" data-curr="USD" onclick="seleccionarMonedaBase('USD', this)">
+              <img src="./bcv.png" alt="USD BCV" class="curr-coin-img">
+              <span>USD BCV</span>
+            </button>
+            <button class="curr-btn" data-curr="USDT" onclick="seleccionarMonedaBase('USDT', this)">
+              <img src="./usdt.png" alt="USDT P2P" class="curr-coin-img">
+              <span>USDT P2P</span>
+            </button>
+            <button class="curr-btn" data-curr="VES" onclick="seleccionarMonedaBase('VES', this)">
+              <img src="./bs.png" alt="BOLÍVARES" class="curr-coin-img">
+              <span>BOLÍVARES</span>
+            </button>
+            <button class="curr-btn" data-curr="EUR" onclick="seleccionarMonedaBase('EUR', this)">
+              <img src="./euro.png" alt="EUROS" class="curr-coin-img">
+              <span>EUROS</span>
+            </button>
+            <button class="curr-btn" data-curr="COP" onclick="seleccionarMonedaBase('COP', this)">
+              <img src="./cop.png" alt="PESOS COP" class="curr-coin-img">
+              <span>PESOS COP</span>
+            </button>
+          </div>
+
+          <label id="main-input-label" style="margin-top:8px;">Monto en Dólares BCV ($):</label>
+          <input type="number" id="main-amount-input" placeholder="Ingresa cantidad..." oninput="calcularMultimoneda()">
+        </div>
+        
+        <div class="calc-results-col">
+          <div class="result-box" id="multi-results-box">
+            <div class="result-line">
+              <span class="res-label-with-coin"><img src="./bs.png" class="res-coin-mini" alt="Bs"> En Bolívares:</span>
+              <div class="res-val-copy-group">
+                <strong id="res-multi-ves-bcv">0,00 Bs</strong>
+                <button type="button" class="btn-copy-inline" onclick="copiarMontoIndividual('res-multi-ves-bcv')" title="Copiar Bolívares">
+                  <svg class="icon-svg-sm" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                </button>
+              </div>
+            </div>
+            <div class="result-line">
+              <span class="res-label-with-coin"><img src="./bcv.png" class="res-coin-mini" alt="USD"> En Dólares:</span>
+              <div class="res-val-copy-group">
+                <strong id="res-multi-usd">0,00 $</strong>
+                <button type="button" class="btn-copy-inline" onclick="copiarMontoIndividual('res-multi-usd')" title="Copiar Dólares">
+                  <svg class="icon-svg-sm" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                </button>
+              </div>
+            </div>
+            <div class="result-line">
+              <span class="res-label-with-coin"><img src="./usdt.png" class="res-coin-mini" alt="USDT"> En USDT:</span>
+              <div class="res-val-copy-group">
+                <strong id="res-multi-usdt" style="color:var(--neon-green);">0,00 USDT</strong>
+                <button type="button" class="btn-copy-inline" onclick="copiarMontoIndividual('res-multi-usdt')" title="Copiar USDT">
+                  <svg class="icon-svg-sm" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                </button>
+              </div>
+            </div>
+            <div class="result-line">
+              <span class="res-label-with-coin"><img src="./euro.png" class="res-coin-mini" alt="EUR"> En Euros:</span>
+              <div class="res-val-copy-group">
+                <strong id="res-multi-eur">0,00 €</strong>
+                <button type="button" class="btn-copy-inline" onclick="copiarMontoIndividual('res-multi-eur')" title="Copiar Euros">
+                  <svg class="icon-svg-sm" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                </button>
+              </div>
+            </div>
+            <div class="result-line">
+              <span class="res-label-with-coin"><img src="./cop.png" class="res-coin-mini" alt="COP"> En Pesos COP:</span>
+              <div class="res-val-copy-group">
+                <strong id="res-multi-cop">0,00 COP</strong>
+                <button type="button" class="btn-copy-inline" onclick="copiarMontoIndividual('res-multi-cop')" title="Copiar Pesos COP">
+                  <svg class="icon-svg-sm" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                </button>
+              </div>
+            </div>
+            <button class="btn-copy" onclick="copiarTexto('resumen-rapido')">
+              <svg class="icon-svg-sm" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              <span>Copiar Cotización Completa</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="calc-section">
+        <h2 style="display:flex; align-items:center; justify-content:center; gap:8px;">
+          <svg class="icon-svg" viewBox="0 0 24 24"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+          <span>Curva de Rendimiento BCV vs USDT</span>
+        </h2>
+        <div id="chart-container" style="width:100%; height:180px;"></div>
+      </div>
+    </div>
+
+    <!-- PESTAÑA 2: COMISIONES, IGTF Y META NETA -->
+    <div id="tab-comisiones" class="tab-content">
+      <div class="calc-section desktop-layout">
+        <div class="calc-inputs-col">
+          <h2>Impuesto IGTF (3%) y Bancos (0.3%)</h2>
+          <label>Monto en Divisas para IGTF ($):</label>
+          <input type="number" id="igtf-monto-usd" placeholder="Ej. 100" oninput="calcularIGTF()">
+          
+          <label>Monto en Bs para Pago Móvil / Transf (0.3%):</label>
+          <input type="number" id="transf-monto-bs" placeholder="Ej. 50000" oninput="calcularComisionTransf()">
+        </div>
+        <div class="calc-results-col">
+          <div class="result-box">
+            <div class="result-line"><span>IGTF 3% recargo ($):</span> <strong id="igtf-res-3pct">0,00 $</strong></div>
+            <div class="result-line"><span>Total con IGTF ($ / Bs):</span> <strong id="igtf-res-total" style="color:var(--neon-green);">0,00 $ / 0,00 Bs</strong></div>
+            <div class="result-line" style="border-top:1px dashed var(--glass-border); padding-top:8px;"><span>Comisión Bancaria (0.3%):</span> <strong id="transf-res-comision" style="color:var(--danger-color);">0,00 Bs</strong></div>
+            <div class="result-line"><span>Total Debitado en Cuenta:</span> <strong id="transf-res-total" style="color:var(--neon-green);">0,00 Bs</strong></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="calc-section desktop-layout">
+        <div class="calc-inputs-col">
+          <h2>Objetivo Neto (Meta de Recepción)</h2>
+          <label>Monto Exacto Neto que deseas recibir ($):</label>
+          <input type="number" id="meta-usd" placeholder="Ej. 50" oninput="calcularMetaNeta()">
+        </div>
+        
+        <div class="calc-results-col">
+          <div class="result-box">
+            <div class="result-line">
+              <span class="res-label-with-coin"><img src="./bs.png" class="res-coin-mini" alt="Bs"> Debes Transferir en Bs:</span>
+              <strong id="meta-res-bs" style="color:var(--neon-green);">0,00 Bs</strong>
+            </div>
+            <button class="btn-copy" onclick="copiarTexto('meta-neta')">
+              <svg class="icon-svg-sm" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              <span>Copiar Monto a Enviar</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="calc-section">
+        <h2>Gestor de Comisiones Bancarias y P2P</h2>
+        
+        <button class="accordion-btn" onclick="toggleAccordion('acc-bancos')">
+          <span style="display:flex; align-items:center; gap:6px;">
+            <svg class="icon-svg-sm" viewBox="0 0 24 24"><polygon points="12 2 20 7 4 7"/><line x1="6" y1="18" x2="6" y2="11"/><line x1="12" y1="18" x2="12" y2="11"/><line x1="18" y1="18" x2="18" y2="11"/><line x1="3" y1="22" x2="21" y2="22"/></svg>
+            <span>Entidad Bancaria</span>
+          </span>
+          <span id="label-banco-activo">BdV (2.5%)</span>
         </button>
-        <button type="button" id="btn-reset-all" class="btn-reset-fields">
-          🗑️ Restablecer Campos de Cálculo
+        <div id="acc-bancos" class="accordion-content">
+          <div class="bank-grid" id="grid-bancos"></div>
+        </div>
+
+        <button class="accordion-btn" onclick="toggleAccordion('acc-binance')">
+          <span style="display:flex; align-items:center; gap:6px;">
+            <img src="./usdt.png" class="res-coin-mini" alt="P2P">
+            <span>Modalidad Binance P2P</span>
+          </span>
+          <span id="label-binance-activo">Maker (0%)</span>
         </button>
+        <div id="acc-binance" class="accordion-content">
+          <div class="bank-grid" id="grid-binance"></div>
+        </div>
+
+        <div style="display:flex; gap:10px; margin-top: 10px;">
+          <div style="flex:1;">
+            <label>Com. Banco (%):</label>
+            <input type="number" id="com-porc-banco" value="2.5" oninput="calcularComisiones(1)">
+          </div>
+          <div style="flex:1;">
+            <label>Com. Binance (%):</label>
+            <input type="number" id="com-porc-binance" value="0.0" oninput="calcularComisiones(1)">
+          </div>
+        </div>
+
+        <div style="background: rgba(0, 230, 118, 0.08); border: 1px solid var(--neon-green); padding: 12px; border-radius: 12px; margin-top: 10px;">
+          <label style="color: var(--neon-green); font-weight: bold;">Margen / Comisión Personal (%):</label>
+          <input type="number" id="com-porc-personal" value="0" placeholder="Ej. 10, 30 o -30%" oninput="calcularComisiones(1)" style="margin-bottom:0;">
+        </div>
+
+        <div class="result-box">
+          <label>Envías desde el Banco ($):</label>
+          <input type="number" id="com-envio-usd" placeholder="Ej. 100" oninput="calcularComisiones(1)">
+          <label>Recibes Neto en USDT:</label>
+          <input type="number" id="com-recibo-usdt" placeholder="Ej. 97.5" oninput="calcularComisiones(2)">
+          
+          <div class="result-line" style="margin-top:10px; border-top:1px dashed var(--glass-border); padding-top:8px;">
+            <span class="res-label-with-coin"><img src="./usdt.png" class="res-coin-mini" alt="USDT"> Liquidación Final con Margen:</span>
+            <strong id="com-res-total-personal" style="color:var(--neon-green); font-size:16px;">0,00 USDT</strong>
+          </div>
+        </div>
       </div>
+    </div>
 
-      <!-- PANEL DESPLEGABLE DE TASAS MANUALES Y HORARIOS DE ALERTA -->
-      <div id="settings-drawer" class="settings-drawer" style="display:none;">
-        <h3 class="drawer-title">⚙️ Calibración de Tasas</h3>
-        <div class="rates-grid-inputs">
-          <div class="input-field-box">
-            <label>Dólar BCV (Bs)</label>
-            <input type="number" id="tasa-bcv" step="0.01" placeholder="0.00">
+    <!-- PESTAÑA 3: ARBITRAJE E HISTORIAL DETALLADO SINCRONIZADO EN FIREBASE -->
+    <div id="tab-arbitraje" class="tab-content">
+      <div class="calc-section desktop-layout">
+        <div class="calc-inputs-col">
+          <h2>Simulador de Arbitraje Financiero</h2>
+          
+          <div style="background:var(--input-bg); border:1px solid var(--neon-green); padding:10px; border-radius:8px; margin-bottom:12px;">
+            <div style="font-size:10px; color:var(--text-muted); text-transform:uppercase;">Ruta de Liquidez Activa:</div>
+            <div id="resumen-canal-activo" style="font-size:12px; font-weight:bold; color:var(--neon-green); margin-top:2px;">BdV [2.5%] + Maker [0%]</div>
           </div>
-          <div class="input-field-box">
-            <label>USDT P2P (Bs)</label>
-            <input type="number" id="tasa-usdt" step="0.01" placeholder="0.00">
+
+          <label>Capital Inicial en Banco (Bs):</label>
+          <input type="number" id="arb-bs-inicial" placeholder="Ej. 128000" oninput="calcularArbitraje()">
+          
+          <div style="display:flex; gap:10px;">
+            <div style="flex:1;">
+              <label>Tasa Compra Banco:</label>
+              <input type="number" id="arb-tasa-compra" value="832.48" oninput="calcularArbitraje()">
+            </div>
+            <div style="flex:1;">
+              <label>Tasa Venta P2P:</label>
+              <input type="number" id="arb-tasa-venta" value="885.10" oninput="calcularArbitraje()">
+            </div>
           </div>
-          <div class="input-field-box">
-            <label>Euro BCV (Bs)</label>
-            <input type="number" id="tasa-euro" step="0.01" placeholder="0.00">
+
+          <div style="background: rgba(0, 230, 118, 0.08); border: 1px solid var(--neon-green); padding: 10px; border-radius: 10px; margin-bottom: 12px;">
+            <label style="color: var(--neon-green); font-weight: bold;">Recargo / Comisión Personal (%):</label>
+            <input type="number" id="arb-com-personal" value="0" placeholder="Ej. -30 o +30%" oninput="calcularArbitraje()" style="margin-bottom:0;">
           </div>
-          <div class="input-field-box">
-            <label>Peso COP (por 1$)</label>
-            <input type="number" id="tasa-cop" step="1" placeholder="4200">
-          </div>
-        </div>
 
-        <div class="sync-buttons-row">
-          <button type="button" id="btn-sync-bcv" class="btn-neon-outline">🔄 Sincronizar BCV</button>
-          <button type="button" id="btn-sync-usdt" class="btn-neon-outline">🔄 Sincronizar P2P</button>
-        </div>
+          <label style="margin-top:10px;">Concepto / Cliente:</label>
+          <input type="text" id="arb-nota" maxlength="80" placeholder="Ej. Operación Cliente Mayorista">
 
-        <hr class="drawer-divider">
-
-        <h3 class="drawer-title">🔔 Alertas Push Programadas</h3>
-        <p class="drawer-hint">Recibe un reporte automático con BCV, USDT y Brecha en las horas elegidas:</p>
-        <div class="alarm-add-row">
-          <input type="time" id="input-nueva-hora" class="time-picker-input" value="09:00">
-          <button type="button" id="btn-agregar-hora" class="btn-add-time">+ Hora</button>
-          <button type="button" id="btn-activar-alertas" class="btn-enable-push">🔔 Activar Alertas</button>
-        </div>
-        <div id="lista-horarios-chips" class="chips-container"></div>
-      </div>
-    </header>
-
-    <!-- SECCIÓN 1: CONVERTIDOR MULTIMONEDA -->
-    <main id="tab-divisas" class="tab-section active">
-      <div class="glass-card">
-        <div class="card-title-row">
-          <h2>🔄 Convertidor Multimoneda</h2>
-        </div>
-
-        <p class="section-sublabel">Selecciona tu Moneda de Entrada:</p>
-        <div class="currency-selector-grid">
-          <button type="button" class="currency-pill active" data-curr="bcv">
-            <img src="./bcv.png" alt="USD BCV">
-            <span>USD BCV</span>
+          <button class="btn-action" style="margin-top:5px; display:flex; align-items:center; justify-content:center; gap:8px;" onclick="registrarOperacion()">
+            <svg class="icon-svg-sm" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+            <span>Guardar en Libro Contable (Nube)</span>
           </button>
-          <button type="button" class="currency-pill" data-curr="usdt">
-            <img src="./usdt.png" alt="USDT P2P">
-            <span>USDT P2P</span>
-          </button>
-          <button type="button" class="currency-pill" data-curr="bs">
-            <img src="./bs.png" alt="BOLÍVARES">
-            <span>BOLÍVARES</span>
-          </button>
-          <button type="button" class="currency-pill" data-curr="euro">
-            <img src="./euro.png" alt="EUROS">
-            <span>EUROS</span>
-          </button>
-          <button type="button" class="currency-pill" data-curr="cop">
-            <img src="./cop.png" alt="PESOS COP">
-            <span>PESOS COP</span>
-          </button>
         </div>
 
-        <div class="main-input-wrapper">
-          <label id="label-monto-entrada" for="monto-divisa-entrada">Monto en Dólares (BCV) ($):</label>
-          <input type="number" id="monto-divisa-entrada" class="huge-number-input" step="any" placeholder="Ingresa cantidad...">
-        </div>
-
-        <!-- LISTA DE RESULTADOS CON NOMBRES CORTOS Y BOTÓN COPIAR -->
-        <div class="conversion-results-list">
-          <div class="conv-row" id="row-res-bs">
-            <div class="conv-left">
-              <img src="./bs.png" alt="Bs" class="conv-icon">
-              <span class="conv-label">Bolívares (BCV):</span>
+        <div class="calc-results-col">
+          <div class="result-box">
+            <div class="result-line"><span>Punto de Equilibrio:</span> <strong id="arb-res-breakeven">0,00 Bs</strong></div>
+            <div class="result-line"><span>Retorno Bruto Venta:</span> <strong id="arb-res-final">0,00 Bs</strong></div>
+            <div class="result-line"><span>Deducible Comisiones (Bs):</span> <strong id="arb-res-comision-bs" style="color:var(--danger-color);">0,00 Bs</strong></div>
+            <div class="result-line">
+              <span class="res-label-with-coin"><img src="./bs.png" class="res-coin-mini" alt="Bs"> Ganancia Neta Base (Bs):</span>
+              <strong id="arb-res-ganancia-bs">0,00 Bs</strong>
             </div>
-            <div class="conv-right">
-              <strong id="res-val-bs" class="conv-amount">0,00 Bs</strong>
-              <button type="button" class="btn-copy-val" data-copy-target="res-val-bs" title="Copiar monto">📋</button>
+            <div class="result-line">
+              <span class="res-label-with-coin"><img src="./bcv.png" class="res-coin-mini" alt="USD"> Ganancia Neta Base (USD):</span>
+              <strong id="arb-res-ganancia-usd-bcv">0,00 $</strong>
             </div>
-          </div>
-
-          <div class="conv-row" id="row-res-bcv">
-            <div class="conv-left">
-              <img src="./bcv.png" alt="USD BCV" class="conv-icon">
-              <span class="conv-label">Dólares (BCV):</span>
+            <div class="result-line">
+              <span class="res-label-with-coin"><img src="./usdt.png" class="res-coin-mini" alt="USDT"> Ganancia Neta Base (USDT):</span>
+              <strong id="arb-res-ganancia-usdt">0,00 USDT</strong>
             </div>
-            <div class="conv-right">
-              <strong id="res-val-bcv" class="conv-amount">0,00 $</strong>
-              <button type="button" class="btn-copy-val" data-copy-target="res-val-bcv" title="Copiar monto">📋</button>
-            </div>
-          </div>
-
-          <div class="conv-row" id="row-res-usdt">
-            <div class="conv-left">
-              <img src="./usdt.png" alt="USDT" class="conv-icon">
-              <span class="conv-label">USDT (P2P):</span>
-            </div>
-            <div class="conv-right">
-              <strong id="res-val-usdt" class="conv-amount highlight-green">0,00 USDT</strong>
-              <button type="button" class="btn-copy-val" data-copy-target="res-val-usdt" title="Copiar monto">📋</button>
-            </div>
-          </div>
-
-          <div class="conv-row" id="row-res-euro">
-            <div class="conv-left">
-              <img src="./euro.png" alt="EUR" class="conv-icon">
-              <span class="conv-label">Euros (BCV):</span>
-            </div>
-            <div class="conv-right">
-              <strong id="res-val-euro" class="conv-amount">0,00 €</strong>
-              <button type="button" class="btn-copy-val" data-copy-target="res-val-euro" title="Copiar monto">📋</button>
-            </div>
-          </div>
-
-          <div class="conv-row" id="row-res-cop">
-            <div class="conv-left">
-              <img src="./cop.png" alt="COP" class="conv-icon">
-              <span class="conv-label">Pesos (COP):</span>
-            </div>
-            <div class="conv-right">
-              <strong id="res-val-cop" class="conv-amount">0,00 COP</strong>
-              <button type="button" class="btn-copy-val" data-copy-target="res-val-cop" title="Copiar monto">📋</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- RESUMEN DE BRECHA CAMBIARIA -->
-        <div class="brecha-summary-box">
-          <div class="brecha-line">
-            <span>Diferencia BCV vs USDT:</span>
-            <strong id="info-brecha-bs">0,00 Bs ($0,00)</strong>
-          </div>
-          <div class="brecha-line">
-            <span>Porcentaje de Brecha:</span>
-            <strong id="info-brecha-pct" class="highlight-green">0,00%</strong>
-          </div>
-        </div>
-      </div>
-    </main>
-
-    <!-- SECCIÓN 2: CALCULADORA DE COMISIONES -->
-    <main id="tab-comisiones" class="tab-section" style="display:none;">
-      <div class="glass-card">
-        <div class="card-title-row">
-          <h2>％ Calculadora de Comisiones</h2>
-        </div>
-
-        <p class="section-sublabel">Plataforma o Método:</p>
-        <div class="preset-chips-row">
-          <button type="button" class="preset-chip active" data-fee="0.3">Pago Móvil (0.3%)</button>
-          <button type="button" class="preset-chip" data-fee="1.5">Zinli / Wally (1.5%)</button>
-          <button type="button" class="preset-chip" data-fee="0.1">Binance P2P (0.1%)</button>
-          <button type="button" class="preset-chip" data-fee="5.4">PayPal (5.4% + $0.30)</button>
-        </div>
-
-        <div class="rates-grid-inputs" style="margin-top:12px;">
-          <div class="input-field-box">
-            <label>Monto Base</label>
-            <input type="number" id="com-monto" step="any" placeholder="Ej: 100">
-          </div>
-          <div class="input-field-box">
-            <label>Comisión (%)</label>
-            <input type="number" id="com-pct" step="0.01" value="0.3">
-          </div>
-          <div class="input-field-box">
-            <label>Cargo Fijo ($ o Bs)</label>
-            <input type="number" id="com-fijo" step="0.01" value="0">
-          </div>
-        </div>
-
-        <div class="conversion-results-list" style="margin-top:15px;">
-          <div class="conv-row">
-            <span class="conv-label">Comisión Descontada:</span>
-            <div class="conv-right">
-              <strong id="com-res-descuento" class="conv-amount highlight-red">0,00</strong>
-              <button type="button" class="btn-copy-val" data-copy-target="com-res-descuento">📋</button>
-            </div>
-          </div>
-          <div class="conv-row">
-            <span class="conv-label">Monto Neto a Recibir:</span>
-            <div class="conv-right">
-              <strong id="com-res-neto" class="conv-amount highlight-green">0,00</strong>
-              <button type="button" class="btn-copy-val" data-copy-target="com-res-neto">📋</button>
-            </div>
-          </div>
-          <div class="conv-row">
-            <span class="conv-label">Debes Enviar (para que lleguen exactos):</span>
-            <div class="conv-right">
-              <strong id="com-res-enviar" class="conv-amount">0,00</strong>
-              <button type="button" class="btn-copy-val" data-copy-target="com-res-enviar">📋</button>
+            <div class="result-line" style="border-top:1px dashed var(--glass-border); padding-top:8px; margin-top:8px;">
+              <span class="res-label-with-coin"><img src="./usdt.png" class="res-coin-mini" alt="USDT"> Liquidación Final + Comisión:</span>
+              <strong id="arb-res-ganancia-usd" style="color:var(--neon-green); font-size:15px;">0,00 USDT</strong>
             </div>
           </div>
         </div>
       </div>
-    </main>
 
-    <!-- SECCIÓN 3: SIMULADOR DE ARBITRAJE Y P2P -->
-    <main id="tab-arbitraje" class="tab-section" style="display:none;">
-      <div class="glass-card">
-        <div class="card-title-row">
-          <h2>📈 Simulador de Arbitraje P2P</h2>
-        </div>
-
-        <div class="rates-grid-inputs">
-          <div class="input-field-box">
-            <label>Canal Operativo</label>
-            <select id="arb-canal" class="select-dark">
-              <option value="Binance P2P (USDT)">Binance P2P (USDT)</option>
-              <option value="Intervención Bancaria (BCV)">Intervención Bancaria (BCV)</option>
-              <option value="Efectivo / Mesa de Cambio">Efectivo / Mesa de Cambio</option>
-            </select>
-          </div>
-          <div class="input-field-box">
-            <label>Capital Inicial (Bs)</label>
-            <input type="number" id="arb-capital-bs" step="any" placeholder="Ej: 10000">
-          </div>
-          <div class="input-field-box">
-            <label>Tasa de Compra (Bs/$)</label>
-            <input type="number" id="arb-tasa-compra" step="0.01" placeholder="Ej: 879.12">
-          </div>
-          <div class="input-field-box">
-            <label>Tasa de Venta (Bs/USDT)</label>
-            <input type="number" id="arb-tasa-venta" step="0.01" placeholder="Ej: 1006.73">
-          </div>
-          <div class="input-field-box">
-            <label>Comisión Total (%)</label>
-            <input type="number" id="arb-comision-pct" step="0.01" value="0.3">
-          </div>
-        </div>
-
-        <div class="conversion-results-list" style="margin-top:14px;">
-          <div class="conv-row">
-            <span class="conv-label">Punto de Equilibrio:</span>
-            <strong id="arb-res-equilibrio" class="conv-amount">0,00 Bs</strong>
-          </div>
-          <div class="conv-row">
-            <span class="conv-label">Retorno Bruto (Bs):</span>
-            <strong id="arb-res-retorno" class="conv-amount">0,00 Bs</strong>
-          </div>
-          <div class="conv-row">
-            <span class="conv-label">Deducible Comisiones:</span>
-            <strong id="arb-res-comision" class="conv-amount highlight-red">0,00 Bs</strong>
-          </div>
-          <div class="conv-row">
-            <span class="conv-label">Ganancia Neta (Bs):</span>
-            <div class="conv-right">
-              <strong id="arb-res-ganancia-bs" class="conv-amount highlight-green">0,00 Bs</strong>
-              <button type="button" class="btn-copy-val" data-copy-target="arb-res-ganancia-bs">📋</button>
-            </div>
-          </div>
-          <div class="conv-row">
-            <span class="conv-label">Ganancia Neta (USDT):</span>
-            <div class="conv-right">
-              <strong id="arb-res-ganancia-usdt" class="conv-amount highlight-green">0,00 USDT</strong>
-              <button type="button" class="btn-copy-val" data-copy-target="arb-res-ganancia-usdt">📋</button>
-            </div>
-          </div>
-          <div class="conv-row">
-            <span class="conv-label">Rentabilidad (ROI):</span>
-            <strong id="arb-res-roi" class="conv-amount highlight-green">0,00%</strong>
-          </div>
-        </div>
-
-        <button type="button" id="btn-guardar-operacion" class="btn-save-operation">
-          💾 Guardar Operación en Historial
-        </button>
+      <div class="calc-section">
+        <h2>Libro Contable Sincronizado en la Nube</h2>
+        <input type="text" id="buscar-historial" maxlength="50" placeholder="Buscar por canal o nota..." oninput="filtrarHistorial()">
+        
+        <div id="historial-cards-container" style="display:flex; flex-direction:column; gap:10px; margin-top:12px;"></div>
       </div>
-
-      <!-- HISTORIAL DE OPERACIONES GUARDADAS -->
-      <div class="glass-card" style="margin-top:16px;">
-        <div class="card-title-row">
-          <h3>🗂️ Historial de Operaciones</h3>
-          <button type="button" id="btn-limpiar-historial" class="btn-clear-hist">Borrar Todo</button>
-        </div>
-        <div id="historial-lista" class="historial-container"></div>
-      </div>
-    </main>
+    </div>
 
   </div>
 
-  <!-- BARRA DE NAVEGACIÓN INFERIOR -->
-  <nav class="bottom-nav">
-    <button type="button" class="nav-item active" data-tab="tab-divisas">
-      <span class="nav-icon">💵</span>
-      <span class="nav-text">Divisas</span>
-    </button>
-    <button type="button" class="nav-item" data-tab="tab-comisiones">
-      <span class="nav-icon">％</span>
-      <span class="nav-text">Comisiones</span>
-    </button>
-    <button type="button" class="nav-item" data-tab="tab-arbitraje">
-      <span class="nav-icon">📊</span>
-      <span class="nav-text">Arbitraje</span>
-    </button>
+  <!-- MODAL DETALLE DE OPERACIÓN -->
+  <div id="modal-detalle" class="modal-overlay" onclick="cerrarModalDetalle(event)">
+    <div class="modal-content" onclick="event.stopPropagation()">
+      <button class="modal-close" onclick="cerrarModalDetalle(null)">✕</button>
+      <h3 style="color:var(--neon-green); margin-bottom:12px; font-size:15px; display:flex; align-items:center; gap:8px;">
+        <svg class="icon-svg" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        <span>Comprobante de Operación</span>
+      </h3>
+      
+      <div id="modal-body-content" class="result-box" style="margin-top:0;"></div>
+
+      <div style="display:flex; gap:8px; margin-top:14px;">
+        <button class="btn-action" style="background:#25D366; color:#fff; display:flex; align-items:center; justify-content:center; gap:8px;" onclick="copiarDetalleWhatsApp()">
+          <svg class="icon-svg-sm" viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+          <span>Copiar para WhatsApp</span>
+        </button>
+        <button class="btn-action" style="background:var(--danger-color); color:#fff; max-width:60px; display:flex; align-items:center; justify-content:center;" onclick="eliminarDesdeModal()">
+          <svg class="icon-svg-sm" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- BARRA DE NAVEGACIÓN INFERIOR 100% SVG -->
+  <nav class="nav-bar">
+    <div class="nav-item active" onclick="switchTab('inicio', this)">
+      <svg class="nav-svg" viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="16" y1="14" x2="16" y2="18"/><path d="M16 10h.01"/><path d="M12 10h.01"/><path d="M8 10h.01"/><path d="M12 14h.01"/><path d="M8 14h.01"/><path d="M12 18h.01"/><path d="M8 18h.01"/></svg>
+      <span>Divisas</span>
+    </div>
+    <div class="nav-item" onclick="switchTab('comisiones', this)">
+      <svg class="nav-svg" viewBox="0 0 24 24"><line x1="19" y1="5" x2="5" y2="19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg>
+      <span>Comisiones</span>
+    </div>
+    <div class="nav-item" onclick="switchTab('arbitraje', this)">
+      <svg class="nav-svg" viewBox="0 0 24 24"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
+      <span>Arbitraje</span>
+    </div>
   </nav>
 
-  <script src="./app.js"></script>
+  <!-- FIREBASE V10 SDK VINCULADO POR CORREO ELECTRÓNICO EN FINANZAS_USUARIOS -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
+    import { 
+      getAuth, 
+      setPersistence, 
+      browserLocalPersistence, 
+      signInWithEmailAndPassword, 
+      signOut, 
+      onAuthStateChanged 
+    } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
+    import { 
+      getFirestore, 
+      doc, 
+      setDoc, 
+      onSnapshot 
+    } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAsBnD8C_E_o5oHzmw7bWmKrmW2JAjdcaU",
+      authDomain: "geomercado-9d642.firebaseapp.com",
+      projectId: "geomercado-9d642",
+      storageBucket: "geomercado-9d642.firebasestorage.app",
+      messagingSenderId: "521126834575",
+      appId: "1:521126834575:web:4c847dec3dd57d9a439bfa"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    let unsubscribeCloud = null;
+    let currentDocId = null;
+    let currentUserUid = null;
+    let pendingCloudPayload = null;
+
+    setPersistence(auth, browserLocalPersistence).catch(() => {});
+
+    // GUARDAR DIRECTAMENTE EN EL DOCUMENTO CON EL CORREO DEL USUARIO (EJ: davidmoraleserror@gmail.com)
+    window.guardarDatosEnFirebase = async function(payload, mostrarConfirmacion = false) {
+      if (!currentDocId) {
+        pendingCloudPayload = payload;
+        return;
+      }
+      try {
+        const userRef = doc(db, 'finanzas_usuarios', currentDocId);
+        await setDoc(userRef, {
+          ...payload,
+          email: currentDocId,
+          uid: currentUserUid || '',
+          actualizadoEn: new Date().toISOString()
+        }, { merge: true });
+
+        const ind = document.getElementById('cloud-sync-indicator');
+        if (ind) ind.textContent = "NUBE SINCRONIZADA";
+        if (mostrarConfirmacion && window.mostrarToast) {
+          window.mostrarToast("Sincronizado con " + currentDocId);
+        }
+      } catch (e) {
+        console.error("Error guardando en Firestore:", e);
+        const ind = document.getElementById('cloud-sync-indicator');
+        if (ind) ind.textContent = "ERROR PERMISOS NUBE";
+      }
+    };
+
+    window.forzarSincronizacionManual = function() {
+      if (window.obtenerPayloadActual) {
+        window.guardarDatosEnFirebase(window.obtenerPayloadActual(), true);
+      }
+    };
+
+    function iniciarEscuchaNube(user) {
+      currentDocId = (user.email || user.uid).toLowerCase().trim();
+      currentUserUid = user.uid;
+
+      if (unsubscribeCloud) unsubscribeCloud();
+      const userRef = doc(db, 'finanzas_usuarios', currentDocId);
+
+      if (pendingCloudPayload) {
+        const temp = pendingCloudPayload;
+        pendingCloudPayload = null;
+        window.guardarDatosEnFirebase(temp, false);
+      }
+
+      unsubscribeCloud = onSnapshot(userRef, (snap) => {
+        if (snap.exists()) {
+          const cloudData = snap.data();
+          if (window.aplicarDatosDesdeNube) {
+            window.aplicarDatosDesdeNube(cloudData);
+          }
+          const ind = document.getElementById('cloud-sync-indicator');
+          if (ind) ind.textContent = "NUBE SINCRONIZADA";
+        } else {
+          if (window.obtenerPayloadActual) {
+            window.guardarDatosEnFirebase(window.obtenerPayloadActual(), false);
+          }
+        }
+      }, (err) => {
+        console.error("Error lectura Firestore:", err);
+      });
+    }
+
+    window.iniciarSesionFirebase = async function() {
+      const email = document.getElementById('auth-email').value.trim();
+      const pass = document.getElementById('auth-password').value;
+      const errDiv = document.getElementById('auth-error');
+      errDiv.style.display = 'none';
+
+      if (!email || !pass) {
+        errDiv.textContent = "Ingrese su correo y clave de acceso.";
+        errDiv.style.display = 'block';
+        return;
+      }
+
+      try {
+        const cred = await signInWithEmailAndPassword(auth, email, pass);
+        localStorage.setItem('user_session_active', 'true');
+        document.getElementById('auth-overlay').style.display = 'none';
+        iniciarEscuchaNube(cred.user);
+        if (window.mostrarToast) window.mostrarToast("Cuenta sincronizada en la nube");
+      } catch (err) {
+        errDiv.textContent = "Correo o clave de acceso incorrectos.";
+        errDiv.style.display = 'block';
+      }
+    };
+
+    window.cerrarSesionFirebase = async function() {
+      if (unsubscribeCloud) unsubscribeCloud();
+      currentDocId = null;
+      currentUserUid = null;
+      localStorage.removeItem('user_session_active');
+      await signOut(auth);
+      document.getElementById('auth-overlay').style.display = 'flex';
+    };
+
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        localStorage.setItem('user_session_active', 'true');
+        document.getElementById('auth-overlay').style.display = 'none';
+        iniciarEscuchaNube(user);
+      } else {
+        localStorage.removeItem('user_session_active');
+        document.getElementById('auth-overlay').style.display = 'flex';
+      }
+    });
+
+    // BOTÓN DE INSTALACIÓN PWA
+    let deferredPrompt;
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      const btnInstall = document.getElementById('btn-install-pwa');
+      if (btnInstall) btnInstall.style.display = 'flex';
+    });
+
+    window.instalarPWA = async function() {
+      if (!deferredPrompt) return;
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === 'accepted') {
+        document.getElementById('btn-install-pwa').style.display = 'none';
+      }
+      deferredPrompt = null;
+    };
+  </script>
+
+  <script src="app.js"></script>
 </body>
 </html>
