@@ -129,8 +129,8 @@ function dispararNotificacion(titulo, cuerpo) {
     navigator.serviceWorker.ready.then(function(reg) {
       reg.showNotification(titulo, {
         body: cuerpo,
-        icon: 
-        badge: './logo.png'
+        icon:
+        badge:
         vibrate: [250, 120, 250],
         renotify: true,
         tag: 'finance-pro-alert'
