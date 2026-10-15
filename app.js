@@ -1029,8 +1029,33 @@ function iniciarRelojNotificaciones() {
     }
   }, 15000);
 }
-// === RESPALDO OFFLINE AUTOMÁTICO EN EL TELÉFONO ===
+// === RESPALDO OFFLINE AUTOMÁTICO Y AVISO VISUAL ===
 const CAMPOS_TASAS = ['tasa-bcv', 'tasa-usdt', 'tasa-euro', 'tasa-cop'];
+
+function mostrarAvisoEstadoRed(esOffline) {
+  let banner = document.getElementById('offline-toast-banner');
+  if (!banner) {
+    banner = document.createElement('div');
+    banner.id = 'offline-toast-banner';
+    banner.style.cssText = 'position:fixed; top:12px; left:50%; transform:translateX(-50%); z-index:99999; padding:10px 18px; border-radius:30px; font-size:12px; font-weight:bold; color:#fff; box-shadow:0 4px 15px rgba(0,0,0,0.6); transition:opacity 0.3s ease; text-align:center; width:max-content; max-width:90%; pointer-events:none;';
+    document.body.appendChild(banner);
+  }
+
+  if (esOffline) {
+    banner.style.background = 'linear-gradient(135deg, #d97706, #b45309)';
+    banner.style.border = '1px solid #fbbf24';
+    banner.textContent = '⚡ Modo Offline Activo • Usando últimas tasas guardadas';
+    banner.style.opacity = '1';
+  } else {
+    banner.style.background = 'linear-gradient(135deg, #059669, #047857)';
+    banner.style.border = '1px solid #34d399';
+    banner.textContent = '✅ Conexión restaurada • Tasas sincronizadas';
+    banner.style.opacity = '1';
+    setTimeout(() => {
+      if (banner) banner.style.opacity = '0';
+    }, 3500);
+  }
+}
 
 function guardarRespaldoLocal() {
   const respaldo = {};
@@ -1054,11 +1079,13 @@ function cargarRespaldoLocal() {
   } catch (e) {}
 }
 
-// Al iniciar la app, carga de inmediato la última tasa guardada en el celular
 window.addEventListener('DOMContentLoaded', () => {
   cargarRespaldoLocal();
 
-  // Guarda automáticamente cada vez que cambie o se sincronice una tasa
+  if (!navigator.onLine) {
+    mostrarAvisoEstadoRed(true);
+  }
+
   CAMPOS_TASAS.forEach((id) => {
     const el = document.getElementById(id);
     if (el) {
@@ -1067,8 +1094,17 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Guarda también cuando presiones los botones de Sincronizar BCV o P2P
   setTimeout(guardarRespaldoLocal, 3500);
+});
+
+window.addEventListener('offline', () => {
+  cargarRespaldoLocal();
+  mostrarAvisoEstadoRed(true);
+});
+
+window.addEventListener('online', () => {
+  mostrarAvisoEstadoRed(false);
+  activarSincronizacionFondo();
 });
 
 // === MOTOR DE ACTIVACIÓN DE NOTIFICACIONES ===
@@ -1076,29 +1112,24 @@ async function activarSincronizacionFondo() {
   if (!('serviceWorker' in navigator)) return;
   const reg = await navigator.serviceWorker.ready;
 
-  // Registra Periodic Sync en el navegador
   if ('periodicSync' in reg) {
     try {
       await reg.periodicSync.register('check-rates-sync', {
-        minInterval: 15 * 60 * 1000 // 15 minutos
+        minInterval: 15 * 60 * 1000
       });
     } catch (e) {}
   }
 
-  // Registra Background Sync estándar
   if ('sync' in reg) {
     try {
       await reg.sync.register('check-rates-sync');
     } catch (e) {}
   }
 
-  // Pide al Service Worker verificar las horas de inmediato
   if (reg.active) {
     reg.active.postMessage({ type: 'CHECK_NOW' });
   }
 }
 
-// Verifica el reloj cada 25 segundos y despierta al Service Worker al desbloquear o usar el teléfono
 setInterval(activarSincronizacionFondo, 25000);
 document.addEventListener('visibilitychange', activarSincronizacionFondo);
-window.addEventListener('online', activarSincronizacionFondo);
