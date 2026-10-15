@@ -1029,3 +1029,76 @@ function iniciarRelojNotificaciones() {
     }
   }, 15000);
 }
+// === RESPALDO OFFLINE AUTOMÁTICO EN EL TELÉFONO ===
+const CAMPOS_TASAS = ['tasa-bcv', 'tasa-usdt', 'tasa-euro', 'tasa-cop'];
+
+function guardarRespaldoLocal() {
+  const respaldo = {};
+  CAMPOS_TASAS.forEach((id) => {
+    const el = document.getElementById(id);
+    if (el && el.value) respaldo[id] = el.value;
+  });
+  localStorage.setItem('finance_pro_tasas_offline', JSON.stringify(respaldo));
+}
+
+function cargarRespaldoLocal() {
+  try {
+    const guardado = JSON.parse(localStorage.getItem('finance_pro_tasas_offline') || '{}');
+    CAMPOS_TASAS.forEach((id) => {
+      const el = document.getElementById(id);
+      if (el && (!el.value || parseFloat(el.value) === 0) && guardado[id]) {
+        el.value = guardado[id];
+        el.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+    });
+  } catch (e) {}
+}
+
+// Al iniciar la app, carga de inmediato la última tasa guardada en el celular
+window.addEventListener('DOMContentLoaded', () => {
+  cargarRespaldoLocal();
+
+  // Guarda automáticamente cada vez que cambie o se sincronice una tasa
+  CAMPOS_TASAS.forEach((id) => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.addEventListener('input', guardarRespaldoLocal);
+      el.addEventListener('change', guardarRespaldoLocal);
+    }
+  });
+
+  // Guarda también cuando presiones los botones de Sincronizar BCV o P2P
+  setTimeout(guardarRespaldoLocal, 3500);
+});
+
+// === MOTOR DE ACTIVACIÓN DE NOTIFICACIONES ===
+async function activarSincronizacionFondo() {
+  if (!('serviceWorker' in navigator)) return;
+  const reg = await navigator.serviceWorker.ready;
+
+  // Registra Periodic Sync en el navegador
+  if ('periodicSync' in reg) {
+    try {
+      await reg.periodicSync.register('check-rates-sync', {
+        minInterval: 15 * 60 * 1000 // 15 minutos
+      });
+    } catch (e) {}
+  }
+
+  // Registra Background Sync estándar
+  if ('sync' in reg) {
+    try {
+      await reg.sync.register('check-rates-sync');
+    } catch (e) {}
+  }
+
+  // Pide al Service Worker verificar las horas de inmediato
+  if (reg.active) {
+    reg.active.postMessage({ type: 'CHECK_NOW' });
+  }
+}
+
+// Verifica el reloj cada 25 segundos y despierta al Service Worker al desbloquear o usar el teléfono
+setInterval(activarSincronizacionFondo, 25000);
+document.addEventListener('visibilitychange', activarSincronizacionFondo);
+window.addEventListener('online', activarSincronizacionFondo);
