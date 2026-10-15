@@ -1,14 +1,27 @@
 :root {
   --bg-color: #0b0e11;
-  --glass-bg: rgba(18, 22, 28, 0.84);
+  --glass-bg: rgba(24, 29, 35, 0.75);
   --glass-border: rgba(255, 255, 255, 0.1);
-  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
-  --input-bg: rgba(11, 14, 17, 0.75);
+  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.45);
+  --input-bg: rgba(11, 14, 17, 0.65);
   --neon-green: #00e676;
-  --neon-green-glow: rgba(0, 230, 118, 0.3);
-  --text-color: #f8fafc;
+  --neon-green-glow: rgba(0, 230, 118, 0.28);
+  --text-color: #f1f5f9;
   --text-muted: #94a3b8;
   --danger-color: #ff5252;
+}
+
+[data-theme="light"] {
+  --bg-color: #f1f5f9;
+  --glass-bg: rgba(255, 255, 255, 0.9);
+  --glass-border: rgba(15, 23, 42, 0.1);
+  --glass-shadow: 0 8px 24px 0 rgba(15, 23, 42, 0.08);
+  --input-bg: #ffffff;
+  --neon-green: #00a854;
+  --neon-green-glow: rgba(0, 168, 84, 0.2);
+  --text-color: #0f172a;
+  --text-muted: #64748b;
+  --danger-color: #e11d48;
 }
 
 * { 
@@ -31,15 +44,81 @@ body {
   overflow-x: hidden;
 }
 
-/* FONDO BURSÁTIL ANIMADO UNIFICADO */
-.bg-stock-svg {
+/* ICONOS SVG GENERALES */
+.icon-svg {
+  width: 18px;
+  height: 18px;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
+}
+
+.icon-svg-sm {
+  width: 14px;
+  height: 14px;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
+}
+
+/* TOAST NOTIFICATIONS */
+.toast-container {
   position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 2000;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: none;
+}
+
+.toast-msg {
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  border-left: 4px solid var(--neon-green);
+  border-top: 1px solid var(--glass-border);
+  border-right: 1px solid var(--glass-border);
+  border-bottom: 1px solid var(--glass-border);
+  color: var(--text-color);
+  padding: 10px 16px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  box-shadow: var(--glass-shadow);
+  animation: slideInToast 0.25s ease forwards;
+}
+
+@keyframes slideInToast {
+  from { opacity: 0; transform: translateX(40px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+/* PORTADA LOGIN Y ANIMACIÓN BURSÁTIL */
+.auth-overlay {
+  position: fixed;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: #080a0d;
+  z-index: 999;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  overflow: hidden;
+}
+
+.bg-stock-svg {
+  position: absolute;
   bottom: 0;
   left: 0;
   width: 100%;
-  height: 70vh;
-  z-index: 0;
-  opacity: 0.35;
+  height: 65%;
+  z-index: 1;
+  opacity: 0.45;
   pointer-events: none;
 }
 
@@ -62,53 +141,10 @@ body {
   100% { transform: translateY(-8px); }
 }
 
-/* TOASTS */
-.toast-container {
-  position: fixed;
-  top: 16px;
-  right: 16px;
-  z-index: 2000;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  pointer-events: none;
-}
-
-.toast-msg {
-  background: var(--glass-bg);
-  backdrop-filter: blur(12px);
-  border-left: 4px solid var(--neon-green);
-  border: 1px solid var(--glass-border);
-  color: var(--text-color);
-  padding: 10px 16px;
-  border-radius: 10px;
-  font-size: 12px;
-  font-weight: 600;
-  box-shadow: var(--glass-shadow);
-  animation: slideInToast 0.25s ease forwards;
-}
-
-@keyframes slideInToast {
-  from { opacity: 0; transform: translateX(40px); }
-  to { opacity: 1; transform: translateX(0); }
-}
-
-/* AUTH OVERLAY */
-.auth-overlay {
-  position: fixed;
-  top: 0; left: 0; width: 100%; height: 100%;
-  background: #080a0d;
-  z-index: 999;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 20px;
-}
-
 .auth-card {
   position: relative;
   z-index: 2;
-  background: var(--glass-bg);
+  background: rgba(18, 22, 28, 0.88);
   backdrop-filter: blur(16px);
   border: 1px solid var(--glass-border);
   box-shadow: var(--glass-shadow);
@@ -119,7 +155,7 @@ body {
   text-align: center;
 }
 
-/* HEADER */
+/* HEADER CON FONDO BURSÁTIL */
 header {
   position: sticky;
   top: 0;
@@ -131,6 +167,15 @@ header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  overflow: hidden;
+}
+
+.header-ticker-svg {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+  z-index: 1;
 }
 
 .live-dot {
@@ -181,20 +226,6 @@ header {
   100% { transform: rotate(360deg); }
 }
 
-.btn-install-app {
-  background: rgba(0, 230, 118, 0.15);
-  border: 1px solid var(--neon-green);
-  color: var(--neon-green);
-  padding: 6px 12px;
-  border-radius: 12px;
-  font-size: 11px;
-  font-weight: 700;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-
 .theme-toggle-btn {
   background: var(--input-bg);
   border: 1px solid var(--glass-border);
@@ -209,8 +240,6 @@ header {
 
 /* CARRUSEL DE TASAS */
 .slider-container {
-  position: relative;
-  z-index: 2;
   display: flex;
   gap: 12px;
   overflow-x: auto;
@@ -250,8 +279,6 @@ header {
 
 /* CONTENEDOR PRINCIPAL */
 .container {
-  position: relative;
-  z-index: 2;
   padding: 12px 15px;
   max-width: 1020px;
   margin: 0 auto;
@@ -279,7 +306,7 @@ header {
 }
 .config-summary::-webkit-details-marker { display: none; }
 
-/* BOTONERA MULTIMONEDA CON IMAGEN URL */
+/* BOTONERA INTERACTIVA DE MONEDAS */
 .currency-selector-grid {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
@@ -302,16 +329,17 @@ header {
   font-weight: 700;
 }
 
-.curr-img-btn {
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  object-fit: cover;
+.curr-svg {
+  width: 20px;
+  height: 20px;
+  stroke: currentColor;
+  stroke-width: 2;
+  fill: none;
 }
 
 .curr-btn.active, .curr-btn:hover {
   border-color: var(--neon-green);
-  background: rgba(0, 230, 118, 0.16);
+  background: rgba(0, 230, 118, 0.14);
   color: var(--text-color);
   transform: translateY(-2px);
   box-shadow: 0 4px 12px var(--neon-green-glow);
@@ -496,7 +524,7 @@ input:focus, select:focus {
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* NAVEGACIÓN INFERIOR */
+/* BARRA DE NAVEGACIÓN INFERIOR SVG */
 .nav-bar {
   position: fixed;
   bottom: 0;
@@ -506,7 +534,7 @@ input:focus, select:focus {
   border-top: 1px solid var(--glass-border);
   display: flex;
   justify-content: space-around;
-  padding: 12px 0;
+  padding: 10px 0;
   z-index: 100;
 }
 
@@ -518,6 +546,16 @@ input:focus, select:focus {
   flex-direction: column;
   align-items: center;
   gap: 4px;
+}
+
+.nav-svg {
+  width: 20px;
+  height: 20px;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
 }
 
 .nav-item.active {
@@ -532,8 +570,8 @@ input:focus, select:focus {
   display: none;
   position: fixed;
   top: 0; left: 0; width: 100%; height: 100%;
-  background: rgba(0,0,0,0.78);
-  backdrop-filter: blur(6px);
+  background: rgba(0,0,0,0.75);
+  backdrop-filter: blur(5px);
   z-index: 300;
   justify-content: center;
   align-items: center;
@@ -570,5 +608,3 @@ input:focus, select:focus {
   cursor: pointer;
 }
 .history-card:hover { border-color: var(--neon-green); }
-
-.icon-svg-sm { width: 14px; height: 14px; stroke: currentColor; stroke-width: 2; fill: none; }
