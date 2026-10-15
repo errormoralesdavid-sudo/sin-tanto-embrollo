@@ -1,4 +1,4 @@
-const CACHE_NAME = 'finance-pro-v7';
+const CACHE_NAME = 'finance-pro-v8';
 const LOGO_URL = 'https://files.catbox.moe/gdnebi.png';
 const ASSETS = [
   './',
@@ -15,7 +15,6 @@ const ASSETS = [
   'https://d3js.org/d3.v7.min.js'
 ];
 
-// BASE DE DATOS INDEXEDDB EN SERVICE WORKER PARA GUARDAR HORARIOS Y TASAS EN SEGUNDO PLANO
 function abrirDB() {
   return new Promise((resolve, reject) => {
     const req = indexedDB.open('FinanceProSWDB', 1);
@@ -57,7 +56,6 @@ function formatoSW(num) {
   return val.toFixed(2).replace('.', ',');
 }
 
-// VERIFICACIÓN AUTÓNOMA DE TASAS Y HORARIOS AUNQUE LA APP ESTÉ CERRADA O PANTALLA APAGADA
 async function verificarMercadoYHorariosEnFondo() {
   const cfg = (await leerConfigSW()) || {
     horarios: ['04:00', '09:00', '13:00'],
@@ -68,16 +66,13 @@ async function verificarMercadoYHorariosEnFondo() {
 
   let bcvActual = cfg.tasaBCV || 0;
   let usdtActual = cfg.tasaUSDT || 0;
-  let cambioDetectado = false;
 
-  // 1. Consultar BCV Oficial en segundo plano
   try {
     const rBcv = await fetch('https://rates.dolarvzla.com/bcv/current.json', { cache: 'no-store' });
     const dBcv = await rBcv.json();
     if (dBcv && dBcv.current && dBcv.current.usd) {
       const nuevoBcv = parseFloat(dBcv.current.usd);
       if (bcvActual > 0 && Math.abs(nuevoBcv - bcvActual) >= 0.01) {
-        cambioDetectado = true;
         await self.registration.showNotification('Actualización Dólar BCV Oficial', {
           body: `Nueva tasa BCV: ${formatoSW(nuevoBcv)} Bs (Anterior: ${formatoSW(bcvActual)} Bs)`,
           icon: LOGO_URL,
@@ -92,7 +87,6 @@ async function verificarMercadoYHorariosEnFondo() {
     }
   } catch (e) {}
 
-  // 2. Consultar USDT P2P en segundo plano
   try {
     const rP2p = await fetch('https://ve.dolarapi.com/v1/dolares', { cache: 'no-store' });
     const dP2p = await rP2p.json();
@@ -100,7 +94,6 @@ async function verificarMercadoYHorariosEnFondo() {
     if (binObj && binObj.promedio) {
       const nuevoUsdt = parseFloat(binObj.promedio);
       if (usdtActual > 0 && Math.abs(nuevoUsdt - usdtActual) >= 0.01) {
-        cambioDetectado = true;
         await self.registration.showNotification('Movimiento en USDT P2P', {
           body: `Nueva tasa P2P: ${formatoSW(nuevoUsdt)} Bs | BCV: ${formatoSW(bcvActual)} Bs`,
           icon: LOGO_URL,
@@ -115,7 +108,6 @@ async function verificarMercadoYHorariosEnFondo() {
     }
   } catch (e) {}
 
-  // 3. Revisar si la hora actual coincide con los horarios programados del usuario
   const now = new Date();
   const hh = String(now.getHours()).padStart(2, '0');
   const mm = String(now.getMinutes()).padStart(2, '0');
@@ -160,15 +152,22 @@ self.addEventListener('activate', (e) => {
   self.clients.claim();
 });
 
+// ESTRATEGIA NETWORK-FIRST PARA ARCHIVOS PROPIOS (SIEMPRE TOMA LA ÚLTIMA VERSIÓN DE GITHUB)
 self.addEventListener('fetch', (e) => {
+  if (e.request.method !== 'GET') return;
   e.respondWith(
-    caches.match(e.request).then((cachedResponse) => {
-      return cachedResponse || fetch(e.request).catch(() => caches.match('./index.html'));
-    })
+    fetch(e.request)
+      .then((networkResponse) => {
+        if (networkResponse && networkResponse.status === 200 && e.request.url.startsWith(self.location.origin)) {
+          const clone = networkResponse.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(e.request, clone));
+        }
+        return networkResponse;
+      })
+      .catch(() => caches.match(e.request).then((cached) => cached || caches.match('./index.html')))
   );
 });
 
-// EVENTOS DE BACKGROUND SYNC Y PERIODIC SYNC (PANTALLA APAGADA / APP CERRADA)
 self.addEventListener('periodicsync', (e) => {
   if (e.tag === 'check-rates-and-alarms') {
     e.waitUntil(verificarMercadoYHorariosEnFondo());
@@ -215,7 +214,6 @@ self.addEventListener('notificationclick', (e) => {
   );
 });
 
-// Timer interno de respaldo mientras el Service Worker permanezca despierto
 setInterval(() => {
   verificarMercadoYHorariosEnFondo();
 }, 30000);
