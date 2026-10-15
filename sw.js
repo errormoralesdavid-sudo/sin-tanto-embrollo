@@ -1,12 +1,17 @@
-const CACHE_NAME = 'finance-pro-v9';
-const API_CACHE_NAME = 'finance-pro-api-v1';
+const CACHE_NAME = 'finance-pro-v10';
+const API_CACHE_NAME = 'finance-pro-api-v2';
 
-const ASSETS = [
+// Archivos principales que NUNCA pueden fallar
+const CORE_ASSETS = [
   './',
   './index.html',
   './styles.css',
   './app.js',
-  './manifest.json',
+  './manifest.json'
+];
+
+// Imágenes externas (se guardan por separado para no bloquear la instalación)
+const EXTERNAL_ASSETS = [
   'https://files.catbox.moe/ww1gm2.png',
   'https://files.catbox.moe/b9c6p4.png',
   'https://files.catbox.moe/jqe1g1.png',
@@ -14,7 +19,6 @@ const ASSETS = [
   'https://files.catbox.moe/t7m6z1.png'
 ];
 
-// Base de datos interna (IndexedDB) compartida entre la App y el Service Worker
 function abrirDB() {
   return new Promise((resolve, reject) => {
     const req = indexedDB.open('FinanceProDB', 1);
@@ -58,7 +62,6 @@ function formatNum(n) {
   return num.toFixed(2).replace('.', ',');
 }
 
-// Motor de verificación de tasas y horarios
 async function verificarMercadoYAlertarEnFondo() {
   const cfg = (await leerConfigDB()) || {
     horarios: ['09:00', '13:00', '18:00'],
@@ -70,7 +73,6 @@ async function verificarMercadoYAlertarEnFondo() {
   let bcvActual = parseFloat(cfg.tasaBCV) || 0;
   let usdtActual = parseFloat(cfg.tasaUSDT) || 0;
 
-  // 1. Consultar BCV (si hay internet)
   try {
     const res1 = await fetch('https://ve.dolarapi.com/v1/dolares/oficial', { cache: 'no-store' });
     if (res1.ok) {
@@ -93,7 +95,6 @@ async function verificarMercadoYAlertarEnFondo() {
     }
   } catch (e) {}
 
-  // 2. Consultar Paralelo / USDT (si hay internet)
   try {
     const res2 = await fetch('https://ve.dolarapi.com/v1/dolares/paralelo', { cache: 'no-store' });
     if (res2.ok) {
@@ -116,7 +117,6 @@ async function verificarMercadoYAlertarEnFondo() {
     }
   } catch (e) {}
 
-  // 3. Revisar alertas por horario programado
   const now = new Date();
   const hh = String(now.getHours()).padStart(2, '0');
   const mm = String(now.getMinutes()).padStart(2, '0');
@@ -146,15 +146,21 @@ async function verificarMercadoYAlertarEnFondo() {
   await guardarConfigEnDB(cfg);
 }
 
-// Instalación y guardado de archivos para modo Offline
+// Instalación blindada: guarda primero los archivos vitales y luego intenta las imágenes sin romper nada
 self.addEventListener('install', (e) => {
   self.skipWaiting();
   e.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS))
+    caches.open(CACHE_NAME).then(async (cache) => {
+      await cache.addAll(CORE_ASSETS);
+      EXTERNAL_ASSETS.forEach((url) => {
+        fetch(url, { mode: 'no-cors' })
+          .then((res) => cache.put(url, res))
+          .catch(() => {});
+      });
+    })
   );
 });
 
-// Limpieza de cachés antiguas
 self.addEventListener('activate', (e) => {
   e.waitUntil(
     caches.keys().then((keys) =>
@@ -168,13 +174,13 @@ self.addEventListener('activate', (e) => {
   self.clients.claim();
 });
 
-// Interceptor de red (Permite que la app funcione sin internet)
+// Interceptor de red a prueba de Modo Avión y recargas manuales
 self.addEventListener('fetch', (e) => {
   if (e.request.method !== 'GET') return;
 
   const url = new URL(e.request.url);
 
-  // Si es la API del dólar: busca en internet, guarda copia, y si no hay señal usa la copia
+  // 1. Si es consulta de tasas a la API
   if (url.hostname.includes('dolarapi.com')) {
     e.respondWith(
       fetch(e.request)
@@ -188,12 +194,33 @@ self.addEventListener('fetch', (e) => {
     return;
   }
 
-  // Para los archivos de tu aplicación: carga instantánea desde caché y actualiza en fondo
+  // 2. Si el usuario abre la app o desliza hacia abajo para recargar (navegación)
+  if (e.request.mode === 'navigate') {
+    e.respondWith(
+      fetch(e.request)
+        .then((res) => {
+          const clone = res.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put('./index.html', clone));
+          return res;
+        })
+        .catch(async () => {
+          const cache = await caches.open(CACHE_NAME);
+          return (
+            (await cache.match('./index.html')) ||
+            (await cache.match('./')) ||
+            (await caches.match(e.request))
+          );
+        })
+    );
+    return;
+  }
+
+  // 3. Resto de archivos (CSS, JS, Iconos)
   e.respondWith(
-    caches.match(e.request).then((cachedResponse) => {
+    caches.match(e.request, { ignoreSearch: true }).then((cachedResponse) => {
       const fetchPromise = fetch(e.request)
         .then((networkResponse) => {
-          if (networkResponse && networkResponse.status === 200) {
+          if (networkResponse && (networkResponse.status === 200 || networkResponse.type === 'opaque')) {
             const clone = networkResponse.clone();
             caches.open(CACHE_NAME).then((cache) => cache.put(e.request, clone));
           }
@@ -206,7 +233,6 @@ self.addEventListener('fetch', (e) => {
   );
 });
 
-// Eventos de sincronización en segundo plano
 self.addEventListener('periodicsync', (e) => {
   if (e.tag === 'check-rates-sync') {
     e.waitUntil(verificarMercadoYAlertarEnFondo());
@@ -219,7 +245,6 @@ self.addEventListener('sync', (e) => {
   }
 });
 
-// Comunicación directa con app.js
 self.addEventListener('message', (e) => {
   if (!e.data) return;
 
@@ -233,17 +258,6 @@ self.addEventListener('message', (e) => {
 
   if (e.data.type === 'CHECK_NOW') {
     e.waitUntil(verificarMercadoYAlertarEnFondo());
-  }
-
-  if (e.data.type === 'SHOW_NOTIFICATION') {
-    self.registration.showNotification(e.data.title, {
-      body: e.data.body,
-      icon: 'https://files.catbox.moe/ww1gm2.png',
-      badge: 'https://files.catbox.moe/ww1gm2.png',
-      vibrate: [200, 100, 200],
-      requireInteraction: true,
-      tag: e.data.tag || 'finance-pro-direct'
-    });
   }
 });
 
