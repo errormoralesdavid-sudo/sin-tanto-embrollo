@@ -52,16 +52,23 @@ body {
   fill: none;
 }
 
-/* FONDO DE VELAS BURSÁTILES EN VIVO EN TODA LA APP */
-.bg-stock-svg {
+/* FONDO DE VELAS CHINAS EN APP Y LOGIN */
+.bg-stock-svg,
+.bg-stock-login-svg {
   position: fixed;
   bottom: 0;
   left: 0;
   width: 100%;
   height: 75vh;
   z-index: 0;
-  opacity: 0.38;
+  opacity: 0.4;
   pointer-events: none;
+}
+
+.bg-stock-login-svg {
+  position: absolute;
+  z-index: 1;
+  opacity: 0.55;
 }
 
 .candles-group {
@@ -114,20 +121,21 @@ body {
   to { opacity: 1; transform: translateX(0); }
 }
 
-/* PANTALLA DE ENTRADA CON LOGO GRANDE FLOTANTE APARTE */
+/* PANTALLA DE ENTRADA CON VELAS CHINAS Y LOGO GRANDE FLOTANTE */
 .auth-overlay {
   position: fixed;
   top: 0; left: 0; width: 100%; height: 100%;
-  background: rgba(8, 10, 13, 0.86);
-  backdrop-filter: blur(10px);
+  background: #080a0d;
   z-index: 999;
   display: flex;
   justify-content: center;
   align-items: center;
   padding: 20px;
+  overflow: hidden;
 }
 
 .auth-wrapper {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -139,12 +147,12 @@ body {
 .floating-hero-logo {
   margin-bottom: 22px;
   animation: logoFloatBig 3.2s ease-in-out infinite alternate;
-  filter: drop-shadow(0 10px 25px rgba(0, 230, 118, 0.4));
+  filter: drop-shadow(0 10px 25px rgba(0, 230, 118, 0.45));
 }
 
 .hero-logo-img {
-  width: 115px;
-  height: 115px;
+  width: 118px;
+  height: 118px;
   border-radius: 26px;
   object-fit: contain;
 }
@@ -155,7 +163,7 @@ body {
 }
 
 .auth-card {
-  background: var(--glass-bg);
+  background: rgba(18, 23, 29, 0.88);
   backdrop-filter: blur(18px);
   border: 1px solid var(--glass-border);
   box-shadow: var(--glass-shadow);
@@ -165,7 +173,7 @@ body {
   text-align: center;
 }
 
-/* HEADER MINIMALISTA */
+/* CABECERA (HEADER) RESTAURADA CON ONDA Y PUNTO EN VIVO */
 header {
   position: sticky;
   top: 0;
@@ -177,16 +185,35 @@ header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  overflow: hidden;
 }
 
-.header-logo-wrap {
-  display: flex;
-  align-items: center;
+.header-ticker-svg {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.live-dot {
+  width: 7px;
+  height: 7px;
+  background: var(--neon-green);
+  border-radius: 50%;
+  display: inline-block;
+  box-shadow: 0 0 8px var(--neon-green);
+  animation: blinkDot 1.5s infinite;
+}
+
+@keyframes blinkDot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
 }
 
 .header-logo-floating {
-  width: 42px;
-  height: 42px;
+  width: 40px;
+  height: 40px;
   border-radius: 12px;
   object-fit: contain;
   animation: floatHeaderLogo 3s ease-in-out infinite alternate;
