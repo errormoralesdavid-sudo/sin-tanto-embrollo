@@ -1,22 +1,12 @@
-const CACHE_NAME = 'finance-pro-v10';
-const API_CACHE_NAME = 'finance-pro-api-v2';
+const CACHE_NAME = 'finance-pro-v11';
+const API_CACHE_NAME = 'finance-pro-api-v3';
 
-// Archivos principales que NUNCA pueden fallar
 const CORE_ASSETS = [
   './',
   './index.html',
   './styles.css',
   './app.js',
   './manifest.json'
-];
-
-// Imágenes externas (se guardan por separado para no bloquear la instalación)
-const EXTERNAL_ASSETS = [
-  'https://files.catbox.moe/ww1gm2.png',
-  'https://files.catbox.moe/b9c6p4.png',
-  'https://files.catbox.moe/jqe1g1.png',
-  'https://files.catbox.moe/p4z1h1.png',
-  'https://files.catbox.moe/t7m6z1.png'
 ];
 
 function abrirDB() {
@@ -146,18 +136,10 @@ async function verificarMercadoYAlertarEnFondo() {
   await guardarConfigEnDB(cfg);
 }
 
-// Instalación blindada: guarda primero los archivos vitales y luego intenta las imágenes sin romper nada
 self.addEventListener('install', (e) => {
   self.skipWaiting();
   e.waitUntil(
-    caches.open(CACHE_NAME).then(async (cache) => {
-      await cache.addAll(CORE_ASSETS);
-      EXTERNAL_ASSETS.forEach((url) => {
-        fetch(url, { mode: 'no-cors' })
-          .then((res) => cache.put(url, res))
-          .catch(() => {});
-      });
-    })
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(CORE_ASSETS))
   );
 });
 
@@ -174,13 +156,13 @@ self.addEventListener('activate', (e) => {
   self.clients.claim();
 });
 
-// Interceptor de red a prueba de Modo Avión y recargas manuales
+// Interceptor de red SEGURO (No bloquea Login en la nube ni imágenes de Catbox)
 self.addEventListener('fetch', (e) => {
   if (e.request.method !== 'GET') return;
 
   const url = new URL(e.request.url);
 
-  // 1. Si es consulta de tasas a la API
+  // 1. Si es la API del dólar: guarda respaldo para modo offline
   if (url.hostname.includes('dolarapi.com')) {
     e.respondWith(
       fetch(e.request)
@@ -194,7 +176,13 @@ self.addEventListener('fetch', (e) => {
     return;
   }
 
-  // 2. Si el usuario abre la app o desliza hacia abajo para recargar (navegación)
+  // 2. IMPORTANTE: Si es cualquier otro servidor externo (Catbox, Firebase, Google, etc.),
+  // NO lo interceptamos para que el Logo y el Login funcionen sin bloqueos.
+  if (url.origin !== self.location.origin) {
+    return;
+  }
+
+  // 3. Si es navegación o recarga de la página principal de la app
   if (e.request.mode === 'navigate') {
     e.respondWith(
       fetch(e.request)
@@ -215,12 +203,12 @@ self.addEventListener('fetch', (e) => {
     return;
   }
 
-  // 3. Resto de archivos (CSS, JS, Iconos)
+  // 4. Archivos propios de la app (index.html, styles.css, app.js, manifest.json)
   e.respondWith(
     caches.match(e.request, { ignoreSearch: true }).then((cachedResponse) => {
       const fetchPromise = fetch(e.request)
         .then((networkResponse) => {
-          if (networkResponse && (networkResponse.status === 200 || networkResponse.type === 'opaque')) {
+          if (networkResponse && networkResponse.status === 200) {
             const clone = networkResponse.clone();
             caches.open(CACHE_NAME).then((cache) => cache.put(e.request, clone));
           }
