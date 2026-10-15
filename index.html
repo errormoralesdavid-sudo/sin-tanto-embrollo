@@ -120,18 +120,18 @@
     </div>
   </div>
 
-  <!-- CABECERA (HEADER) RESTAURADA CON DISEÑO DE ONDA Y TEXTO EN VIVO (SIN SOL NI RUEDITA) -->
+  <!-- CABECERA (HEADER) RESTAURADA CON DISEÑO DE ONDA Y ESTADO DE NUBE INTERACTIVO -->
   <header>
     <svg class="header-ticker-svg" viewBox="0 0 600 60" preserveAspectRatio="none">
       <path class="ticker-wave" d="M0,45 L50,38 L100,42 L150,25 L200,32 L250,18 L300,28 L350,12 L400,24 L450,15 L500,22 L550,8 L600,16" fill="none" stroke="var(--neon-green)" stroke-width="1.5" stroke-opacity="0.32"/>
     </svg>
 
-    <div style="display:flex; align-items:center; gap:12px; z-index:2;">
+    <div style="display:flex; align-items:center; gap:12px; z-index:2; cursor:pointer;" onclick="forzarSincronizacionManual()" title="Toca para sincronizar con la nube">
       <img src="https://files.catbox.moe/gdnebi.png" alt="Logo" class="header-logo-floating">
       <div>
         <div style="font-size:13px; font-weight:800; letter-spacing:0.6px; color:var(--text-color);">FINANCE PRO</div>
         <div style="font-size:10px; color:var(--neon-green); display:flex; align-items:center; gap:5px;">
-          <span class="live-dot"></span> <span id="cloud-sync-indicator">MERCADO EN VIVO</span>
+          <span class="live-dot"></span> <span id="cloud-sync-indicator">CONECTANDO NUBE...</span>
         </div>
       </div>
     </div>
@@ -552,7 +552,7 @@
     </div>
   </nav>
 
-  <!-- FIREBASE V10 SDK + SINCRONIZACIÓN CLOUD DEL LIBRO CONTABLE Y AJUSTES POR USUARIO -->
+  <!-- FIREBASE V10 SDK + SINCRONIZACIÓN GARANTIZADA CON COLA PENDIENTE -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
     import { 
@@ -585,33 +585,58 @@
 
     let unsubscribeCloud = null;
     let currentUserUid = null;
+    let currentUserEmail = null;
+    let pendingCloudPayload = null;
 
     setPersistence(auth, browserLocalPersistence).catch(() => {});
 
-    if (localStorage.getItem('user_session_active') === 'true') {
-      document.getElementById('auth-overlay').style.display = 'none';
-    }
-
-    // GUARDAR EN LA NUBE (FIRESTORE) VINCULADO AL USUARIO
-    window.guardarDatosEnFirebase = async function(payload) {
-      if (!currentUserUid) return;
+    // GUARDAR EN LA NUBE (FIRESTORE) CON COLA DE RESPALDO SI AÚN ESTÁ CONECTANDO
+    window.guardarDatosEnFirebase = async function(payload, mostrarConfirmacion = false) {
+      if (!currentUserUid) {
+        pendingCloudPayload = payload;
+        return;
+      }
       try {
         const userRef = doc(db, 'finanzas_usuarios', currentUserUid);
         await setDoc(userRef, {
           ...payload,
+          email: currentUserEmail || '',
+          uid: currentUserUid,
           actualizadoEn: new Date().toISOString()
         }, { merge: true });
+
         const ind = document.getElementById('cloud-sync-indicator');
         if (ind) ind.textContent = "NUBE SINCRONIZADA";
+        if (mostrarConfirmacion && window.mostrarToast) {
+          window.mostrarToast("Datos respaldados en Firebase");
+        }
       } catch (e) {
-        console.warn("Guardado local activo, pendiente nube:", e);
+        console.error("Error guardando en Firestore:", e);
+        const ind = document.getElementById('cloud-sync-indicator');
+        if (ind) ind.textContent = "ERROR PERMISOS NUBE";
       }
     };
 
-    // ESCUCHAR DATOS EN TIEMPO REAL AL ABRIR EN PC O CELULAR
-    function iniciarEscuchaNube(uid) {
+    window.forzarSincronizacionManual = function() {
+      if (window.obtenerPayloadActual) {
+        window.guardarDatosEnFirebase(window.obtenerPayloadActual(), true);
+      }
+    };
+
+    function iniciarEscuchaNube(user) {
+      currentUserUid = user.uid;
+      currentUserEmail = user.email || '';
+
       if (unsubscribeCloud) unsubscribeCloud();
-      const userRef = doc(db, 'finanzas_usuarios', uid);
+      const userRef = doc(db, 'finanzas_usuarios', user.uid);
+
+      // Si había cambios hechos antes de conectar, subirlos de inmediato
+      if (pendingCloudPayload) {
+        const temp = pendingCloudPayload;
+        pendingCloudPayload = null;
+        window.guardarDatosEnFirebase(temp, false);
+      }
+
       unsubscribeCloud = onSnapshot(userRef, (snap) => {
         if (snap.exists()) {
           const cloudData = snap.data();
@@ -621,11 +646,13 @@
           const ind = document.getElementById('cloud-sync-indicator');
           if (ind) ind.textContent = "NUBE SINCRONIZADA";
         } else {
-          // Si es primera vez en la nube, subimos los datos locales actuales
+          // Crear inmediatamente el documento del usuario en finanzas_usuarios al primer ingreso
           if (window.obtenerPayloadActual) {
-            window.guardarDatosEnFirebase(window.obtenerPayloadActual());
+            window.guardarDatosEnFirebase(window.obtenerPayloadActual(), false);
           }
         }
+      }, (err) => {
+        console.error("Error lectura Firestore:", err);
       });
     }
 
@@ -643,11 +670,10 @@
 
       try {
         const cred = await signInWithEmailAndPassword(auth, email, pass);
-        currentUserUid = cred.user.uid;
         localStorage.setItem('user_session_active', 'true');
         document.getElementById('auth-overlay').style.display = 'none';
-        iniciarEscuchaNube(currentUserUid);
-        if (window.mostrarToast) window.mostrarToast("Sincronizando cuenta financiera...");
+        iniciarEscuchaNube(cred.user);
+        if (window.mostrarToast) window.mostrarToast("Conectado a Firebase Cloud");
       } catch (err) {
         errDiv.textContent = "Correo o clave de acceso incorrectos.";
         errDiv.style.display = 'block';
@@ -657,6 +683,7 @@
     window.cerrarSesionFirebase = async function() {
       if (unsubscribeCloud) unsubscribeCloud();
       currentUserUid = null;
+      currentUserEmail = null;
       localStorage.removeItem('user_session_active');
       await signOut(auth);
       document.getElementById('auth-overlay').style.display = 'flex';
@@ -664,14 +691,13 @@
 
     onAuthStateChanged(auth, (user) => {
       if (user) {
-        currentUserUid = user.uid;
         localStorage.setItem('user_session_active', 'true');
         document.getElementById('auth-overlay').style.display = 'none';
-        iniciarEscuchaNube(user.uid);
+        iniciarEscuchaNube(user);
       } else {
-        if (localStorage.getItem('user_session_active') !== 'true') {
-          document.getElementById('auth-overlay').style.display = 'flex';
-        }
+        // Si no hay sesión real en Firebase Auth, mostrar el login para garantizar que conecte el UID
+        localStorage.removeItem('user_session_active');
+        document.getElementById('auth-overlay').style.display = 'flex';
       }
     });
 
