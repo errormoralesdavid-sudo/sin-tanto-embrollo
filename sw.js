@@ -1,23 +1,23 @@
-const CACHE_NAME = 'finance-pro-v8';
-const LOGO_URL = 'https://files.catbox.moe/gdnebi.png';
+const CACHE_NAME = 'finance-pro-v9';
+const API_CACHE_NAME = 'finance-pro-api-v1';
+
 const ASSETS = [
   './',
   './index.html',
   './styles.css',
   './app.js',
   './manifest.json',
-  LOGO_URL,
-  'https://files.catbox.moe/0iqhgt.png',
-  'https://files.catbox.moe/5my5ck.png',
-  'https://files.catbox.moe/1nq9fx.png',
-  'https://files.catbox.moe/6zt6p1.png',
-  'https://files.catbox.moe/kj6rft.png',
-  'https://d3js.org/d3.v7.min.js'
+  'https://files.catbox.moe/ww1gm2.png',
+  'https://files.catbox.moe/b9c6p4.png',
+  'https://files.catbox.moe/jqe1g1.png',
+  'https://files.catbox.moe/p4z1h1.png',
+  'https://files.catbox.moe/t7m6z1.png'
 ];
 
+// Base de datos interna (IndexedDB) compartida entre la App y el Service Worker
 function abrirDB() {
   return new Promise((resolve, reject) => {
-    const req = indexedDB.open('FinanceProSWDB', 1);
+    const req = indexedDB.open('FinanceProDB', 1);
     req.onupgradeneeded = (e) => {
       const db = e.target.result;
       if (!db.objectStoreNames.contains('config')) {
@@ -29,15 +29,16 @@ function abrirDB() {
   });
 }
 
-async function guardarConfigSW(data) {
+async function guardarConfigEnDB(data) {
   try {
     const db = await abrirDB();
+    const current = (await leerConfigDB()) || {};
     const tx = db.transaction('config', 'readwrite');
-    tx.objectStore('config').put({ id: 'main', ...data });
+    tx.objectStore('config').put({ id: 'main', ...current, ...data });
   } catch (e) {}
 }
 
-async function leerConfigSW() {
+async function leerConfigDB() {
   try {
     const db = await abrirDB();
     return new Promise((resolve) => {
@@ -51,153 +52,197 @@ async function leerConfigSW() {
   }
 }
 
-function formatoSW(num) {
-  const val = Number(num) || 0;
-  return val.toFixed(2).replace('.', ',');
+function formatNum(n) {
+  const num = parseFloat(n);
+  if (isNaN(num)) return '0,00';
+  return num.toFixed(2).replace('.', ',');
 }
 
-async function verificarMercadoYHorariosEnFondo() {
-  const cfg = (await leerConfigSW()) || {
-    horarios: ['04:00', '09:00', '13:00'],
+// Motor de verificación de tasas y horarios
+async function verificarMercadoYAlertarEnFondo() {
+  const cfg = (await leerConfigDB()) || {
+    horarios: ['09:00', '13:00', '18:00'],
     tasaBCV: 0,
     tasaUSDT: 0,
-    ultimaHora: ''
+    ultimoAvisoHora: ''
   };
 
-  let bcvActual = cfg.tasaBCV || 0;
-  let usdtActual = cfg.tasaUSDT || 0;
+  let bcvActual = parseFloat(cfg.tasaBCV) || 0;
+  let usdtActual = parseFloat(cfg.tasaUSDT) || 0;
 
+  // 1. Consultar BCV (si hay internet)
   try {
-    const rBcv = await fetch('https://rates.dolarvzla.com/bcv/current.json', { cache: 'no-store' });
-    const dBcv = await rBcv.json();
-    if (dBcv && dBcv.current && dBcv.current.usd) {
-      const nuevoBcv = parseFloat(dBcv.current.usd);
-      if (bcvActual > 0 && Math.abs(nuevoBcv - bcvActual) >= 0.01) {
-        await self.registration.showNotification('Actualización Dólar BCV Oficial', {
-          body: `Nueva tasa BCV: ${formatoSW(nuevoBcv)} Bs (Anterior: ${formatoSW(bcvActual)} Bs)`,
-          icon: LOGO_URL,
-          badge: LOGO_URL,
-          vibrate: [300, 150, 300],
-          renotify: true,
-          requireInteraction: true,
-          tag: 'bcv-change-alert'
-        });
+    const res1 = await fetch('https://ve.dolarapi.com/v1/dolares/oficial', { cache: 'no-store' });
+    if (res1.ok) {
+      const d1 = await res1.json();
+      if (d1 && d1.promedio) {
+        const nuevoBCV = parseFloat(d1.promedio);
+        if (bcvActual > 0 && Math.abs(nuevoBCV - bcvActual) >= 0.01) {
+          const subio = nuevoBCV > bcvActual;
+          await self.registration.showNotification('Actualización Dólar BCV Oficial', {
+            body: `Nueva tasa BCV: ${formatNum(nuevoBCV)} Bs (anterior: ${formatNum(bcvActual)} Bs) ${subio ? '📈' : '📉'}`,
+            icon: 'https://files.catbox.moe/ww1gm2.png',
+            badge: 'https://files.catbox.moe/ww1gm2.png',
+            vibrate: [200, 100, 200],
+            requireInteraction: true,
+            tag: 'bcv-change-alert'
+          });
+        }
+        bcvActual = nuevoBCV;
       }
-      bcvActual = nuevoBcv;
     }
   } catch (e) {}
 
+  // 2. Consultar Paralelo / USDT (si hay internet)
   try {
-    const rP2p = await fetch('https://ve.dolarapi.com/v1/dolares', { cache: 'no-store' });
-    const dP2p = await rP2p.json();
-    const binObj = dP2p.find(i => i.fuente === 'paralelo' || i.fuente === 'cripto') || dP2p[1];
-    if (binObj && binObj.promedio) {
-      const nuevoUsdt = parseFloat(binObj.promedio);
-      if (usdtActual > 0 && Math.abs(nuevoUsdt - usdtActual) >= 0.01) {
-        await self.registration.showNotification('Movimiento en USDT P2P', {
-          body: `Nueva tasa P2P: ${formatoSW(nuevoUsdt)} Bs | BCV: ${formatoSW(bcvActual)} Bs`,
-          icon: LOGO_URL,
-          badge: LOGO_URL,
-          vibrate: [300, 150, 300],
-          renotify: true,
-          requireInteraction: true,
-          tag: 'usdt-change-alert'
-        });
+    const res2 = await fetch('https://ve.dolarapi.com/v1/dolares/paralelo', { cache: 'no-store' });
+    if (res2.ok) {
+      const d2 = await res2.json();
+      if (d2 && d2.promedio) {
+        const nuevoUSDT = parseFloat(d2.promedio);
+        if (usdtActual > 0 && Math.abs(nuevoUSDT - usdtActual) >= 0.05) {
+          const subio = nuevoUSDT > usdtActual;
+          await self.registration.showNotification('Movimiento en USDT P2P', {
+            body: `USDT se ubica en ${formatNum(nuevoUSDT)} Bs (antes: ${formatNum(usdtActual)} Bs) ${subio ? '🚀' : '🔻'}`,
+            icon: 'https://files.catbox.moe/ww1gm2.png',
+            badge: 'https://files.catbox.moe/ww1gm2.png',
+            vibrate: [200, 100, 200],
+            requireInteraction: true,
+            tag: 'usdt-change-alert'
+          });
+        }
+        usdtActual = nuevoUSDT;
       }
-      usdtActual = nuevoUsdt;
     }
   } catch (e) {}
 
+  // 3. Revisar alertas por horario programado
   const now = new Date();
   const hh = String(now.getHours()).padStart(2, '0');
   const mm = String(now.getMinutes()).padStart(2, '0');
-  const currentTime = `${hh}:${mm}`;
-  const keyHoy = `${now.toDateString()}_${currentTime}`;
+  const currentHM = `${hh}:${mm}`;
+  const fechaMinuto = `${now.toDateString()}_${currentHM}`;
 
-  if (Array.isArray(cfg.horarios) && cfg.horarios.includes(currentTime) && cfg.ultimaHora !== keyHoy) {
-    cfg.ultimaHora = keyHoy;
-    await self.registration.showNotification(`Reporte Financiero (${currentTime})`, {
-      body: `BCV Oficial: ${formatoSW(bcvActual)} Bs | USDT P2P: ${formatoSW(usdtActual)} Bs`,
-      icon: LOGO_URL,
-      badge: LOGO_URL,
-      vibrate: [250, 120, 250],
-      renotify: true,
-      requireInteraction: true,
-      tag: 'scheduled-rate-alert'
-    });
+  if (Array.isArray(cfg.horarios) && cfg.horarios.includes(currentHM)) {
+    if (cfg.ultimoAvisoHora !== fechaMinuto) {
+      let brecha = 0;
+      if (bcvActual > 0 && usdtActual > 0) {
+        brecha = ((usdtActual - bcvActual) / bcvActual) * 100;
+      }
+      await self.registration.showNotification(`Reporte Financiero (${currentHM})`, {
+        body: `BCV: ${formatNum(bcvActual)} Bs | USDT P2P: ${formatNum(usdtActual)} Bs | Brecha: ${formatNum(brecha)}%`,
+        icon: 'https://files.catbox.moe/ww1gm2.png',
+        badge: 'https://files.catbox.moe/ww1gm2.png',
+        vibrate: [300, 100, 300],
+        requireInteraction: true,
+        tag: 'scheduled-report-' + currentHM
+      });
+      cfg.ultimoAvisoHora = fechaMinuto;
+    }
   }
 
   cfg.tasaBCV = bcvActual;
   cfg.tasaUSDT = usdtActual;
-  await guardarConfigSW(cfg);
+  await guardarConfigEnDB(cfg);
 }
 
+// Instalación y guardado de archivos para modo Offline
 self.addEventListener('install', (e) => {
+  self.skipWaiting();
   e.waitUntil(
     caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS))
   );
-  self.skipWaiting();
 });
 
+// Limpieza de cachés antiguas
 self.addEventListener('activate', (e) => {
   e.waitUntil(
-    caches.keys().then((keys) => {
-      return Promise.all(
-        keys.map((key) => {
-          if (key !== CACHE_NAME) return caches.delete(key);
+    caches.keys().then((keys) =>
+      Promise.all(
+        keys.map((k) => {
+          if (k !== CACHE_NAME && k !== API_CACHE_NAME) return caches.delete(k);
         })
-      );
-    })
+      )
+    )
   );
   self.clients.claim();
 });
 
-// ESTRATEGIA NETWORK-FIRST PARA ARCHIVOS PROPIOS (SIEMPRE TOMA LA ÚLTIMA VERSIÓN DE GITHUB)
+// Interceptor de red (Permite que la app funcione sin internet)
 self.addEventListener('fetch', (e) => {
   if (e.request.method !== 'GET') return;
+
+  const url = new URL(e.request.url);
+
+  // Si es la API del dólar: busca en internet, guarda copia, y si no hay señal usa la copia
+  if (url.hostname.includes('dolarapi.com')) {
+    e.respondWith(
+      fetch(e.request)
+        .then((res) => {
+          const clone = res.clone();
+          caches.open(API_CACHE_NAME).then((cache) => cache.put(e.request, clone));
+          return res;
+        })
+        .catch(() => caches.match(e.request))
+    );
+    return;
+  }
+
+  // Para los archivos de tu aplicación: carga instantánea desde caché y actualiza en fondo
   e.respondWith(
-    fetch(e.request)
-      .then((networkResponse) => {
-        if (networkResponse && networkResponse.status === 200 && e.request.url.startsWith(self.location.origin)) {
-          const clone = networkResponse.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(e.request, clone));
-        }
-        return networkResponse;
-      })
-      .catch(() => caches.match(e.request).then((cached) => cached || caches.match('./index.html')))
+    caches.match(e.request).then((cachedResponse) => {
+      const fetchPromise = fetch(e.request)
+        .then((networkResponse) => {
+          if (networkResponse && networkResponse.status === 200) {
+            const clone = networkResponse.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(e.request, clone));
+          }
+          return networkResponse;
+        })
+        .catch(() => cachedResponse);
+
+      return cachedResponse || fetchPromise;
+    })
   );
 });
 
+// Eventos de sincronización en segundo plano
 self.addEventListener('periodicsync', (e) => {
-  if (e.tag === 'check-rates-and-alarms') {
-    e.waitUntil(verificarMercadoYHorariosEnFondo());
+  if (e.tag === 'check-rates-sync') {
+    e.waitUntil(verificarMercadoYAlertarEnFondo());
   }
 });
 
 self.addEventListener('sync', (e) => {
-  e.waitUntil(verificarMercadoYHorariosEnFondo());
+  if (e.tag === 'check-rates-sync') {
+    e.waitUntil(verificarMercadoYAlertarEnFondo());
+  }
 });
 
+// Comunicación directa con app.js
 self.addEventListener('message', (e) => {
   if (!e.data) return;
 
   if (e.data.type === 'SYNC_CONFIG') {
-    guardarConfigSW({
-      horarios: e.data.horarios || ['04:00', '09:00', '13:00'],
+    guardarConfigEnDB({
+      horarios: e.data.horarios || ['09:00', '13:00', '18:00'],
       tasaBCV: e.data.tasaBCV || 0,
       tasaUSDT: e.data.tasaUSDT || 0
-    });
+    }).then(() => verificarMercadoYAlertarEnFondo());
   }
 
-  if (e.data.type === 'NOTIFY') {
+  if (e.data.type === 'CHECK_NOW') {
+    e.waitUntil(verificarMercadoYAlertarEnFondo());
+  }
+
+  if (e.data.type === 'SHOW_NOTIFICATION') {
     self.registration.showNotification(e.data.title, {
       body: e.data.body,
-      icon: LOGO_URL,
-      badge: LOGO_URL,
-      vibrate: [250, 120, 250],
-      renotify: true,
+      icon: 'https://files.catbox.moe/ww1gm2.png',
+      badge: 'https://files.catbox.moe/ww1gm2.png',
+      vibrate: [200, 100, 200],
       requireInteraction: true,
-      tag: 'finance-pro-direct'
+      tag: e.data.tag || 'finance-pro-direct'
     });
   }
 });
@@ -205,15 +250,9 @@ self.addEventListener('message', (e) => {
 self.addEventListener('notificationclick', (e) => {
   e.notification.close();
   e.waitUntil(
-    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
-      for (const client of clientList) {
-        if ('focus' in client) return client.focus();
-      }
-      if (clients.openWindow) return clients.openWindow('./index.html');
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((cl) => {
+      if (cl.length > 0) return cl[0].focus();
+      return clients.openWindow('./');
     })
   );
 });
-
-setInterval(() => {
-  verificarMercadoYHorariosEnFondo();
-}, 30000);
