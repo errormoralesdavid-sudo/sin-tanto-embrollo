@@ -1,4 +1,3 @@
-// VARIABLES DE ESTADO PRINCIPALES
 var tasaBCV = 832.48;
 var tasaUSDT = 885.10;
 var tasaEUR = 968.06;
@@ -36,7 +35,6 @@ var itemSeleccionadoModal = null;
 var isUserInteracting = false;
 var resumeTimeout = null;
 
-// BLINDAJE ANTI-XSS (SANITIZACIÓN DE TEXTO)
 function sanitizarTexto(str) {
   if (!str) return '';
   return String(str).replace(/[&<>"'`=\/]/g, function (s) {
@@ -47,7 +45,6 @@ function sanitizarTexto(str) {
   });
 }
 
-// SISTEMA DE NOTIFICACIONES TOAST (REEMPLAZA ALERT NATIVO)
 window.mostrarToast = function(mensaje) {
   var container = document.getElementById('toast-container');
   var toast = document.createElement('div');
@@ -80,23 +77,6 @@ window.onload = function() {
   iniciarRelojNotificaciones();
   iniciarAutoScrollEnInputs();
 };
-
-function actualizarIconoTema(theme) {
-  var btn = document.getElementById("theme-btn");
-  if (theme === "light") {
-    btn.innerHTML = '<svg class="icon-svg" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
-  } else {
-    btn.innerHTML = '<svg class="icon-svg" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>';
-  }
-}
-
-function toggleTheme() {
-  var currentTheme = document.documentElement.getAttribute("data-theme");
-  var newTheme = currentTheme === "light" ? "dark" : "light";
-  document.documentElement.setAttribute("data-theme", newTheme);
-  actualizarIconoTema(newTheme);
-  localStorage.setItem("embrollo_theme", newTheme);
-}
 
 function iniciarScrollWheelSlider() {
   var slider = document.getElementById('rate-slider');
@@ -174,16 +154,12 @@ function guardarDatos() {
     horariosNotif: listaHorariosNotif,
     monedaActiva: monedaActiva
   };
-  localStorage.setItem('embrollo_data_pro_v3', JSON.stringify(datos));
+  localStorage.setItem('embrollo_data_pro_v4', JSON.stringify(datos));
 }
 
 function cargarDatosGuardados() {
-  var theme = localStorage.getItem("embrollo_theme") || "dark";
-  document.documentElement.setAttribute("data-theme", theme);
-  actualizarIconoTema(theme);
-
   try {
-    var datos = JSON.parse(localStorage.getItem('embrollo_data_pro_v3'));
+    var datos = JSON.parse(localStorage.getItem('embrollo_data_pro_v4'));
     if (datos) {
       if(datos.bcv) document.getElementById('input-tasa-bcv').value = datos.bcv;
       if(datos.usdt) document.getElementById('input-tasa-usdt').value = datos.usdt;
@@ -216,7 +192,7 @@ function cargarDatosGuardados() {
   }
 }
 
-// CONVERTIDOR MULTIMONEDA INTERACTIVO
+// CONVERTIDOR MULTIMONEDA SIN FILA BOLÍVARES P2P
 function seleccionarMonedaBase(moneda, el) {
   monedaActiva = moneda;
   document.querySelectorAll('.curr-btn').forEach(function(b) { b.classList.remove('active'); });
@@ -248,17 +224,14 @@ function calcularMultimoneda() {
   var usdtP2p = tasaUSDT > 0 ? baseEnBs / tasaUSDT : 0;
   var eur = tasaEUR > 0 ? baseEnBs / tasaEUR : 0;
   var cop = usdBcv * tasaCOP;
-  var vesParalelo = monedaActiva === 'USD' ? monto * tasaUSDT : baseEnBs;
 
   document.getElementById('res-multi-ves-bcv').textContent = formato(baseEnBs) + ' Bs';
-  document.getElementById('res-multi-ves-usdt').textContent = formato(vesParalelo) + ' Bs';
   document.getElementById('res-multi-usd').textContent = formato(usdBcv) + ' $';
   document.getElementById('res-multi-usdt').textContent = formato(usdtP2p) + ' USDT';
   document.getElementById('res-multi-eur').textContent = formato(eur) + ' €';
   document.getElementById('res-multi-cop').textContent = formato(cop) + ' COP';
 }
 
-// HORARIOS DE NOTIFICACIÓN
 function renderHorariosNotificaciones() {
   var cont = document.getElementById('lista-horarios');
   cont.innerHTML = '';
@@ -298,7 +271,6 @@ function eliminarHorarioNotificacion(idx) {
   guardarDatos();
 }
 
-// MODAL PERSONALIZADO PARA BANCOS Y BINANCE
 function abrirModalInput(titulo, mostrarNombre, valorNombre, valorPct, callback) {
   document.getElementById('modal-input-title').textContent = titulo;
   var nameWrap = document.getElementById('modal-input-name-wrap');
@@ -309,8 +281,7 @@ function abrirModalInput(titulo, mostrarNombre, valorNombre, valorPct, callback)
   inputName.value = valorNombre || '';
   inputPct.value = valorPct !== undefined ? valorPct : '';
 
-  var modal = document.getElementById('modal-input-custom');
-  modal.style.display = 'flex';
+  document.getElementById('modal-input-custom').style.display = 'flex';
 
   document.getElementById('modal-input-save').onclick = function() {
     var n = sanitizarTexto(inputName.value.trim());
@@ -817,7 +788,6 @@ function copiarTexto(tipo) {
     var val = document.getElementById('main-amount-input').value || '0';
     texto = "*COTIZACIÓN MULTIMONEDA (" + val + " " + monedaActiva + ")*\n" +
       "• En Bs (BCV): " + document.getElementById('res-multi-ves-bcv').textContent + "\n" +
-      "• En Bs (P2P): " + document.getElementById('res-multi-ves-usdt').textContent + "\n" +
       "• En USD (BCV): " + document.getElementById('res-multi-usd').textContent + "\n" +
       "• En USDT (P2P): " + document.getElementById('res-multi-usdt').textContent + "\n" +
       "• En Euros: " + document.getElementById('res-multi-eur').textContent + "\n" +
