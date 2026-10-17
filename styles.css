@@ -325,17 +325,39 @@ header {
   margin-bottom: 16px;
 }
 
-.config-summary {
-  color: var(--neon-green);
-  font-weight: 700;
-  font-size: 13px;
+/* BOTONES DE CABECERA COMPACTOS (TUERCA Y BASURA) */
+.top-actions-row {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.btn-icon-top {
+  background: var(--input-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 10px;
+  padding: 10px;
+  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  list-style: none;
+  backdrop-filter: blur(8px);
 }
-.config-summary::-webkit-details-marker { display: none; }
+
+.btn-icon-top.danger {
+  color: var(--danger-color);
+  background: rgba(255, 82, 82, 0.08);
+}
+
+.btn-icon-top.success {
+  color: var(--neon-green);
+  background: rgba(0, 230, 118, 0.08);
+}
+
+.btn-icon-top:active {
+  transform: scale(0.9);
+}
 
 /* BOTONERA MULTIMONEDA CON EFECTO INTERACTIVO */
 .currency-selector-grid {
@@ -398,6 +420,54 @@ header {
   height: 18px;
   object-fit: contain;
   animation: coinFloat 3s ease-in-out infinite alternate;
+}
+
+/* GRUPO DE INPUT CON MATEMÁTICAS Y PEGAR */
+.math-input-group {
+  display: flex;
+  align-items: stretch;
+  gap: 6px;
+  margin-bottom: 12px;
+  background: var(--input-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 10px;
+  padding: 4px;
+}
+
+.math-input-group input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  margin-bottom: 0;
+  padding: 8px 12px;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-color);
+  width: 100%;
+  outline: none;
+}
+
+.math-input-group:focus-within {
+  border-color: var(--neon-green);
+  box-shadow: 0 0 10px var(--neon-green-glow);
+}
+
+.btn-math {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text-muted);
+  border-radius: 8px;
+  padding: 0 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.btn-math:hover, .btn-math:active {
+  background: rgba(0, 230, 118, 0.15);
+  color: var(--neon-green);
+  border-color: var(--neon-green);
 }
 
 /* GRUPO DE RESULTADO + BOTÓN COPIAR SVG */
