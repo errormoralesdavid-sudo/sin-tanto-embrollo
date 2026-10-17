@@ -81,7 +81,7 @@ function fallbackCopiar(texto) {
   window.mostrarToast("Copiado: " + texto);
 }
 
-// === FUNCIONES DEL INPUT MATEMÁTICO (PEGAR, SUMAR, RESTAR, MULT, DIV) ===
+// === FUNCIONES DEL INPUT MATEMÁTICO ===
 async function pegarAlInput() {
   try {
     var texto = await navigator.clipboard.readText();
@@ -93,34 +93,18 @@ async function pegarAlInput() {
       window.mostrarToast("Monto pegado");
     }
   } catch(e) {
-    window.mostrarToast("No se pudo pegar (Verifica permisos)");
+    window.mostrarToast("No se pudo pegar");
   }
 }
 
-function agregarOperador(operador) {
+// Aquí se agregan +, -, * (multiplicación) y / (división)
+window.agregarOperador = function(operador) {
   var input = document.getElementById('main-amount-input');
   if (input.value !== '') {
     input.value = input.value + operador;
     input.focus();
   }
-}
-
-// Extrae el valor numérico resolviendo operaciones como 10+5 o 6000/2
-function evaluarInputCalculadora() {
-  var inputEl = document.getElementById('main-amount-input');
-  var rawMonto = inputEl ? inputEl.value : '';
-  var monto = 0;
-  try {
-    var saneado = rawMonto.replace(/,/g, '.').replace(/[^0-9.\+\-\*\/]/g, '');
-    var listoParaEvaluar = saneado.replace(/[\+\-\*\/]+$/, '');
-    if (listoParaEvaluar !== '') {
-      monto = new Function('return ' + listoParaEvaluar)() || 0;
-    }
-  } catch (e) {
-    monto = 0;
-  }
-  return monto;
-}
+};
 
 window.onload = function() {
   registrarServiceWorkerYBackgroundSync();
@@ -204,6 +188,7 @@ function dispararNotificacion(titulo, cuerpo) {
 
 function iniciarScrollWheelSlider() {
   var slider = document.getElementById('rate-slider');
+  if(!slider) return;
   slider.addEventListener('wheel', function(e) {
     if (e.deltaY !== 0) {
       e.preventDefault();
@@ -225,6 +210,7 @@ function iniciarAutoScrollEnInputs() {
 
 function iniciarSmoothSlider() {
   var slider = document.getElementById('rate-slider');
+  if(!slider) return;
   slider.addEventListener('touchstart', detenerAutoScroll);
   slider.addEventListener('touchend', reanudarAutoScrollConDelay);
   slider.addEventListener('mouseenter', detenerAutoScroll);
@@ -258,16 +244,17 @@ function formato(num) {
   return val.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
-function toggleAccordion(id) {
-  document.getElementById(id).classList.toggle('open');
-}
+window.toggleAccordion = function(id) {
+  var el = document.getElementById(id);
+  if(el) el.classList.toggle('open');
+};
 
 window.obtenerPayloadActual = function() {
   return {
-    bcv: document.getElementById('input-tasa-bcv').value,
-    usdt: document.getElementById('input-tasa-usdt').value,
-    eur: document.getElementById('input-tasa-eur').value,
-    cop: document.getElementById('input-tasa-cop').value,
+    bcv: document.getElementById('input-tasa-bcv') ? document.getElementById('input-tasa-bcv').value : tasaBCV,
+    usdt: document.getElementById('input-tasa-usdt') ? document.getElementById('input-tasa-usdt').value : tasaUSDT,
+    eur: document.getElementById('input-tasa-eur') ? document.getElementById('input-tasa-eur').value : tasaEUR,
+    cop: document.getElementById('input-tasa-cop') ? document.getElementById('input-tasa-cop').value : tasaCOP,
     prevBCV: prevBCV,
     prevUSDT: prevUSDT,
     prevEUR: prevEUR,
@@ -277,10 +264,10 @@ window.obtenerPayloadActual = function() {
     historicoGrafico: historicoGrafico,
     horariosNotif: listaHorariosNotif,
     monedaActiva: monedaActiva,
-    comPorcBanco: document.getElementById('com-porc-banco').value,
-    comPorcBinance: document.getElementById('com-porc-binance').value,
-    comPorcPersonal: document.getElementById('com-porc-personal').value,
-    arbComPersonal: document.getElementById('arb-com-personal').value,
+    comPorcBanco: document.getElementById('com-porc-banco') ? document.getElementById('com-porc-banco').value : 0,
+    comPorcBinance: document.getElementById('com-porc-binance') ? document.getElementById('com-porc-binance').value : 0,
+    comPorcPersonal: document.getElementById('com-porc-personal') ? document.getElementById('com-porc-personal').value : 0,
+    arbComPersonal: document.getElementById('arb-com-personal') ? document.getElementById('arb-com-personal').value : 0,
     bancoActivoNombre: bancoActivoNombre,
     binanceActivoNombre: binanceActivoNombre
   };
@@ -300,10 +287,10 @@ window.aplicarDatosDesdeNube = function(datos) {
   if (!datos) return;
   aplicandoNube = true;
   try {
-    if(datos.bcv) document.getElementById('input-tasa-bcv').value = datos.bcv;
-    if(datos.usdt) document.getElementById('input-tasa-usdt').value = datos.usdt;
-    if(datos.eur) document.getElementById('input-tasa-eur').value = datos.eur;
-    if(datos.cop) document.getElementById('input-tasa-cop').value = datos.cop;
+    if(datos.bcv && document.getElementById('input-tasa-bcv')) document.getElementById('input-tasa-bcv').value = datos.bcv;
+    if(datos.usdt && document.getElementById('input-tasa-usdt')) document.getElementById('input-tasa-usdt').value = datos.usdt;
+    if(datos.eur && document.getElementById('input-tasa-eur')) document.getElementById('input-tasa-eur').value = datos.eur;
+    if(datos.cop && document.getElementById('input-tasa-cop')) document.getElementById('input-tasa-cop').value = datos.cop;
     
     if(datos.prevBCV !== undefined) prevBCV = datos.prevBCV;
     if(datos.prevUSDT !== undefined) prevUSDT = datos.prevUSDT;
@@ -315,23 +302,23 @@ window.aplicarDatosDesdeNube = function(datos) {
     if(Array.isArray(datos.historicoGrafico)) { historicoGrafico = datos.historicoGrafico; renderGraficoD3(); }
     if(Array.isArray(datos.horariosNotif)) { listaHorariosNotif = datos.horariosNotif; renderHorariosNotificaciones(); }
 
-    if(datos.comPorcBanco !== undefined) document.getElementById('com-porc-banco').value = datos.comPorcBanco;
-    if(datos.comPorcBinance !== undefined) document.getElementById('com-porc-binance').value = datos.comPorcBinance;
-    if(datos.comPorcPersonal !== undefined) document.getElementById('com-porc-personal').value = datos.comPorcPersonal;
-    if(datos.arbComPersonal !== undefined) document.getElementById('arb-com-personal').value = datos.arbComPersonal;
+    if(datos.comPorcBanco !== undefined && document.getElementById('com-porc-banco')) document.getElementById('com-porc-banco').value = datos.comPorcBanco;
+    if(datos.comPorcBinance !== undefined && document.getElementById('com-porc-binance')) document.getElementById('com-porc-binance').value = datos.comPorcBinance;
+    if(datos.comPorcPersonal !== undefined && document.getElementById('com-porc-personal')) document.getElementById('com-porc-personal').value = datos.comPorcPersonal;
+    if(datos.arbComPersonal !== undefined && document.getElementById('arb-com-personal')) document.getElementById('arb-com-personal').value = datos.arbComPersonal;
 
-    if(datos.bancoActivoNombre) {
+    if(datos.bancoActivoNombre && document.getElementById('label-banco-activo')) {
       bancoActivoNombre = datos.bancoActivoNombre;
       document.getElementById('label-banco-activo').textContent = bancoActivoNombre + ' (' + document.getElementById('com-porc-banco').value + '%)';
     }
-    if(datos.binanceActivoNombre) {
+    if(datos.binanceActivoNombre && document.getElementById('label-binance-activo')) {
       binanceActivoNombre = datos.binanceActivoNombre;
       document.getElementById('label-binance-activo').textContent = binanceActivoNombre + ' (' + document.getElementById('com-porc-binance').value + '%)';
     }
 
     if(datos.monedaActiva) {
       var btn = document.querySelector('.curr-btn[data-curr="' + datos.monedaActiva + '"]');
-      if (btn) seleccionarMonedaBase(datos.monedaActiva, btn, false);
+      if (btn) window.seleccionarMonedaBase(datos.monedaActiva, btn, false);
     }
 
     actualizarResumenCanal();
@@ -360,31 +347,39 @@ function cargarDatosGuardados() {
   }
 }
 
-// === Conversión Bidireccional al tocar las Monedas ===
-function seleccionarMonedaBase(nuevaMoneda, el, guardar = true) {
+// === CAMBIO INTELIGENTE DE MONEDA ===
+window.seleccionarMonedaBase = function(nuevaMoneda, el, guardar = true) {
   var inputEl = document.getElementById('main-amount-input');
-  
-  if (inputEl.value !== '' && monedaActiva !== nuevaMoneda) {
-    var montoActual = evaluarInputCalculadora();
-    
-    if (montoActual > 0) {
-      var baseBs = 0;
-      if (monedaActiva === 'VES') baseBs = montoActual;
-      else if (monedaActiva === 'USD') baseBs = montoActual * tasaBCV;
-      else if (monedaActiva === 'USDT') baseBs = montoActual * tasaUSDT;
-      else if (monedaActiva === 'EUR') baseBs = montoActual * tasaEUR;
-      else if (monedaActiva === 'COP') baseBs = tasaCOP > 0 ? montoActual * (tasaBCV / tasaCOP) : 0;
+  var rawMonto = inputEl.value;
+  var montoAnterior = 0;
 
-      var nuevoMonto = 0;
-      if (nuevaMoneda === 'VES') nuevoMonto = baseBs;
-      else if (nuevaMoneda === 'USD') nuevoMonto = tasaBCV > 0 ? baseBs / tasaBCV : 0;
-      else if (nuevaMoneda === 'USDT') nuevoMonto = tasaUSDT > 0 ? baseBs / tasaUSDT : 0;
-      else if (nuevaMoneda === 'EUR') nuevoMonto = tasaEUR > 0 ? baseBs / tasaEUR : 0;
-      else if (nuevaMoneda === 'COP') nuevoMonto = tasaBCV > 0 ? (baseBs / tasaBCV) * tasaCOP : 0;
-
-      var decimals = nuevaMoneda === 'COP' || nuevaMoneda === 'VES' ? 2 : 2;
-      inputEl.value = Number(nuevoMonto.toFixed(decimals));
+  // Extraer el monto actual antes del cambio
+  try {
+    var saneado = rawMonto.replace(/,/g, '.').replace(/[^0-9.\+\-\*\/]/g, '');
+    var listo = saneado.replace(/[\+\-\*\/]+$/, '');
+    if (listo !== '') {
+      montoAnterior = new Function('return ' + listo)() || 0;
     }
+  } catch (e) { montoAnterior = 0; }
+
+  // Si había un monto, lo transforma a la nueva moneda automáticamente
+  if (montoAnterior > 0 && nuevaMoneda !== monedaActiva) {
+    var baseEnBs = 0;
+    if (monedaActiva === 'VES') baseEnBs = montoAnterior;
+    else if (monedaActiva === 'USD') baseEnBs = montoAnterior * tasaBCV;
+    else if (monedaActiva === 'USDT') baseEnBs = montoAnterior * tasaUSDT;
+    else if (monedaActiva === 'EUR') baseEnBs = montoAnterior * tasaEUR;
+    else if (monedaActiva === 'COP') baseEnBs = tasaCOP > 0 ? montoAnterior * (tasaBCV / tasaCOP) : 0;
+
+    var nuevoMontoInput = 0;
+    if (nuevaMoneda === 'VES') nuevoMontoInput = baseEnBs;
+    else if (nuevaMoneda === 'USD') nuevoMontoInput = tasaBCV > 0 ? baseEnBs / tasaBCV : 0;
+    else if (nuevaMoneda === 'USDT') nuevoMontoInput = tasaUSDT > 0 ? baseEnBs / tasaUSDT : 0;
+    else if (nuevaMoneda === 'EUR') nuevoMontoInput = tasaEUR > 0 ? baseEnBs / tasaEUR : 0;
+    else if (nuevaMoneda === 'COP') nuevoMontoInput = tasaBCV > 0 ? baseEnBs / (tasaBCV / tasaCOP) : 0;
+
+    // Se actualiza el input con el monto ya convertido (2 decimales limpios)
+    inputEl.value = Number(nuevoMontoInput.toFixed(2));
   }
 
   monedaActiva = nuevaMoneda;
@@ -398,16 +393,30 @@ function seleccionarMonedaBase(nuevaMoneda, el, guardar = true) {
     'EUR': 'Monto en Euros (€):',
     'COP': 'Monto en Pesos COP:'
   };
-  document.getElementById('main-input-label').textContent = labels[monedaActiva] || 'Monto:';
+  var labelEl = document.getElementById('main-input-label');
+  if(labelEl) labelEl.textContent = labels[nuevaMoneda] || 'Monto:';
   
   inputEl.select();
-
-  calcularMultimoneda();
+  window.calcularMultimoneda();
   if (guardar) guardarDatos(true);
-}
+};
 
-function calcularMultimoneda() {
-  var monto = evaluarInputCalculadora();
+window.calcularMultimoneda = function() {
+  var inputEl = document.getElementById('main-amount-input');
+  if(!inputEl) return;
+  var rawMonto = inputEl.value;
+  var monto = 0;
+
+  try {
+    var saneado = rawMonto.replace(/,/g, '.').replace(/[^0-9.\+\-\*\/]/g, '');
+    var listoParaEvaluar = saneado.replace(/[\+\-\*\/]+$/, '');
+    if (listoParaEvaluar !== '') {
+      monto = new Function('return ' + listoParaEvaluar)() || 0;
+    }
+  } catch (e) {
+    monto = 0;
+  }
+
   var baseEnBs = 0;
 
   if (monedaActiva === 'VES') baseEnBs = monto;
@@ -426,10 +435,11 @@ function calcularMultimoneda() {
   document.getElementById('res-multi-usdt').textContent = formato(usdtP2p) + ' USDT';
   document.getElementById('res-multi-eur').textContent = formato(eur) + ' €';
   document.getElementById('res-multi-cop').textContent = formato(cop) + ' COP';
-}
+};
 
 function renderHorariosNotificaciones() {
   var cont = document.getElementById('lista-horarios');
+  if(!cont) return;
   cont.innerHTML = '';
   listaHorariosNotif.forEach(function(hora, idx) {
     var tag = document.createElement('div');
@@ -449,7 +459,7 @@ function renderHorariosNotificaciones() {
   });
 }
 
-function agregarHorarioNotificacion() {
+window.agregarHorarioNotificacion = function() {
   var nuevo = document.getElementById('nuevo-horario').value;
   if (!nuevo) return;
   if (!listaHorariosNotif.includes(nuevo)) {
@@ -459,7 +469,7 @@ function agregarHorarioNotificacion() {
     guardarDatos(true);
     window.mostrarToast("Alerta programada a las " + nuevo);
   }
-}
+};
 
 function eliminarHorarioNotificacion(idx) {
   listaHorariosNotif.splice(idx, 1);
@@ -487,16 +497,18 @@ function abrirModalInput(titulo, mostrarNombre, valorNombre, valorPct, callback)
       return;
     }
     callback(n, p);
-    cerrarModalInput();
+    window.cerrarModalInput();
   };
 }
 
-function cerrarModalInput() {
-  document.getElementById('modal-input-custom').style.display = 'none';
-}
+window.cerrarModalInput = function() {
+  var m = document.getElementById('modal-input-custom');
+  if(m) m.style.display = 'none';
+};
 
 function renderBancos() {
   var grid = document.getElementById('grid-bancos');
+  if(!grid) return;
   grid.innerHTML = '';
   listaBancos.forEach(function(b) {
     var div = document.createElement('div');
@@ -550,6 +562,7 @@ function renderBancos() {
 
 function renderBinance() {
   var grid = document.getElementById('grid-binance');
+  if(!grid) return;
   grid.innerHTML = '';
   listaBinance.forEach(function(bin) {
     var div = document.createElement('div');
@@ -607,10 +620,10 @@ function seleccionarBancoComision(comision, nombreBanco, el) {
   document.getElementById('com-porc-banco').value = comision;
   bancoActivoNombre = nombreBanco;
   document.getElementById('label-banco-activo').textContent = nombreBanco + ' (' + comision + '%)';
-  toggleAccordion('acc-bancos');
+  window.toggleAccordion('acc-bancos');
   actualizarResumenCanal();
-  calcularComisiones(1);
-  calcularArbitraje();
+  window.calcularComisiones(1);
+  window.calcularArbitraje();
   guardarDatos(true);
 }
 
@@ -620,48 +633,58 @@ function seleccionarBinanceComision(comision, nombreBinance, el) {
   document.getElementById('com-porc-binance').value = comision;
   binanceActivoNombre = nombreBinance;
   document.getElementById('label-binance-activo').textContent = nombreBinance + ' (' + comision + '%)';
-  toggleAccordion('acc-binance');
+  window.toggleAccordion('acc-binance');
   actualizarResumenCanal();
-  calcularComisiones(1);
-  calcularArbitraje();
+  window.calcularComisiones(1);
+  window.calcularArbitraje();
   guardarDatos(true);
 }
 
 function actualizarResumenCanal() {
-  var pb = document.getElementById('com-porc-banco').value;
-  var pbin = document.getElementById('com-porc-binance').value;
-  document.getElementById('resumen-canal-activo').textContent = bancoActivoNombre + ' [' + pb + '%] + ' + binanceActivoNombre + ' [' + pbin + '%]';
+  var pb = document.getElementById('com-porc-banco') ? document.getElementById('com-porc-banco').value : 0;
+  var pbin = document.getElementById('com-porc-binance') ? document.getElementById('com-porc-binance').value : 0;
+  var resCanal = document.getElementById('resumen-canal-activo');
+  if(resCanal) resCanal.textContent = bancoActivoNombre + ' [' + pb + '%] + ' + binanceActivoNombre + ' [' + pbin + '%]';
 }
 
-function actualizarTasasManuales(subirNube = true) {
+window.actualizarTasasManuales = function(subirNube = true) {
   tasaBCV = parseFloat(document.getElementById('input-tasa-bcv').value) || 0;
   tasaUSDT = parseFloat(document.getElementById('input-tasa-usdt').value) || 0;
   tasaEUR = parseFloat(document.getElementById('input-tasa-eur').value) || 0;
   tasaCOP = parseFloat(document.getElementById('input-tasa-cop').value) || 0;
 
-  document.getElementById('rate-bcv').textContent = formato(tasaBCV) + ' Bs';
-  document.getElementById('rate-usdt').textContent = formato(tasaUSDT) + ' Bs';
-  document.getElementById('rate-eur').textContent = formato(tasaEUR) + ' Bs';
-  document.getElementById('rate-cop').textContent = formato(tasaCOP);
+  var rBcv = document.getElementById('rate-bcv');
+  var rUsdt = document.getElementById('rate-usdt');
+  var rEur = document.getElementById('rate-eur');
+  var rCop = document.getElementById('rate-cop');
+
+  if(rBcv) rBcv.textContent = formato(tasaBCV) + ' Bs';
+  if(rUsdt) rUsdt.textContent = formato(tasaUSDT) + ' Bs';
+  if(rEur) rEur.textContent = formato(tasaEUR) + ' Bs';
+  if(rCop) rCop.textContent = formato(tasaCOP);
 
   calcularVariacion('var-bcv', tasaBCV, prevBCV);
   calcularVariacion('var-usdt', tasaUSDT, prevUSDT);
   calcularVariacion('var-eur', tasaEUR, prevEUR);
 
   var spread = tasaBCV > 0 ? ((tasaUSDT - tasaBCV) / tasaBCV) * 100 : 0;
-  document.getElementById('rate-spread').textContent = spread.toFixed(2) + '%';
+  var rSpread = document.getElementById('rate-spread');
+  if(rSpread) rSpread.textContent = spread.toFixed(2) + '%';
 
-  document.getElementById('arb-tasa-compra').value = tasaBCV;
-  document.getElementById('arb-tasa-venta').value = tasaUSDT;
+  var arbC = document.getElementById('arb-tasa-compra');
+  var arbV = document.getElementById('arb-tasa-venta');
+  if(arbC) arbC.value = tasaBCV;
+  if(arbV) arbV.value = tasaUSDT;
   
-  calcularMultimoneda();
-  calcularArbitraje();
-  calcularMetaNeta();
+  window.calcularMultimoneda();
+  window.calcularArbitraje();
+  window.calcularMetaNeta();
   guardarDatos(subirNube);
-}
+};
 
 function calcularVariacion(elementId, actual, previo) {
   var el = document.getElementById(elementId);
+  if(!el) return;
   if (!previo || previo === actual) {
     el.textContent = 'Estable';
     el.className = 'trend neutral';
@@ -677,7 +700,7 @@ function calcularVariacion(elementId, actual, previo) {
   }
 }
 
-async function sincronizarDolarVzlaAPI(mostrarAlerta) {
+window.sincronizarDolarVzlaAPI = async function(mostrarAlerta) {
   try {
     var response = await fetch('https://rates.dolarvzla.com/bcv/current.json');
     var data = await response.json();
@@ -687,7 +710,7 @@ async function sincronizarDolarVzlaAPI(mostrarAlerta) {
       var nuevoUsd = parseFloat(data.current.usd);
       if (nuevoUsd && Math.abs(nuevoUsd - tasaBCV) >= 0.01) {
         prevBCV = tasaBCV;
-        document.getElementById('input-tasa-bcv').value = nuevoUsd;
+        if(document.getElementById('input-tasa-bcv')) document.getElementById('input-tasa-bcv').value = nuevoUsd;
         huboCambio = true;
         dispararNotificacion(
           'Cambio en Dólar BCV Oficial',
@@ -697,19 +720,21 @@ async function sincronizarDolarVzlaAPI(mostrarAlerta) {
       var nuevoEur = parseFloat(data.current.eur);
       if (nuevoEur && Math.abs(nuevoEur - tasaEUR) >= 0.01) {
         prevEUR = tasaEUR;
-        document.getElementById('input-tasa-eur').value = nuevoEur;
+        if(document.getElementById('input-tasa-eur')) document.getElementById('input-tasa-eur').value = nuevoEur;
         huboCambio = true;
       }
     }
-    actualizarTasasManuales(huboCambio);
-    document.getElementById('sync-status').textContent = 'Tasas Oficiales Sincronizadas';
+    window.actualizarTasasManuales(huboCambio);
+    var sync = document.getElementById('sync-status');
+    if(sync) sync.textContent = 'Tasas Oficiales Sincronizadas';
     if (mostrarAlerta) window.mostrarToast('Tasas BCV actualizadas');
   } catch (error) {
-    document.getElementById('sync-status').textContent = 'Modo Offline Activo';
+    var sync = document.getElementById('sync-status');
+    if(sync) sync.textContent = 'Modo Offline Activo';
   }
-}
+};
 
-async function sincronizarBinanceP2P(mostrarAlerta) {
+window.sincronizarBinanceP2P = async function(mostrarAlerta) {
   try {
     var response = await fetch('https://ve.dolarapi.com/v1/dolares');
     var data = await response.json();
@@ -720,54 +745,58 @@ async function sincronizarBinanceP2P(mostrarAlerta) {
       var huboCambio = false;
       if (nuevaTasa && Math.abs(nuevaTasa - tasaUSDT) >= 0.01) {
         prevUSDT = tasaUSDT;
-        document.getElementById('input-tasa-usdt').value = nuevaTasa;
+        if(document.getElementById('input-tasa-usdt')) document.getElementById('input-tasa-usdt').value = nuevaTasa;
         huboCambio = true;
         dispararNotificacion(
           'Cambio en USDT P2P',
           'Nueva cotización: ' + formato(nuevaTasa) + ' Bs | BCV: ' + formato(tasaBCV) + ' Bs'
         );
       }
-      actualizarTasasManuales(huboCambio);
-      document.getElementById('sync-status').textContent = 'Mercado P2P Sincronizado';
+      window.actualizarTasasManuales(huboCambio);
+      var sync = document.getElementById('sync-status');
+      if(sync) sync.textContent = 'Mercado P2P Sincronizado';
       if (mostrarAlerta) window.mostrarToast('Tasa USDT P2P actualizada');
     }
   } catch (e) {
-    document.getElementById('sync-status').textContent = 'Modo Offline Activo';
+    var sync = document.getElementById('sync-status');
+    if(sync) sync.textContent = 'Modo Offline Activo';
   }
-}
+};
 
-function switchTab(tabId, el) {
+window.switchTab = function(tabId, el) {
   document.querySelectorAll('.tab-content').forEach(function(t) { t.classList.remove('active'); });
   document.querySelectorAll('.nav-item').forEach(function(i) { i.classList.remove('active'); });
-  document.getElementById('tab-' + tabId).classList.add('active');
-  el.classList.add('active');
-}
+  var target = document.getElementById('tab-' + tabId);
+  if(target) target.classList.add('active');
+  if(el) el.classList.add('active');
+};
 
-function calcularComisionTransf() {
+window.calcularComisionTransf = function() {
   var bs = parseFloat(document.getElementById('transf-monto-bs').value) || 0;
   var comision = bs * 0.003;
   document.getElementById('transf-res-comision').textContent = formato(comision) + ' Bs';
   document.getElementById('transf-res-total').textContent = formato(bs + comision) + ' Bs';
-}
+};
 
-function calcularMetaNeta() {
+window.calcularMetaNeta = function() {
   var metaUsd = parseFloat(document.getElementById('meta-usd').value) || 0;
-  var pBanco = parseFloat(document.getElementById('com-porc-banco').value) || 2.5;
-  var pBinance = parseFloat(document.getElementById('com-porc-binance').value) || 0;
+  var pBanco = parseFloat(document.getElementById('com-porc-banco') ? document.getElementById('com-porc-banco').value : 0) || 2.5;
+  var pBinance = parseFloat(document.getElementById('com-porc-binance') ? document.getElementById('com-porc-binance').value : 0) || 0;
   var factorComision = (1 - (pBanco / 100)) * (1 - (pBinance / 100));
   var usdNecesarios = factorComision > 0 ? metaUsd / factorComision : metaUsd;
-  document.getElementById('meta-res-bs').textContent = formato((usdNecesarios * tasaBCV) * 1.003) + ' Bs';
-}
+  var metaEl = document.getElementById('meta-res-bs');
+  if(metaEl) metaEl.textContent = formato((usdNecesarios * tasaBCV) * 1.003) + ' Bs';
+};
 
-function calcularIGTF() {
+window.calcularIGTF = function() {
   var usd = parseFloat(document.getElementById('igtf-monto-usd').value) || 0;
   var baseBs = usd * tasaBCV;
   var igtfUsd = usd * 0.03;
   document.getElementById('igtf-res-3pct').textContent = formato(igtfUsd) + ' $';
   document.getElementById('igtf-res-total').textContent = formato(usd + igtfUsd) + ' $ / ' + formato(baseBs + (igtfUsd * tasaBCV)) + ' Bs';
-}
+};
 
-function calcularComisiones(modo) {
+window.calcularComisiones = function(modo) {
   var pBanco = parseFloat(document.getElementById('com-porc-banco').value) || 0;
   var pBinance = parseFloat(document.getElementById('com-porc-binance').value) || 0;
   var pPersonal = parseFloat(document.getElementById('com-porc-personal').value) || 0;
@@ -788,10 +817,10 @@ function calcularComisiones(modo) {
   }
 
   actualizarResumenCanal();
-  calcularMetaNeta();
-}
+  window.calcularMetaNeta();
+};
 
-function calcularArbitraje() {
+window.calcularArbitraje = function() {
   var bs = parseFloat(document.getElementById('arb-bs-inicial').value) || 0;
   var tCompra = parseFloat(document.getElementById('arb-tasa-compra').value) || tasaBCV;
   var tVenta = parseFloat(document.getElementById('arb-tasa-venta').value) || tasaUSDT;
@@ -800,7 +829,8 @@ function calcularArbitraje() {
   var pPersonal = parseFloat(document.getElementById('arb-com-personal').value) || 0;
 
   var factorComision = (1 - (pBanco / 100)) * (1 - (pBinance / 100));
-  document.getElementById('arb-res-breakeven').textContent = formato(factorComision > 0 ? tCompra / factorComision : tCompra) + ' Bs';
+  var eq = document.getElementById('arb-res-breakeven');
+  if(eq) eq.textContent = formato(factorComision > 0 ? tCompra / factorComision : tCompra) + ' Bs';
 
   if (bs > 0 && tCompra > 0) {
     var usdBrutos = bs / tCompra;
@@ -813,28 +843,26 @@ function calcularArbitraje() {
 
     var colorRes = gananciaBsBruta >= 0 ? 'var(--neon-green)' : 'var(--danger-color)';
 
-    document.getElementById('arb-res-final').textContent = formato(bsFinales) + ' Bs';
-    document.getElementById('arb-res-comision-bs').textContent = formato(bs - (usdtNetos * tCompra)) + ' Bs';
+    var arbFinal = document.getElementById('arb-res-final');
+    var arbCom = document.getElementById('arb-res-comision-bs');
+    if(arbFinal) arbFinal.textContent = formato(bsFinales) + ' Bs';
+    if(arbCom) arbCom.textContent = formato(bs - (usdtNetos * tCompra)) + ' Bs';
     
     var elBs = document.getElementById('arb-res-ganancia-bs');
-    elBs.textContent = formato(gananciaBsBruta) + ' Bs';
-    elBs.style.color = colorRes;
+    if(elBs){ elBs.textContent = formato(gananciaBsBruta) + ' Bs'; elBs.style.color = colorRes; }
 
     var elUsdBcv = document.getElementById('arb-res-ganancia-usd-bcv');
-    elUsdBcv.textContent = formato(gananciaUsdBcvBruta) + ' $';
-    elUsdBcv.style.color = colorRes;
+    if(elUsdBcv) { elUsdBcv.textContent = formato(gananciaUsdBcvBruta) + ' $'; elUsdBcv.style.color = colorRes; }
 
     var elUsdt = document.getElementById('arb-res-ganancia-usdt');
-    elUsdt.textContent = formato(gananciaUsdtBruta) + ' USDT';
-    elUsdt.style.color = colorRes;
+    if(elUsdt) { elUsdt.textContent = formato(gananciaUsdtBruta) + ' USDT'; elUsdt.style.color = colorRes; }
 
     var elUsd = document.getElementById('arb-res-ganancia-usd');
-    elUsd.textContent = formato(gananciaUsdtFinal) + ' USDT';
-    elUsd.style.color = colorRes;
+    if(elUsd) { elUsd.textContent = formato(gananciaUsdtFinal) + ' USDT'; elUsd.style.color = colorRes; }
   }
-}
+};
 
-function registrarOperacion() {
+window.registrarOperacion = function() {
   var bs = document.getElementById('arb-bs-inicial').value;
   var ganBs = document.getElementById('arb-res-ganancia-bs').textContent;
   if (!bs || ganBs === '0,00 Bs') {
@@ -868,11 +896,12 @@ function registrarOperacion() {
   renderHistorial();
   guardarDatos(true);
   window.mostrarToast('Operación guardada en tu Libro en la Nube');
-}
+};
 
 function renderHistorial(filtro) {
   var q = (filtro || '').toLowerCase();
   var container = document.getElementById('historial-cards-container');
+  if(!container) return;
   container.innerHTML = '';
 
   historial.filter(function(h) {
@@ -932,12 +961,13 @@ function crearLineaDetalle(label, valor, colorDestacado) {
   return row;
 }
 
-function abrirModalDetalle(id) {
+window.abrirModalDetalle = function(id) {
   var item = historial.find(function(h) { return h.id === id; });
   if (!item) return;
   itemSeleccionadoModal = item;
 
   var body = document.getElementById('modal-body-content');
+  if(!body) return;
   body.innerHTML = '';
 
   body.appendChild(crearLineaDetalle('Fecha y Hora:', item.fechaHora));
@@ -955,24 +985,25 @@ function abrirModalDetalle(id) {
   body.appendChild(crearLineaDetalle('Observación:', item.nota));
 
   document.getElementById('modal-detalle').style.display = 'flex';
-}
+};
 
-function cerrarModalDetalle(e) {
+window.cerrarModalDetalle = function(e) {
   if (!e || e.target.id === 'modal-detalle') {
-    document.getElementById('modal-detalle').style.display = 'none';
+    var modal = document.getElementById('modal-detalle');
+    if(modal) modal.style.display = 'none';
   }
-}
+};
 
-function eliminarDesdeModal() {
+window.eliminarDesdeModal = function() {
   if (!itemSeleccionadoModal) return;
   historial = historial.filter(function(h) { return h.id !== itemSeleccionadoModal.id; });
   renderHistorial();
   guardarDatos(true);
-  cerrarModalDetalle(null);
+  window.cerrarModalDetalle(null);
   window.mostrarToast("Registro eliminado de la nube");
-}
+};
 
-function copiarDetalleWhatsApp() {
+window.copiarDetalleWhatsApp = function() {
   if (!itemSeleccionadoModal) return;
   var h = itemSeleccionadoModal;
   var texto = "*COMPROBANTE DE OPERACIÓN FINANCIERA*\n" +
@@ -990,20 +1021,20 @@ function copiarDetalleWhatsApp() {
 
   navigator.clipboard.writeText(texto);
   window.mostrarToast('Comprobante copiado para WhatsApp');
-}
+};
 
-function filtrarHistorial() {
+window.filtrarHistorial = function() {
   renderHistorial(document.getElementById('buscar-historial').value);
-}
+};
 
-function copiarTexto(tipo) {
+window.copiarTexto = function(tipo) {
   var texto = '';
   if (tipo === 'resumen-rapido') {
     var val = document.getElementById('main-amount-input').value || '0';
     texto = "*COTIZACIÓN MULTIMONEDA (" + val + " " + monedaActiva + ")*\n" +
-      "• En Bs: " + document.getElementById('res-multi-ves-bcv').textContent + "\n" +
-      "• En USD: " + document.getElementById('res-multi-usd').textContent + "\n" +
-      "• En USDT: " + document.getElementById('res-multi-usdt').textContent + "\n" +
+      "• En Bs (BCV): " + document.getElementById('res-multi-ves-bcv').textContent + "\n" +
+      "• En USD (BCV): " + document.getElementById('res-multi-usd').textContent + "\n" +
+      "• En USDT (P2P): " + document.getElementById('res-multi-usdt').textContent + "\n" +
       "• En Euros: " + document.getElementById('res-multi-eur').textContent + "\n" +
       "• En Pesos COP: " + document.getElementById('res-multi-cop').textContent;
   } else if (tipo === 'meta-neta') {
@@ -1011,25 +1042,32 @@ function copiarTexto(tipo) {
   }
   navigator.clipboard.writeText(texto);
   window.mostrarToast('Copiado al portapapeles');
-}
+};
 
-function limpiarTodo() {
+window.limpiarTodo = function() {
   document.getElementById('main-amount-input').value = '';
   document.querySelectorAll('input').forEach(function(i) {
     if(!['input-tasa-bcv','input-tasa-usdt','input-tasa-eur','input-tasa-cop','nuevo-horario','auth-email','auth-password'].includes(i.id)) {
       i.value = '';
     }
   });
-  document.getElementById('com-porc-banco').value = '2.5';
-  document.getElementById('com-porc-binance').value = '0.0';
-  document.getElementById('com-porc-personal').value = '0';
-  document.getElementById('arb-com-personal').value = '0';
-  actualizarTasasManuales(true);
+  var cB = document.getElementById('com-porc-banco');
+  var cBin = document.getElementById('com-porc-binance');
+  var cP = document.getElementById('com-porc-personal');
+  var aP = document.getElementById('arb-com-personal');
+  
+  if(cB) cB.value = '2.5';
+  if(cBin) cBin.value = '0.0';
+  if(cP) cP.value = '0';
+  if(aP) aP.value = '0';
+  
+  window.actualizarTasasManuales(true);
   window.mostrarToast("Campos restablecidos");
-}
+};
 
 function renderGraficoD3() {
   var container = d3.select("#chart-container");
+  if(container.empty()) return;
   container.html("");
 
   var node = container.node();
@@ -1081,14 +1119,15 @@ function renderGraficoD3() {
     .attr("d", lineUSDT);
 }
 
-function solicitarPermisoNotificaciones() {
+window.solicitarPermisoNotificaciones = function() {
   if (!("Notification" in window)) {
     window.mostrarToast("Navegador sin soporte de alertas");
     return;
   }
   Notification.requestPermission().then(function(permission) {
     if (permission === "granted") {
-      document.getElementById("notif-status").textContent = "Alertas Activas (Horarios y Cambios de Tasa)";
+      var notifStatus = document.getElementById("notif-status");
+      if(notifStatus) notifStatus.textContent = "Alertas Activas (Horarios y Cambios de Tasa)";
       window.mostrarToast("Alertas activadas en segundo plano");
       sincronizarConfigConServiceWorker();
       dispararNotificacion(
@@ -1096,10 +1135,11 @@ function solicitarPermisoNotificaciones() {
         'BCV: ' + formato(tasaBCV) + ' Bs | USDT P2P: ' + formato(tasaUSDT) + ' Bs'
       );
     } else {
-      document.getElementById("notif-status").textContent = "Permiso de alerta denegado";
+      var notifStatus = document.getElementById("notif-status");
+      if(notifStatus) notifStatus.textContent = "Permiso de alerta denegado";
     }
   });
-}
+};
 
 var ultimaHoraNotificada = '';
 function iniciarRelojNotificaciones() {
@@ -1205,7 +1245,15 @@ async function activarSincronizacionFondo() {
 
   if ('periodicSync' in reg) {
     try {
-      await reg.periodicSync.register('check-rates
+      await reg.periodicSync.register('check-rates-sync', {
+        minInterval: 15 * 60 * 1000
+      });
+    } catch (e) {}
+  }
+
+  if ('sync' in reg) {
+    try {
+      await reg.sync.register('check-rates-sync');
     } catch (e) {}
   }
 
