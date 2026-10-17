@@ -97,7 +97,6 @@ async function pegarAlInput() {
   }
 }
 
-// Aquí se agregan +, -, * (multiplicación) y / (división)
 window.agregarOperador = function(operador) {
   var input = document.getElementById('main-amount-input');
   if (input.value !== '') {
@@ -109,7 +108,11 @@ window.agregarOperador = function(operador) {
 window.onload = function() {
   registrarServiceWorkerYBackgroundSync();
 
-  cargarDatosGuardados();
+  // CANDADO DE CARGA LOCAL: Si hay sesión activa, NO carga el localStorage inicial para no sobreescribir la nube
+  if (!localStorage.getItem('user_session_active')) {
+    cargarDatosGuardados();
+  }
+  
   renderBancos();
   renderBinance();
   renderHorariosNotificaciones();
@@ -278,6 +281,7 @@ function guardarDatos(subirANube = true) {
   localStorage.setItem('embrollo_data_pro_v5', JSON.stringify(datos));
   sincronizarConfigConServiceWorker();
 
+  // CONDICIÓN PRINCIPAL: Solo sube a Firebase si no hay bloqueo temporal (aplicandoNube)
   if (subirANube && !aplicandoNube && window.guardarDatosEnFirebase) {
     window.guardarDatosEnFirebase(datos);
   }
@@ -285,7 +289,7 @@ function guardarDatos(subirANube = true) {
 
 window.aplicarDatosDesdeNube = function(datos) {
   if (!datos) return;
-  aplicandoNube = true;
+  aplicandoNube = true; // BLOQUEA LA SUBIDA MIENTRAS SE APLICAN LOS DATOS DE LA NUBE
   try {
     if(datos.bcv && document.getElementById('input-tasa-bcv')) document.getElementById('input-tasa-bcv').value = datos.bcv;
     if(datos.usdt && document.getElementById('input-tasa-usdt')) document.getElementById('input-tasa-usdt').value = datos.usdt;
@@ -322,11 +326,13 @@ window.aplicarDatosDesdeNube = function(datos) {
     }
 
     actualizarResumenCanal();
-    actualizarTasasManuales(false);
+    actualizarTasasManuales(false); // Falso para no forzar la subida a la nube
     localStorage.setItem('embrollo_data_pro_v5', JSON.stringify(window.obtenerPayloadActual()));
     sincronizarConfigConServiceWorker();
   } catch(e) {}
-  aplicandoNube = false;
+  
+  // SE LIBERA EL CANDADO UNA VEZ TODO ESTÁ PINTADO EN PANTALLA
+  setTimeout(() => { aplicandoNube = false; }, 500); 
 };
 
 function cargarDatosGuardados() {
@@ -353,7 +359,6 @@ window.seleccionarMonedaBase = function(nuevaMoneda, el, guardar = true) {
   var rawMonto = inputEl.value;
   var montoAnterior = 0;
 
-  // Extraer el monto actual antes del cambio
   try {
     var saneado = rawMonto.replace(/,/g, '.').replace(/[^0-9.\+\-\*\/]/g, '');
     var listo = saneado.replace(/[\+\-\*\/]+$/, '');
@@ -362,7 +367,6 @@ window.seleccionarMonedaBase = function(nuevaMoneda, el, guardar = true) {
     }
   } catch (e) { montoAnterior = 0; }
 
-  // Si había un monto, lo transforma a la nueva moneda automáticamente
   if (montoAnterior > 0 && nuevaMoneda !== monedaActiva) {
     var baseEnBs = 0;
     if (monedaActiva === 'VES') baseEnBs = montoAnterior;
@@ -378,7 +382,6 @@ window.seleccionarMonedaBase = function(nuevaMoneda, el, guardar = true) {
     else if (nuevaMoneda === 'EUR') nuevoMontoInput = tasaEUR > 0 ? baseEnBs / tasaEUR : 0;
     else if (nuevaMoneda === 'COP') nuevoMontoInput = tasaBCV > 0 ? baseEnBs / (tasaBCV / tasaCOP) : 0;
 
-    // Se actualiza el input con el monto ya convertido (2 decimales limpios)
     inputEl.value = Number(nuevoMontoInput.toFixed(2));
   }
 
