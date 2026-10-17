@@ -62,19 +62,48 @@ window.copiarMontoIndividual = function(elementId) {
   var el = document.getElementById(elementId);
   if (!el) return;
   var texto = el.textContent.trim();
-  // Limpia el texto para dejar solo números y comas si se desea, o copia el texto exacto
-  navigator.clipboard.writeText(texto).then(function() {
-    window.mostrarToast("Copiado: " + texto);
-  }).catch(function() {
-    var temp = document.createElement('textarea');
-    temp.value = texto;
-    document.body.appendChild(temp);
-    temp.select();
-    document.execCommand('copy');
-    document.body.removeChild(temp);
-    window.mostrarToast("Copiado: " + texto);
-  });
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(texto).then(function() {
+      window.mostrarToast("Copiado: " + texto);
+    }).catch(function() { fallbackCopiar(texto); });
+  } else {
+    fallbackCopiar(texto);
+  }
 };
+
+function fallbackCopiar(texto) {
+  var temp = document.createElement('textarea');
+  temp.value = texto;
+  document.body.appendChild(temp);
+  temp.select();
+  document.execCommand('copy');
+  document.body.removeChild(temp);
+  window.mostrarToast("Copiado: " + texto);
+}
+
+// === FUNCIONES DEL INPUT MATEMÁTICO (PEGAR, SUMAR, RESTAR) ===
+async function pegarAlInput() {
+  try {
+    var texto = await navigator.clipboard.readText();
+    var numLimpiado = texto.replace(/[^0-9.,+\-*/]/g, ''); 
+    if (numLimpiado) {
+      var input = document.getElementById('main-amount-input');
+      input.value = numLimpiado;
+      calcularMultimoneda();
+      window.mostrarToast("Monto pegado");
+    }
+  } catch(e) {
+    window.mostrarToast("No se pudo pegar (Verifica los permisos)");
+  }
+}
+
+function agregarOperador(operador) {
+  var input = document.getElementById('main-amount-input');
+  if (input.value !== '') {
+    input.value = input.value + operador;
+    input.focus();
+  }
+}
 
 window.onload = function() {
   registrarServiceWorkerYBackgroundSync();
@@ -91,7 +120,7 @@ window.onload = function() {
   setInterval(function() {
     sincronizarDolarVzlaAPI(false);
     sincronizarBinanceP2P(false);
-  }, 180000);
+  }, 180000); 
 
   iniciarSmoothSlider();
   iniciarScrollWheelSlider();
@@ -314,6 +343,7 @@ function cargarDatosGuardados() {
   }
 }
 
+// Resalta texto y cambia moneda sin error
 function seleccionarMonedaBase(moneda, el, guardar = true) {
   monedaActiva = moneda;
   document.querySelectorAll('.curr-btn').forEach(function(b) { b.classList.remove('active'); });
@@ -327,12 +357,29 @@ function seleccionarMonedaBase(moneda, el, guardar = true) {
     'COP': 'Monto en Pesos COP:'
   };
   document.getElementById('main-input-label').textContent = labels[moneda] || 'Monto:';
+  
+  var inputEl = document.getElementById('main-amount-input');
+  inputEl.select();
+
   calcularMultimoneda();
   if (guardar) guardarDatos(true);
 }
 
 function calcularMultimoneda() {
-  var monto = parseFloat(document.getElementById('main-amount-input').value) || 0;
+  var inputEl = document.getElementById('main-amount-input');
+  var rawMonto = inputEl.value;
+  var monto = 0;
+
+  try {
+    var saneado = rawMonto.replace(/,/g, '.').replace(/[^0-9.\+\-\*\/]/g, '');
+    var listoParaEvaluar = saneado.replace(/[\+\-\*\/]+$/, '');
+    if (listoParaEvaluar !== '') {
+      monto = new Function('return ' + listoParaEvaluar)() || 0;
+    }
+  } catch (e) {
+    monto = 0;
+  }
+
   var baseEnBs = 0;
 
   if (monedaActiva === 'VES') baseEnBs = monto;
@@ -628,7 +675,7 @@ async function sincronizarDolarVzlaAPI(mostrarAlerta) {
     }
     actualizarTasasManuales(huboCambio);
     document.getElementById('sync-status').textContent = 'Tasas Oficiales Sincronizadas';
-    if (mostrarAlerta) mostrarToast('Tasas BCV actualizadas');
+    if (mostrarAlerta) window.mostrarToast('Tasas BCV actualizadas');
   } catch (error) {
     document.getElementById('sync-status').textContent = 'Modo Offline Activo';
   }
@@ -654,7 +701,7 @@ async function sincronizarBinanceP2P(mostrarAlerta) {
       }
       actualizarTasasManuales(huboCambio);
       document.getElementById('sync-status').textContent = 'Mercado P2P Sincronizado';
-      if (mostrarAlerta) mostrarToast('Tasa USDT P2P actualizada');
+      if (mostrarAlerta) window.mostrarToast('Tasa USDT P2P actualizada');
     }
   } catch (e) {
     document.getElementById('sync-status').textContent = 'Modo Offline Activo';
@@ -763,7 +810,7 @@ function registrarOperacion() {
   var bs = document.getElementById('arb-bs-inicial').value;
   var ganBs = document.getElementById('arb-res-ganancia-bs').textContent;
   if (!bs || ganBs === '0,00 Bs') {
-    mostrarToast("Ingrese un monto de inversión válido");
+    window.mostrarToast("Ingrese un monto de inversión válido");
     return;
   }
 
@@ -792,7 +839,7 @@ function registrarOperacion() {
   document.getElementById('arb-nota').value = '';
   renderHistorial();
   guardarDatos(true);
-  mostrarToast('Operación guardada en tu Libro en la Nube');
+  window.mostrarToast('Operación guardada en tu Libro en la Nube');
 }
 
 function renderHistorial(filtro) {
@@ -894,7 +941,7 @@ function eliminarDesdeModal() {
   renderHistorial();
   guardarDatos(true);
   cerrarModalDetalle(null);
-  mostrarToast("Registro eliminado de la nube");
+  window.mostrarToast("Registro eliminado de la nube");
 }
 
 function copiarDetalleWhatsApp() {
@@ -914,7 +961,7 @@ function copiarDetalleWhatsApp() {
     "• Nota: " + h.nota;
 
   navigator.clipboard.writeText(texto);
-  mostrarToast('Comprobante copiado para WhatsApp');
+  window.mostrarToast('Comprobante copiado para WhatsApp');
 }
 
 function filtrarHistorial() {
@@ -926,19 +973,20 @@ function copiarTexto(tipo) {
   if (tipo === 'resumen-rapido') {
     var val = document.getElementById('main-amount-input').value || '0';
     texto = "*COTIZACIÓN MULTIMONEDA (" + val + " " + monedaActiva + ")*\n" +
-      "• En Bs (BCV): " + document.getElementById('res-multi-ves-bcv').textContent + "\n" +
-      "• En USD (BCV): " + document.getElementById('res-multi-usd').textContent + "\n" +
-      "• En USDT (P2P): " + document.getElementById('res-multi-usdt').textContent + "\n" +
+      "• En Bs: " + document.getElementById('res-multi-ves-bcv').textContent + "\n" +
+      "• En USD: " + document.getElementById('res-multi-usd').textContent + "\n" +
+      "• En USDT: " + document.getElementById('res-multi-usdt').textContent + "\n" +
       "• En Euros: " + document.getElementById('res-multi-eur').textContent + "\n" +
       "• En Pesos COP: " + document.getElementById('res-multi-cop').textContent;
   } else if (tipo === 'meta-neta') {
     texto = "Para recibir *" + (document.getElementById('meta-usd').value || 0) + " $ netos*, el monto exacto a transferir es *" + document.getElementById('meta-res-bs').textContent + "*.";
   }
   navigator.clipboard.writeText(texto);
-  mostrarToast('Copiado al portapapeles');
+  window.mostrarToast('Copiado al portapapeles');
 }
 
 function limpiarTodo() {
+  document.getElementById('main-amount-input').value = '';
   document.querySelectorAll('input').forEach(function(i) {
     if(!['input-tasa-bcv','input-tasa-usdt','input-tasa-eur','input-tasa-cop','nuevo-horario','auth-email','auth-password'].includes(i.id)) {
       i.value = '';
@@ -949,7 +997,7 @@ function limpiarTodo() {
   document.getElementById('com-porc-personal').value = '0';
   document.getElementById('arb-com-personal').value = '0';
   actualizarTasasManuales(true);
-  mostrarToast("Campos restablecidos");
+  window.mostrarToast("Campos restablecidos");
 }
 
 function renderGraficoD3() {
@@ -1007,13 +1055,13 @@ function renderGraficoD3() {
 
 function solicitarPermisoNotificaciones() {
   if (!("Notification" in window)) {
-    mostrarToast("Navegador sin soporte de alertas");
+    window.mostrarToast("Navegador sin soporte de alertas");
     return;
   }
   Notification.requestPermission().then(function(permission) {
     if (permission === "granted") {
       document.getElementById("notif-status").textContent = "Alertas Activas (Horarios y Cambios de Tasa)";
-      mostrarToast("Alertas activadas en segundo plano");
+      window.mostrarToast("Alertas activadas en segundo plano");
       sincronizarConfigConServiceWorker();
       dispararNotificacion(
         'Alertas Financieras Activas',
@@ -1060,12 +1108,12 @@ function mostrarAvisoEstadoRed(esOffline) {
   if (esOffline) {
     banner.style.background = 'linear-gradient(135deg, #d97706, #b45309)';
     banner.style.border = '1px solid #fbbf24';
-    banner.textContent = '⚡ Modo Offline Activo • Usando últimas tasas guardadas';
+    banner.innerHTML = '<svg class="icon-svg-sm" style="vertical-align:-2px; margin-right:4px;" viewBox="0 0 24 24"><path d="M10.5 2h3l-1.5 8h4.5l-6 12 1.5-8h-4.5z"/></svg> Modo Offline Activo • Usando últimas tasas';
     banner.style.opacity = '1';
   } else {
     banner.style.background = 'linear-gradient(135deg, #059669, #047857)';
     banner.style.border = '1px solid #34d399';
-    banner.textContent = '✅ Conexión restaurada • Tasas sincronizadas';
+    banner.innerHTML = '<svg class="icon-svg-sm" style="vertical-align:-2px; margin-right:4px;" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> Conexión restaurada • Tasas sincronizadas';
     banner.style.opacity = '1';
     setTimeout(() => {
       if (banner) banner.style.opacity = '0';
