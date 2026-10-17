@@ -1206,7 +1206,7 @@ async function activarSincronizacionFondo() {
   if ('periodicSync' in reg) {
     try {
       await reg.periodicSync.register('check-rates
-} catch (e) {}
+    } catch (e) {}
   }
 
   if (reg.active) {
