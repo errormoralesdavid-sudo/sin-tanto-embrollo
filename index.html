@@ -299,14 +299,14 @@
 
           <label id="main-input-label" style="margin-top:8px;">Monto en Dólares BCV ($):</label>
           
-          <!-- INPUT MATEMÁTICO CON BOTONES DE SVG Y DECIMAL -->
+          <!-- INPUT MATEMÁTICO CON BOTONES DE SVG -->
           <div class="math-input-group">
             <input type="text" inputmode="decimal" id="main-amount-input" placeholder="0.00" oninput="calcularMultimoneda()">
             <button class="btn-math" onclick="pegarAlInput()" title="Pegar Monto">
               <svg class="icon-svg-sm" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
             </button>
             <button class="btn-math" onclick="agregarOperador('/')" title="Dividir">
-              <svg class="icon-svg-sm" viewBox="0 0 24 24"><circle cx="12" cy="6" r="2" stroke="none" fill="currentColor"/><circle cx="12" cy="18" r="2" stroke="none" fill="currentColor"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              <svg class="icon-svg-sm" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
             </button>
             <button class="btn-math" onclick="agregarOperador('*')" title="Multiplicar">
               <svg class="icon-svg-sm" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
@@ -628,14 +628,14 @@
     let unsubscribeCloud = null;
     let currentDocId = null;
     let currentUserUid = null;
-    let pendingCloudPayload = null;
+    let nubeCargadaInicialmente = false; // CANDADO DE SEGURIDAD
 
     setPersistence(auth, browserLocalPersistence).catch(() => {});
 
-    // GUARDAR DIRECTAMENTE EN EL DOCUMENTO CON EL CORREO DEL USUARIO (EJ: davidmoraleserror@gmail.com)
+    // GUARDAR DIRECTAMENTE EN EL DOCUMENTO CON EL CORREO DEL USUARIO
     window.guardarDatosEnFirebase = async function(payload, mostrarConfirmacion = false) {
-      if (!currentDocId) {
-        pendingCloudPayload = payload;
+      // PROHIBICIÓN: Si la nube no ha terminado de descargar tus datos, no guarda NADA.
+      if (!currentDocId || !nubeCargadaInicialmente) {
         return;
       }
       try {
@@ -650,7 +650,7 @@
         const ind = document.getElementById('cloud-sync-indicator');
         if (ind) ind.textContent = "NUBE SINCRONIZADA";
         if (mostrarConfirmacion && window.mostrarToast) {
-          window.mostrarToast("Sincronizado con " + currentDocId);
+          window.mostrarToast("Sincronizado con la nube");
         }
       } catch (e) {
         console.error("Error guardando en Firestore:", e);
@@ -668,15 +668,10 @@
     function iniciarEscuchaNube(user) {
       currentDocId = (user.email || user.uid).toLowerCase().trim();
       currentUserUid = user.uid;
+      nubeCargadaInicialmente = false; // Cerramos el candado al entrar
 
       if (unsubscribeCloud) unsubscribeCloud();
       const userRef = doc(db, 'finanzas_usuarios', currentDocId);
-
-      if (pendingCloudPayload) {
-        const temp = pendingCloudPayload;
-        pendingCloudPayload = null;
-        window.guardarDatosEnFirebase(temp, false);
-      }
 
       unsubscribeCloud = onSnapshot(userRef, (snap) => {
         if (snap.exists()) {
@@ -684,9 +679,12 @@
           if (window.aplicarDatosDesdeNube) {
             window.aplicarDatosDesdeNube(cloudData);
           }
+          nubeCargadaInicialmente = true; // ABRIMOS EL CANDADO (Datos reales descargados)
           const ind = document.getElementById('cloud-sync-indicator');
           if (ind) ind.textContent = "NUBE SINCRONIZADA";
         } else {
+          // Si el usuario es nuevo y no tiene datos, abrimos el candado y guardamos su inicio
+          nubeCargadaInicialmente = true; 
           if (window.obtenerPayloadActual) {
             window.guardarDatosEnFirebase(window.obtenerPayloadActual(), false);
           }
@@ -713,7 +711,7 @@
         localStorage.setItem('user_session_active', 'true');
         document.getElementById('auth-overlay').style.display = 'none';
         iniciarEscuchaNube(cred.user);
-        if (window.mostrarToast) window.mostrarToast("Cuenta sincronizada en la nube");
+        if (window.mostrarToast) window.mostrarToast("Sesión iniciada correctamente");
       } catch (err) {
         errDiv.textContent = "Correo o clave de acceso incorrectos.";
         errDiv.style.display = 'block';
@@ -724,6 +722,7 @@
       if (unsubscribeCloud) unsubscribeCloud();
       currentDocId = null;
       currentUserUid = null;
+      nubeCargadaInicialmente = false;
       localStorage.removeItem('user_session_active');
       await signOut(auth);
       document.getElementById('auth-overlay').style.display = 'flex';
