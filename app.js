@@ -81,7 +81,7 @@ function fallbackCopiar(texto) {
   window.mostrarToast("Copiado: " + texto);
 }
 
-// === FUNCIONES DEL INPUT MATEMÁTICO (PEGAR, SUMAR, RESTAR) ===
+// === FUNCIONES DEL INPUT MATEMÁTICO (PEGAR, SUMAR, RESTAR, MULT, DIV) ===
 async function pegarAlInput() {
   try {
     var texto = await navigator.clipboard.readText();
@@ -93,7 +93,7 @@ async function pegarAlInput() {
       window.mostrarToast("Monto pegado");
     }
   } catch(e) {
-    window.mostrarToast("No se pudo pegar (Verifica los permisos)");
+    window.mostrarToast("No se pudo pegar (Verifica permisos)");
   }
 }
 
@@ -103,6 +103,23 @@ function agregarOperador(operador) {
     input.value = input.value + operador;
     input.focus();
   }
+}
+
+// Extrae el valor numérico resolviendo operaciones como 10+5 o 6000/2
+function evaluarInputCalculadora() {
+  var inputEl = document.getElementById('main-amount-input');
+  var rawMonto = inputEl ? inputEl.value : '';
+  var monto = 0;
+  try {
+    var saneado = rawMonto.replace(/,/g, '.').replace(/[^0-9.\+\-\*\/]/g, '');
+    var listoParaEvaluar = saneado.replace(/[\+\-\*\/]+$/, '');
+    if (listoParaEvaluar !== '') {
+      monto = new Function('return ' + listoParaEvaluar)() || 0;
+    }
+  } catch (e) {
+    monto = 0;
+  }
+  return monto;
 }
 
 window.onload = function() {
@@ -343,9 +360,34 @@ function cargarDatosGuardados() {
   }
 }
 
-// Resalta texto y cambia moneda sin error
-function seleccionarMonedaBase(moneda, el, guardar = true) {
-  monedaActiva = moneda;
+// === Conversión Bidireccional al tocar las Monedas ===
+function seleccionarMonedaBase(nuevaMoneda, el, guardar = true) {
+  var inputEl = document.getElementById('main-amount-input');
+  
+  if (inputEl.value !== '' && monedaActiva !== nuevaMoneda) {
+    var montoActual = evaluarInputCalculadora();
+    
+    if (montoActual > 0) {
+      var baseBs = 0;
+      if (monedaActiva === 'VES') baseBs = montoActual;
+      else if (monedaActiva === 'USD') baseBs = montoActual * tasaBCV;
+      else if (monedaActiva === 'USDT') baseBs = montoActual * tasaUSDT;
+      else if (monedaActiva === 'EUR') baseBs = montoActual * tasaEUR;
+      else if (monedaActiva === 'COP') baseBs = tasaCOP > 0 ? montoActual * (tasaBCV / tasaCOP) : 0;
+
+      var nuevoMonto = 0;
+      if (nuevaMoneda === 'VES') nuevoMonto = baseBs;
+      else if (nuevaMoneda === 'USD') nuevoMonto = tasaBCV > 0 ? baseBs / tasaBCV : 0;
+      else if (nuevaMoneda === 'USDT') nuevoMonto = tasaUSDT > 0 ? baseBs / tasaUSDT : 0;
+      else if (nuevaMoneda === 'EUR') nuevoMonto = tasaEUR > 0 ? baseBs / tasaEUR : 0;
+      else if (nuevaMoneda === 'COP') nuevoMonto = tasaBCV > 0 ? (baseBs / tasaBCV) * tasaCOP : 0;
+
+      var decimals = nuevaMoneda === 'COP' || nuevaMoneda === 'VES' ? 2 : 2;
+      inputEl.value = Number(nuevoMonto.toFixed(decimals));
+    }
+  }
+
+  monedaActiva = nuevaMoneda;
   document.querySelectorAll('.curr-btn').forEach(function(b) { b.classList.remove('active'); });
   if (el) el.classList.add('active');
 
@@ -356,9 +398,8 @@ function seleccionarMonedaBase(moneda, el, guardar = true) {
     'EUR': 'Monto en Euros (€):',
     'COP': 'Monto en Pesos COP:'
   };
-  document.getElementById('main-input-label').textContent = labels[moneda] || 'Monto:';
+  document.getElementById('main-input-label').textContent = labels[monedaActiva] || 'Monto:';
   
-  var inputEl = document.getElementById('main-amount-input');
   inputEl.select();
 
   calcularMultimoneda();
@@ -366,20 +407,7 @@ function seleccionarMonedaBase(moneda, el, guardar = true) {
 }
 
 function calcularMultimoneda() {
-  var inputEl = document.getElementById('main-amount-input');
-  var rawMonto = inputEl.value;
-  var monto = 0;
-
-  try {
-    var saneado = rawMonto.replace(/,/g, '.').replace(/[^0-9.\+\-\*\/]/g, '');
-    var listoParaEvaluar = saneado.replace(/[\+\-\*\/]+$/, '');
-    if (listoParaEvaluar !== '') {
-      monto = new Function('return ' + listoParaEvaluar)() || 0;
-    }
-  } catch (e) {
-    monto = 0;
-  }
-
+  var monto = evaluarInputCalculadora();
   var baseEnBs = 0;
 
   if (monedaActiva === 'VES') baseEnBs = monto;
@@ -429,7 +457,7 @@ function agregarHorarioNotificacion() {
     listaHorariosNotif.sort();
     renderHorariosNotificaciones();
     guardarDatos(true);
-    mostrarToast("Alerta programada a las " + nuevo);
+    window.mostrarToast("Alerta programada a las " + nuevo);
   }
 }
 
@@ -455,7 +483,7 @@ function abrirModalInput(titulo, mostrarNombre, valorNombre, valorPct, callback)
     var n = sanitizarTexto(inputName.value.trim());
     var p = parseFloat(inputPct.value) || 0;
     if (mostrarNombre && !n) {
-      mostrarToast("Ingrese un nombre válido");
+      window.mostrarToast("Ingrese un nombre válido");
       return;
     }
     callback(n, p);
@@ -493,7 +521,7 @@ function renderBancos() {
         b.comision = nuevaCom;
         renderBancos();
         guardarDatos(true);
-        mostrarToast("Comisión sincronizada en la nube");
+        window.mostrarToast("Comisión sincronizada en la nube");
       });
     };
 
@@ -514,7 +542,7 @@ function renderBancos() {
       listaBancos.push({ id: Date.now(), nombre: nombre, comision: comision });
       renderBancos();
       guardarDatos(true);
-      mostrarToast("Banco guardado en la nube");
+      window.mostrarToast("Banco guardado en la nube");
     });
   };
   grid.appendChild(btnAdd);
@@ -546,7 +574,7 @@ function renderBinance() {
         bin.comision = nuevaCom;
         renderBinance();
         guardarDatos(true);
-        mostrarToast("Tarifa sincronizada en la nube");
+        window.mostrarToast("Tarifa sincronizada en la nube");
       });
     };
 
@@ -567,7 +595,7 @@ function renderBinance() {
       listaBinance.push({ id: Date.now(), nombre: nombre, comision: comision });
       renderBinance();
       guardarDatos(true);
-      mostrarToast("Modalidad guardada en la nube");
+      window.mostrarToast("Modalidad guardada en la nube");
     });
   };
   grid.appendChild(btnAdd);
@@ -1177,16 +1205,8 @@ async function activarSincronizacionFondo() {
 
   if ('periodicSync' in reg) {
     try {
-      await reg.periodicSync.register('check-rates-sync', {
-        minInterval: 15 * 60 * 1000
-      });
-    } catch (e) {}
-  }
-
-  if ('sync' in reg) {
-    try {
-      await reg.sync.register('check-rates-sync');
-    } catch (e) {}
+      await reg.periodicSync.register('check-rates
+} catch (e) {}
   }
 
   if (reg.active) {
