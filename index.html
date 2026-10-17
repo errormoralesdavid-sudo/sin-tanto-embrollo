@@ -197,74 +197,72 @@
 
   <div class="container">
 
-    <!-- PANEL DESPLEGABLE DE CONFIGURACIÓN Y ALERTAS -->
-    <details class="calc-section" style="cursor:pointer;">
-      <summary class="config-summary">
+    <!-- BOTONES SUPERIORES COMPACTOS (AJUSTES Y LIMPIAR) -->
+    <div class="top-actions-row">
+      <button class="btn-icon-top danger" onclick="limpiarTodo()" title="Restablecer Campos">
+        <svg class="icon-svg-sm" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+      </button>
+      <button class="btn-icon-top success" onclick="var p = document.getElementById('panel-configuracion'); p.style.display = (p.style.display === 'none') ? 'block' : 'none';" title="Configurar Tasas">
         <svg class="icon-svg-sm" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-        <span>Panel de Tasas y Alertas Programadas</span>
-      </summary>
-      <div style="margin-top:14px;">
-        
-        <div style="background:var(--input-bg); padding:12px; border-radius:10px; margin-bottom:12px; border:1px dashed var(--neon-green); text-align:center;">
-          <div id="sync-status" class="status-badge">Sincronizando mercado...</div>
-          <div style="display:flex; gap:8px; margin-top:10px;">
-            <button class="btn-action" style="font-size:11px; padding:9px; display:flex; align-items:center; justify-content:center; gap:6px;" onclick="sincronizarDolarVzlaAPI(true)">
-              <img src="./bcv.png" alt="BCV" style="width:16px; height:16px;">
-              <span>Sincronizar BCV</span>
-            </button>
-            <button class="btn-action" style="font-size:11px; padding:9px; background:#f0b90b; color:#000; display:flex; align-items:center; justify-content:center; gap:6px;" onclick="sincronizarBinanceP2P(true)">
-              <img src="./usdt.png" alt="P2P" style="width:16px; height:16px;">
-              <span>Sincronizar P2P</span>
-            </button>
-          </div>
-        </div>
+      </button>
+    </div>
 
-        <div style="display:flex; gap:10px;">
-          <div style="flex:1;">
-            <label>Tasa BCV (Bs):</label>
-            <input type="number" id="input-tasa-bcv" value="832.48" step="0.01" oninput="actualizarTasasManuales()">
-          </div>
-          <div style="flex:1;">
-            <label>Tasa USDT (Bs):</label>
-            <input type="number" id="input-tasa-usdt" value="885.10" step="0.01" oninput="actualizarTasasManuales()">
-          </div>
+    <!-- PANEL DESPLEGABLE DE CONFIGURACIÓN Y ALERTAS (OCULTO INICIALMENTE) -->
+    <div id="panel-configuracion" class="calc-section" style="display:none;">
+      <h3 style="color:var(--neon-green); margin-bottom:12px; font-size:14px; text-align:center;">Panel de Tasas y Alertas</h3>
+      <div style="background:var(--input-bg); padding:12px; border-radius:10px; margin-bottom:12px; border:1px dashed var(--neon-green); text-align:center;">
+        <div id="sync-status" class="status-badge">Sincronizando mercado...</div>
+        <div style="display:flex; gap:8px; margin-top:10px;">
+          <button class="btn-action" style="font-size:11px; padding:9px; display:flex; align-items:center; justify-content:center; gap:6px;" onclick="sincronizarDolarVzlaAPI(true)">
+            <img src="./bcv.png" alt="BCV" style="width:16px; height:16px;">
+            <span>Sincronizar BCV</span>
+          </button>
+          <button class="btn-action" style="font-size:11px; padding:9px; background:#f0b90b; color:#000; display:flex; align-items:center; justify-content:center; gap:6px;" onclick="sincronizarBinanceP2P(true)">
+            <img src="./usdt.png" alt="P2P" style="width:16px; height:16px;">
+            <span>Sincronizar P2P</span>
+          </button>
         </div>
-        <div style="display:flex; gap:10px;">
-          <div style="flex:1;">
-            <label>Tasa Euro (€):</label>
-            <input type="number" id="input-tasa-eur" value="968.06" step="0.01" oninput="actualizarTasasManuales()">
-          </div>
-          <div style="flex:1;">
-            <label>Valor 1$ en COP:</label>
-            <input type="number" id="input-tasa-cop" value="3102.00" step="0.01" oninput="actualizarTasasManuales()">
-          </div>
-        </div>
-
-        <div style="background:var(--input-bg); padding:12px; border-radius:10px; margin-top:8px; border:1px solid var(--glass-border);">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-            <label style="color:var(--neon-green); font-weight:bold; margin-bottom:0; display:flex; align-items:center; gap:6px;">
-              <svg class="icon-svg-sm" viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-              <span>Alertas Push (Horarios + Cambios de Tasa)</span>
-            </label>
-            <button class="btn-toggle" onclick="solicitarPermisoNotificaciones()">Activar Alertas</button>
-          </div>
-          
-          <div style="display:flex; gap:8px; align-items:center; margin-bottom:10px;">
-            <input type="time" id="nuevo-horario" value="04:00" style="margin-bottom:0; flex:1;">
-            <button class="btn-action" style="font-size:11px; padding:10px 14px; width:auto;" onclick="agregarHorarioNotificacion()">+ Hora</button>
-          </div>
-
-          <div id="lista-horarios" style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:8px;"></div>
-          <div id="notif-status" style="font-size:10px; color:var(--text-muted); text-align:center;">Recibe alertas a tus horas elegidas y cada vez que cambie el dólar</div>
-        </div>
-
       </div>
-    </details>
 
-    <button class="btn-limpiar" onclick="limpiarTodo()">
-      <svg class="icon-svg-sm" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-      <span>Restablecer Campos de Cálculo</span>
-    </button>
+      <div style="display:flex; gap:10px;">
+        <div style="flex:1;">
+          <label>Tasa BCV (Bs):</label>
+          <input type="number" id="input-tasa-bcv" value="832.48" step="0.01" oninput="actualizarTasasManuales()">
+        </div>
+        <div style="flex:1;">
+          <label>Tasa USDT (Bs):</label>
+          <input type="number" id="input-tasa-usdt" value="885.10" step="0.01" oninput="actualizarTasasManuales()">
+        </div>
+      </div>
+      <div style="display:flex; gap:10px;">
+        <div style="flex:1;">
+          <label>Tasa Euro (€):</label>
+          <input type="number" id="input-tasa-eur" value="968.06" step="0.01" oninput="actualizarTasasManuales()">
+        </div>
+        <div style="flex:1;">
+          <label>Valor 1$ en COP:</label>
+          <input type="number" id="input-tasa-cop" value="3102.00" step="0.01" oninput="actualizarTasasManuales()">
+        </div>
+      </div>
+
+      <div style="background:var(--input-bg); padding:12px; border-radius:10px; margin-top:8px; border:1px solid var(--glass-border);">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+          <label style="color:var(--neon-green); font-weight:bold; margin-bottom:0; display:flex; align-items:center; gap:6px;">
+            <svg class="icon-svg-sm" viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            <span>Alertas Push (Horarios + Cambios de Tasa)</span>
+          </label>
+          <button class="btn-toggle" onclick="solicitarPermisoNotificaciones()">Activar Alertas</button>
+        </div>
+        
+        <div style="display:flex; gap:8px; align-items:center; margin-bottom:10px;">
+          <input type="time" id="nuevo-horario" value="04:00" style="margin-bottom:0; flex:1;">
+          <button class="btn-action" style="font-size:11px; padding:10px 14px; width:auto;" onclick="agregarHorarioNotificacion()">+ Hora</button>
+        </div>
+
+        <div id="lista-horarios" style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:8px;"></div>
+        <div id="notif-status" style="font-size:10px; color:var(--text-muted); text-align:center;">Recibe alertas a tus horas elegidas y cada vez que cambie el dólar</div>
+      </div>
+    </div>
 
     <!-- PESTAÑA 1: INICIO (CONVERTIDOR MULTIMONEDA INTERACTIVO) -->
     <div id="tab-inicio" class="tab-content active">
@@ -300,7 +298,20 @@
           </div>
 
           <label id="main-input-label" style="margin-top:8px;">Monto en Dólares BCV ($):</label>
-          <input type="number" id="main-amount-input" placeholder="Ingresa cantidad..." oninput="calcularMultimoneda()">
+          
+          <!-- INPUT MATEMÁTICO CON BOTONES DE SVG -->
+          <div class="math-input-group">
+            <input type="text" inputmode="decimal" id="main-amount-input" placeholder="0.00" oninput="calcularMultimoneda()">
+            <button class="btn-math" onclick="pegarAlInput()" title="Pegar Monto">
+              <svg class="icon-svg-sm" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            </button>
+            <button class="btn-math" onclick="agregarOperador('-')" title="Restar">
+              <svg class="icon-svg-sm" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            </button>
+            <button class="btn-math" onclick="agregarOperador('+')" title="Sumar">
+              <svg class="icon-svg-sm" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            </button>
+          </div>
         </div>
         
         <div class="calc-results-col">
