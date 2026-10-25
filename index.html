@@ -49,19 +49,22 @@
   <!-- CONTENEDOR DE NOTIFICACIONES TOAST -->
   <div id="toast-container" class="toast-container"></div>
 
-  <!-- MODAL PERSONALIZADO PARA BANCOS Y P2P -->
+  <!-- MODAL PERSONALIZADO PARA BANCOS Y P2P (CON EDICIÓN DE NOMBRE Y ELIMINACIÓN SVG) -->
   <div id="modal-input-custom" class="modal-overlay">
     <div class="modal-content" style="max-width: 360px;">
       <h3 id="modal-input-title" style="color:var(--neon-green); margin-bottom:14px; font-size:15px;">Configurar</h3>
       <div id="modal-input-name-wrap">
-        <label>Nombre de la Entidad:</label>
-        <input type="text" id="modal-input-name" maxlength="25" placeholder="Ej. Mercantil">
+        <label>Nombre de la Entidad / Modalidad:</label>
+        <input type="text" id="modal-input-name" maxlength="25" placeholder="Ej. Binance P2P">
       </div>
       <label>Comisión (%):</label>
       <input type="number" id="modal-input-pct" step="0.01" placeholder="Ej. 1.5">
-      <div style="display:flex; gap:10px; margin-top:10px;">
-        <button class="btn-action" id="modal-input-save">Guardar</button>
-        <button class="btn-limpiar" style="margin-bottom:0;" onclick="cerrarModalInput()">Cancelar</button>
+      <div style="display:flex; gap:8px; margin-top:10px; align-items:center;">
+        <button class="btn-action" id="modal-input-save" style="flex:1;">Guardar</button>
+        <button class="btn-action" id="modal-input-delete" style="display:none; background:var(--danger-color); color:#fff; width:46px; padding:12px 0; align-items:center; justify-content:center;" title="Eliminar">
+          <svg class="icon-svg-sm" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+        </button>
+        <button class="btn-limpiar" style="margin-bottom:0; width:auto; padding:12px 14px;" onclick="cerrarModalInput()">Cancelar</button>
       </div>
     </div>
   </div>
@@ -301,12 +304,12 @@
           
           <!-- INPUT MATEMÁTICO CON BOTONES DE SVG -->
           <div class="math-input-group">
-            <input type="text" inputmode="decimal" id="main-amount-input" placeholder="0.00" oninput="calcularMultimoneda()">
+            <input type="text" inputmode="decimal" id="main-amount-input" placeholder="0.00" oninput="calcularMultimoneda()" onblur="resolverExpresionInput()">
             <button class="btn-math" onclick="pegarAlInput()" title="Pegar Monto">
               <svg class="icon-svg-sm" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
             </button>
             <button class="btn-math" onclick="agregarOperador('/')" title="Dividir">
-              <svg class="icon-svg-sm" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              <svg class="icon-svg-sm" viewBox="0 0 24 24"><circle cx="12" cy="6" r="1.5" fill="currentColor"/><line x1="5" y1="12" x2="19" y2="12"/><circle cx="12" cy="18" r="1.5" fill="currentColor"/></svg>
             </button>
             <button class="btn-math" onclick="agregarOperador('*')" title="Multiplicar">
               <svg class="icon-svg-sm" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
@@ -316,6 +319,9 @@
             </button>
             <button class="btn-math" onclick="agregarOperador('+')" title="Sumar">
               <svg class="icon-svg-sm" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            </button>
+            <button class="btn-math" onclick="resolverExpresionInput()" title="Resolver Operación" style="color:var(--neon-green); border-color:rgba(0,230,118,0.35);">
+              <svg class="icon-svg-sm" viewBox="0 0 24 24"><line x1="5" y1="9" x2="19" y2="9"/><line x1="5" y1="15" x2="19" y2="15"/></svg>
             </button>
           </div>
         </div>
@@ -380,7 +386,7 @@
           <svg class="icon-svg" viewBox="0 0 24 24"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
           <span>Curva de Rendimiento BCV vs USDT</span>
         </h2>
-        <div id="chart-container" style="width:100%; height:180px;"></div>
+        <div id="chart-container" style="width:100%; height:195px;"></div>
       </div>
     </div>
 
@@ -547,6 +553,19 @@
 
       <div class="calc-section">
         <h2>Libro Contable Sincronizado en la Nube</h2>
+
+        <!-- BARRA DE RESUMEN ACUMULADO DEL LIBRO CONTABLE -->
+        <div style="display:flex; justify-content:space-between; align-items:center; background:var(--input-bg); border:1px solid var(--glass-border); border-left:3px solid var(--neon-green); padding:10px 12px; border-radius:10px; margin-bottom:10px; font-size:11px;">
+          <div>
+            <span style="color:var(--text-muted); display:block;">Operaciones: <strong id="libro-total-ops" style="color:var(--text-color);">0</strong></span>
+            <span style="color:var(--text-muted);">Capital Movido: <strong id="libro-total-bs" style="color:var(--text-color);">0,00 Bs</strong></span>
+          </div>
+          <div style="text-align:right;">
+            <span style="color:var(--text-muted); display:block;">Ganancia Acumulada:</span>
+            <strong id="libro-total-usdt" style="color:var(--neon-green); font-size:14px;">0,00 USDT</strong>
+          </div>
+        </div>
+
         <input type="text" id="buscar-historial" maxlength="50" placeholder="Buscar por canal o nota..." oninput="filtrarHistorial()">
         
         <div id="historial-cards-container" style="display:flex; flex-direction:column; gap:10px; margin-top:12px;"></div>
@@ -608,6 +627,7 @@
     import { 
       getFirestore, 
       doc, 
+      getDoc,
       setDoc, 
       onSnapshot 
     } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
@@ -628,14 +648,12 @@
     let unsubscribeCloud = null;
     let currentDocId = null;
     let currentUserUid = null;
-    let nubeCargadaInicialmente = false; // CANDADO DE SEGURIDAD
+    window.nubeCargadaInicialmente = false; // CANDADO GLOBAL DE SEGURIDAD
 
     setPersistence(auth, browserLocalPersistence).catch(() => {});
 
-    // GUARDAR DIRECTAMENTE EN EL DOCUMENTO CON EL CORREO DEL USUARIO
     window.guardarDatosEnFirebase = async function(payload, mostrarConfirmacion = false) {
-      // PROHIBICIÓN: Si la nube no ha terminado de descargar tus datos, no guarda NADA.
-      if (!currentDocId || !nubeCargadaInicialmente) {
+      if (!currentDocId || !window.nubeCargadaInicialmente) {
         return;
       }
       try {
@@ -660,34 +678,50 @@
     };
 
     window.forzarSincronizacionManual = function() {
-      if (window.obtenerPayloadActual) {
+      if (window.obtenerPayloadActual && window.nubeCargadaInicialmente) {
         window.guardarDatosEnFirebase(window.obtenerPayloadActual(), true);
       }
     };
 
-    function iniciarEscuchaNube(user) {
+    async function iniciarEscuchaNube(user) {
       currentDocId = (user.email || user.uid).toLowerCase().trim();
       currentUserUid = user.uid;
-      nubeCargadaInicialmente = false; // Cerramos el candado al entrar
+      window.nubeCargadaInicialmente = false;
 
       if (unsubscribeCloud) unsubscribeCloud();
       const userRef = doc(db, 'finanzas_usuarios', currentDocId);
 
+      // 1. Lectura inicial prioritaria para no perder jamás datos previos
+      try {
+        const initialSnap = await getDoc(userRef);
+        if (initialSnap.exists()) {
+          const cloudData = initialSnap.data();
+          if (window.aplicarDatosDesdeNube) {
+            window.aplicarDatosDesdeNube(cloudData);
+          }
+          window.nubeCargadaInicialmente = true;
+          const ind = document.getElementById('cloud-sync-indicator');
+          if (ind) ind.textContent = "NUBE SINCRONIZADA";
+        } else {
+          window.nubeCargadaInicialmente = true;
+          if (window.obtenerPayloadActual) {
+            window.guardarDatosEnFirebase(window.obtenerPayloadActual(), false);
+          }
+        }
+      } catch (err) {
+        console.error("Error en lectura inicial:", err);
+      }
+
+      // 2. Escucha en tiempo real continua entre dispositivos
       unsubscribeCloud = onSnapshot(userRef, (snap) => {
         if (snap.exists()) {
           const cloudData = snap.data();
           if (window.aplicarDatosDesdeNube) {
             window.aplicarDatosDesdeNube(cloudData);
           }
-          nubeCargadaInicialmente = true; // ABRIMOS EL CANDADO (Datos reales descargados)
+          window.nubeCargadaInicialmente = true;
           const ind = document.getElementById('cloud-sync-indicator');
           if (ind) ind.textContent = "NUBE SINCRONIZADA";
-        } else {
-          // Si el usuario es nuevo y no tiene datos, abrimos el candado y guardamos su inicio
-          nubeCargadaInicialmente = true; 
-          if (window.obtenerPayloadActual) {
-            window.guardarDatosEnFirebase(window.obtenerPayloadActual(), false);
-          }
         }
       }, (err) => {
         console.error("Error lectura Firestore:", err);
@@ -722,7 +756,7 @@
       if (unsubscribeCloud) unsubscribeCloud();
       currentDocId = null;
       currentUserUid = null;
-      nubeCargadaInicialmente = false;
+      window.nubeCargadaInicialmente = false;
       localStorage.removeItem('user_session_active');
       await signOut(auth);
       document.getElementById('auth-overlay').style.display = 'flex';
@@ -734,6 +768,7 @@
         document.getElementById('auth-overlay').style.display = 'none';
         iniciarEscuchaNube(user);
       } else {
+        window.nubeCargadaInicialmente = false;
         localStorage.removeItem('user_session_active');
         document.getElementById('auth-overlay').style.display = 'flex';
       }
