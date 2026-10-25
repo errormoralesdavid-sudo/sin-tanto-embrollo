@@ -15,7 +15,7 @@ var historial = [];
 var historicoGrafico = [];
 var listaHorariosNotif = ["04:00", "09:00", "13:00"];
 
-var listaBancos = [
+var BANCOS_BASE = [
   { id: 1, nombre: 'BdV', comision: 2.5 },
   { id: 2, nombre: 'BDT', comision: 1.5 },
   { id: 3, nombre: 'B. Tesoro', comision: 2.5 },
@@ -24,12 +24,15 @@ var listaBancos = [
   { id: 6, nombre: 'BNC', comision: 1.5 }
 ];
 
-var listaBinance = [
+var BINANCE_BASE = [
   { id: 1, nombre: 'Maker', comision: 0.0 },
   { id: 2, nombre: 'Taker', comision: 0.1 },
   { id: 3, nombre: 'P2P Ref', comision: 0.2 },
   { id: 4, nombre: 'Tarjeta', comision: 0.35 }
 ];
+
+var listaBancos = JSON.parse(JSON.stringify(BANCOS_BASE));
+var listaBinance = JSON.parse(JSON.stringify(BINANCE_BASE));
 
 var itemSeleccionadoModal = null;
 var isUserInteracting = false;
@@ -48,6 +51,7 @@ function sanitizarTexto(str) {
 
 window.mostrarToast = function(mensaje) {
   var container = document.getElementById('toast-container');
+  if (!container) return;
   var toast = document.createElement('div');
   toast.className = 'toast-msg';
   toast.textContent = mensaje;
@@ -82,55 +86,146 @@ function fallbackCopiar(texto) {
 }
 
 // === FUNCIONES DEL INPUT MATEMÁTICO ===
-async function pegarAlInput() {
+window.pegarAlInput = async function() {
   try {
     var texto = await navigator.clipboard.readText();
     var numLimpiado = texto.replace(/[^0-9.,+\-*/]/g, ''); 
     if (numLimpiado) {
       var input = document.getElementById('main-amount-input');
       input.value = numLimpiado;
-      calcularMultimoneda();
+      window.calcularMultimoneda();
       window.mostrarToast("Monto pegado");
     }
   } catch(e) {
     window.mostrarToast("No se pudo pegar");
   }
-}
+};
 
 window.agregarOperador = function(operador) {
   var input = document.getElementById('main-amount-input');
-  if (input.value !== '') {
-    input.value = input.value + operador;
-    input.focus();
+  if (!input) return;
+  var val = input.value.trim();
+  if (val === '') return;
+  // Si ya termina en un operador, lo reemplaza por el nuevo
+  if (/[\+\-\*\/]$/.test(val)) {
+    input.value = val.slice(0, -1) + operador;
+  } else {
+    input.value = val + operador;
   }
+  input.focus();
 };
+
+window.resolverExpresionInput = function() {
+  var input = document.getElementById('main-amount-input');
+  if (!input || !input.value) return;
+  try {
+    var saneado = input.value.replace(/,/g, '.').replace(/[^0-9.\+\-\*\/]/g, '');
+    var listo = saneado.replace(/[\+\-\*\/]+$/, '');
+    if (listo !== '' && /[\+\-\*\/]/.test(listo)) {
+      var res = new Function('return ' + listo)();
+      if (isFinite(res)) {
+        input.value = Number(res.toFixed(2));
+        window.calcularMultimoneda();
+      }
+    }
+  } catch (e) {}
+};
+
+// === FUSIÓN INTELIGENTE PARA NO PERDER DATOS ENTRE TELÉFONO Y NUBE ===
+function fusionarListasConfig(listaLocal, listaNube) {
+  var mapa = {};
+  var resultado = [];
+
+  (listaNube || []).forEach(function(item) {
+    if (!item || !item.nombre) return;
+    var clave = String(item.id || item.nombre).toLowerCase();
+    mapa[clave] = item;
+    resultado.push(item);
+  });
+
+  (listaLocal || []).forEach(function(item) {
+    if (!item || !item.nombre) return;
+    var clave = String(item.id || item.nombre).toLowerCase();
+    var existeNombre = resultado.some(function(r) {
+      return r.nombre.toLowerCase() === item.nombre.toLowerCase();
+    });
+    if (!mapa[clave] && !existeNombre) {
+      resultado.push(item);
+    }
+  });
+
+  return resultado;
+}
+
+function fusionarHistorialContable(histLocal, histNube) {
+  var mapaIds = {};
+  var combinado = [];
+
+  (histNube || []).concat(histLocal || []).forEach(function(item) {
+    if (item && item.id && !mapaIds[item.id]) {
+      mapaIds[item.id] = true;
+      combinado.push(item);
+    }
+  });
+
+  combinado.sort(function(a, b) { return (b.id || 0) - (a.id || 0); });
+  return combinado;
+}
+
+function asegurarHistoricoGrafico() {
+  var bcvBase = parseFloat(tasaBCV) || 832.48;
+  var usdtBase = parseFloat(tasaUSDT) || 885.10;
+
+  var valido = Array.isArray(historicoGrafico) && historicoGrafico.length >= 2 && historicoGrafico.every(function(d) {
+    return d && isFinite(Number(d.bcv)) && Number(d.bcv) > 0 && isFinite(Number(d.usdt)) && Number(d.usdt) > 0;
+  });
+
+  if (!valido) {
+    historicoGrafico = [
+      { fecha: 'T-3', bcv: +(bcvBase * 0.985).toFixed(2), usdt: +(usdtBase * 0.980).toFixed(2) },
+      { fecha: 'T-2', bcv: +(bcvBase * 0.992).toFixed(2), usdt: +(usdtBase * 0.990).toFixed(2) },
+      { fecha: 'Ayer', bcv: +(bcvBase * 0.997).toFixed(2), usdt: +(usdtBase * 0.995).toFixed(2) },
+      { fecha: 'Hoy', bcv: +bcvBase.toFixed(2), usdt: +usdtBase.toFixed(2) }
+    ];
+  } else {
+    historicoGrafico[historicoGrafico.length - 1] = {
+      fecha: 'Hoy',
+      bcv: +bcvBase.toFixed(2),
+      usdt: +usdtBase.toFixed(2)
+    };
+  }
+}
 
 window.onload = function() {
   registrarServiceWorkerYBackgroundSync();
 
-  // CANDADO DE CARGA LOCAL: Si hay sesión activa, NO carga el localStorage inicial para no sobreescribir la nube
-  if (!localStorage.getItem('user_session_active')) {
-    cargarDatosGuardados();
-  }
-  
+  // Cargamos siempre el respaldo local inmediatamente para que la gráfica y tus datos estén listos desde el segundo 0
+  cargarDatosGuardados();
+  asegurarHistoricoGrafico();
+
   renderBancos();
   renderBinance();
   renderHorariosNotificaciones();
-  actualizarTasasManuales(false);
+  renderHistorial();
+  window.actualizarTasasManuales(false);
+  renderGraficoD3();
   
-  sincronizarDolarVzlaAPI(false);
-  sincronizarBinanceP2P(false);
+  window.sincronizarDolarVzlaAPI(false);
+  window.sincronizarBinanceP2P(false);
   
   setInterval(function() {
-    sincronizarDolarVzlaAPI(false);
-    sincronizarBinanceP2P(false);
+    window.sincronizarDolarVzlaAPI(false);
+    window.sincronizarBinanceP2P(false);
   }, 180000); 
 
   iniciarSmoothSlider();
   iniciarScrollWheelSlider();
-  renderGraficoD3();
   iniciarRelojNotificaciones();
   iniciarAutoScrollEnInputs();
+
+  window.addEventListener('resize', function() {
+    renderGraficoD3();
+  });
 };
 
 async function registrarServiceWorkerYBackgroundSync() {
@@ -253,6 +348,7 @@ window.toggleAccordion = function(id) {
 };
 
 window.obtenerPayloadActual = function() {
+  asegurarHistoricoGrafico();
   return {
     bcv: document.getElementById('input-tasa-bcv') ? document.getElementById('input-tasa-bcv').value : tasaBCV,
     usdt: document.getElementById('input-tasa-usdt') ? document.getElementById('input-tasa-usdt').value : tasaUSDT,
@@ -281,15 +377,14 @@ function guardarDatos(subirANube = true) {
   localStorage.setItem('embrollo_data_pro_v5', JSON.stringify(datos));
   sincronizarConfigConServiceWorker();
 
-  // CONDICIÓN PRINCIPAL: Solo sube a Firebase si no hay bloqueo temporal (aplicandoNube)
-  if (subirANube && !aplicandoNube && window.guardarDatosEnFirebase) {
+  if (subirANube && !aplicandoNube && window.nubeCargadaInicialmente && window.guardarDatosEnFirebase) {
     window.guardarDatosEnFirebase(datos);
   }
 }
 
-window.aplicarDatosDesdeNube = function(datos) {
+window.aplicarDatosDesdeNube = function(datos, esCargaLocal = false) {
   if (!datos) return;
-  aplicandoNube = true; // BLOQUEA LA SUBIDA MIENTRAS SE APLICAN LOS DATOS DE LA NUBE
+  aplicandoNube = true;
   try {
     if(datos.bcv && document.getElementById('input-tasa-bcv')) document.getElementById('input-tasa-bcv').value = datos.bcv;
     if(datos.usdt && document.getElementById('input-tasa-usdt')) document.getElementById('input-tasa-usdt').value = datos.usdt;
@@ -300,11 +395,35 @@ window.aplicarDatosDesdeNube = function(datos) {
     if(datos.prevUSDT !== undefined) prevUSDT = datos.prevUSDT;
     if(datos.prevEUR !== undefined) prevEUR = datos.prevEUR;
 
-    if(Array.isArray(datos.bancos)) { listaBancos = datos.bancos; renderBancos(); }
-    if(Array.isArray(datos.binance)) { listaBinance = datos.binance; renderBinance(); }
-    if(Array.isArray(datos.historial)) { historial = datos.historial; renderHistorial(); }
-    if(Array.isArray(datos.historicoGrafico)) { historicoGrafico = datos.historicoGrafico; renderGraficoD3(); }
-    if(Array.isArray(datos.horariosNotif)) { listaHorariosNotif = datos.horariosNotif; renderHorariosNotificaciones(); }
+    if (Array.isArray(datos.bancos) && datos.bancos.length > 0) {
+      listaBancos = esCargaLocal ? datos.bancos : fusionarListasConfig(listaBancos, datos.bancos);
+      renderBancos();
+    }
+
+    if (Array.isArray(datos.binance) && datos.binance.length > 0) {
+      listaBinance = esCargaLocal ? datos.binance : fusionarListasConfig(listaBinance, datos.binance);
+      renderBinance();
+    }
+
+    if (Array.isArray(datos.historial)) {
+      if (esCargaLocal) {
+        historial = datos.historial;
+      } else {
+        historial = fusionarHistorialContable(historial, datos.historial);
+      }
+      renderHistorial();
+    }
+
+    if (Array.isArray(datos.historicoGrafico) && datos.historicoGrafico.length >= 2) {
+      historicoGrafico = datos.historicoGrafico;
+    }
+    asegurarHistoricoGrafico();
+    renderGraficoD3();
+
+    if (Array.isArray(datos.horariosNotif) && datos.horariosNotif.length > 0) {
+      listaHorariosNotif = datos.horariosNotif;
+      renderHorariosNotificaciones();
+    }
 
     if(datos.comPorcBanco !== undefined && document.getElementById('com-porc-banco')) document.getElementById('com-porc-banco').value = datos.comPorcBanco;
     if(datos.comPorcBinance !== undefined && document.getElementById('com-porc-binance')) document.getElementById('com-porc-binance').value = datos.comPorcBinance;
@@ -326,37 +445,28 @@ window.aplicarDatosDesdeNube = function(datos) {
     }
 
     actualizarResumenCanal();
-    actualizarTasasManuales(false); // Falso para no forzar la subida a la nube
+    window.actualizarTasasManuales(false);
     localStorage.setItem('embrollo_data_pro_v5', JSON.stringify(window.obtenerPayloadActual()));
     sincronizarConfigConServiceWorker();
   } catch(e) {}
   
-  // SE LIBERA EL CANDADO UNA VEZ TODO ESTÁ PINTADO EN PANTALLA
-  setTimeout(() => { aplicandoNube = false; }, 500); 
+  setTimeout(function() { aplicandoNube = false; }, 350); 
 };
 
 function cargarDatosGuardados() {
   try {
     var datos = JSON.parse(localStorage.getItem('embrollo_data_pro_v5'));
     if (datos) {
-      window.aplicarDatosDesdeNube(datos);
+      window.aplicarDatosDesdeNube(datos, true);
     }
   } catch(e) {}
-
-  if (historicoGrafico.length === 0) {
-    historicoGrafico = [
-      { fecha: 'T-3', bcv: tasaBCV * 0.985, usdt: tasaUSDT * 0.98 },
-      { fecha: 'T-2', bcv: tasaBCV * 0.992, usdt: tasaUSDT * 0.99 },
-      { fecha: 'Ayer', bcv: tasaBCV * 0.997, usdt: tasaUSDT * 0.995 },
-      { fecha: 'Hoy', bcv: tasaBCV, usdt: tasaUSDT }
-    ];
-  }
+  asegurarHistoricoGrafico();
 }
 
 // === CAMBIO INTELIGENTE DE MONEDA ===
 window.seleccionarMonedaBase = function(nuevaMoneda, el, guardar = true) {
   var inputEl = document.getElementById('main-amount-input');
-  var rawMonto = inputEl.value;
+  var rawMonto = inputEl ? inputEl.value : '';
   var montoAnterior = 0;
 
   try {
@@ -367,7 +477,7 @@ window.seleccionarMonedaBase = function(nuevaMoneda, el, guardar = true) {
     }
   } catch (e) { montoAnterior = 0; }
 
-  if (montoAnterior > 0 && nuevaMoneda !== monedaActiva) {
+  if (montoAnterior > 0 && nuevaMoneda !== monedaActiva && inputEl) {
     var baseEnBs = 0;
     if (monedaActiva === 'VES') baseEnBs = montoAnterior;
     else if (monedaActiva === 'USD') baseEnBs = montoAnterior * tasaBCV;
@@ -399,7 +509,6 @@ window.seleccionarMonedaBase = function(nuevaMoneda, el, guardar = true) {
   var labelEl = document.getElementById('main-input-label');
   if(labelEl) labelEl.textContent = labels[nuevaMoneda] || 'Monto:';
   
-  inputEl.select();
   window.calcularMultimoneda();
   if (guardar) guardarDatos(true);
 };
@@ -480,26 +589,42 @@ function eliminarHorarioNotificacion(idx) {
   guardarDatos(true);
 }
 
-function abrirModalInput(titulo, mostrarNombre, valorNombre, valorPct, callback) {
+// === MODAL MEJORADO: PERMITE EDITAR NOMBRE, COMISIÓN Y ELIMINAR ENTIDAD ===
+function abrirModalInput(titulo, mostrarNombre, valorNombre, valorPct, callbackGuardar, callbackEliminar) {
   document.getElementById('modal-input-title').textContent = titulo;
   var nameWrap = document.getElementById('modal-input-name-wrap');
   var inputName = document.getElementById('modal-input-name');
   var inputPct = document.getElementById('modal-input-pct');
+  var btnDel = document.getElementById('modal-input-delete');
 
   nameWrap.style.display = mostrarNombre ? 'block' : 'none';
   inputName.value = valorNombre || '';
   inputPct.value = valorPct !== undefined ? valorPct : '';
 
+  if (btnDel) {
+    if (typeof callbackEliminar === 'function') {
+      btnDel.style.display = 'flex';
+      btnDel.onclick = function() {
+        callbackEliminar();
+        window.cerrarModalInput();
+      };
+    } else {
+      btnDel.style.display = 'none';
+      btnDel.onclick = null;
+    }
+  }
+
   document.getElementById('modal-input-custom').style.display = 'flex';
 
   document.getElementById('modal-input-save').onclick = function() {
     var n = sanitizarTexto(inputName.value.trim());
-    var p = parseFloat(inputPct.value) || 0;
+    var p = parseFloat(inputPct.value);
+    if (isNaN(p)) p = 0;
     if (mostrarNombre && !n) {
       window.mostrarToast("Ingrese un nombre válido");
       return;
     }
-    callback(n, p);
+    callbackGuardar(n, p);
     window.cerrarModalInput();
   };
 }
@@ -532,12 +657,40 @@ function renderBancos() {
     editBtn.style = 'opacity:0.7;';
     editBtn.onclick = function(e) {
       e.stopPropagation();
-      abrirModalInput('Editar ' + b.nombre, false, b.nombre, b.comision, function(_, nuevaCom) {
-        b.comision = nuevaCom;
-        renderBancos();
-        guardarDatos(true);
-        window.mostrarToast("Comisión sincronizada en la nube");
-      });
+      abrirModalInput(
+        'Editar Banco',
+        true,
+        b.nombre,
+        b.comision,
+        function(nuevoNombre, nuevaCom) {
+          var eraActivo = (bancoActivoNombre === b.nombre);
+          b.nombre = nuevoNombre;
+          b.comision = nuevaCom;
+          if (eraActivo) {
+            bancoActivoNombre = nuevoNombre;
+            document.getElementById('com-porc-banco').value = nuevaCom;
+            document.getElementById('label-banco-activo').textContent = nuevoNombre + ' (' + nuevaCom + '%)';
+          }
+          renderBancos();
+          actualizarResumenCanal();
+          window.calcularComisiones(1);
+          window.calcularArbitraje();
+          guardarDatos(true);
+          window.mostrarToast("Banco actualizado en la nube");
+        },
+        listaBancos.length > 1 ? function() {
+          listaBancos = listaBancos.filter(function(item) { return item.id !== b.id; });
+          if (bancoActivoNombre === b.nombre && listaBancos[0]) {
+            bancoActivoNombre = listaBancos[0].nombre;
+            document.getElementById('com-porc-banco').value = listaBancos[0].comision;
+            document.getElementById('label-banco-activo').textContent = bancoActivoNombre + ' (' + listaBancos[0].comision + '%)';
+          }
+          renderBancos();
+          actualizarResumenCanal();
+          guardarDatos(true);
+          window.mostrarToast("Banco eliminado");
+        } : null
+      );
     };
 
     rightWrap.appendChild(badge);
@@ -558,7 +711,7 @@ function renderBancos() {
       renderBancos();
       guardarDatos(true);
       window.mostrarToast("Banco guardado en la nube");
-    });
+    }, null);
   };
   grid.appendChild(btnAdd);
 }
@@ -586,12 +739,40 @@ function renderBinance() {
     editBtn.style = 'opacity:0.7;';
     editBtn.onclick = function(e) {
       e.stopPropagation();
-      abrirModalInput('Editar ' + bin.nombre, false, bin.nombre, bin.comision, function(_, nuevaCom) {
-        bin.comision = nuevaCom;
-        renderBinance();
-        guardarDatos(true);
-        window.mostrarToast("Tarifa sincronizada en la nube");
-      });
+      abrirModalInput(
+        'Editar Modalidad P2P',
+        true,
+        bin.nombre,
+        bin.comision,
+        function(nuevoNombre, nuevaCom) {
+          var eraActiva = (binanceActivoNombre === bin.nombre);
+          bin.nombre = nuevoNombre;
+          bin.comision = nuevaCom;
+          if (eraActiva) {
+            binanceActivoNombre = nuevoNombre;
+            document.getElementById('com-porc-binance').value = nuevaCom;
+            document.getElementById('label-binance-activo').textContent = nuevoNombre + ' (' + nuevaCom + '%)';
+          }
+          renderBinance();
+          actualizarResumenCanal();
+          window.calcularComisiones(1);
+          window.calcularArbitraje();
+          guardarDatos(true);
+          window.mostrarToast("Tarifa sincronizada en la nube");
+        },
+        listaBinance.length > 1 ? function() {
+          listaBinance = listaBinance.filter(function(item) { return item.id !== bin.id; });
+          if (binanceActivoNombre === bin.nombre && listaBinance[0]) {
+            binanceActivoNombre = listaBinance[0].nombre;
+            document.getElementById('com-porc-binance').value = listaBinance[0].comision;
+            document.getElementById('label-binance-activo').textContent = binanceActivoNombre + ' (' + listaBinance[0].comision + '%)';
+          }
+          renderBinance();
+          actualizarResumenCanal();
+          guardarDatos(true);
+          window.mostrarToast("Tarifa eliminada");
+        } : null
+      );
     };
 
     rightWrap.appendChild(badge);
@@ -612,7 +793,7 @@ function renderBinance() {
       renderBinance();
       guardarDatos(true);
       window.mostrarToast("Modalidad guardada en la nube");
-    });
+    }, null);
   };
   grid.appendChild(btnAdd);
 }
@@ -679,6 +860,8 @@ window.actualizarTasasManuales = function(subirNube = true) {
   if(arbC) arbC.value = tasaBCV;
   if(arbV) arbV.value = tasaUSDT;
   
+  asegurarHistoricoGrafico();
+  renderGraficoD3();
   window.calcularMultimoneda();
   window.calcularArbitraje();
   window.calcularMetaNeta();
@@ -772,6 +955,9 @@ window.switchTab = function(tabId, el) {
   var target = document.getElementById('tab-' + tabId);
   if(target) target.classList.add('active');
   if(el) el.classList.add('active');
+  if (tabId === 'inicio') {
+    setTimeout(renderGraficoD3, 60);
+  }
 };
 
 window.calcularComisionTransf = function() {
@@ -901,18 +1087,45 @@ window.registrarOperacion = function() {
   window.mostrarToast('Operación guardada en tu Libro en la Nube');
 };
 
+function parsearNumeroVenezolano(str) {
+  if (typeof str === 'number') return str;
+  if (!str) return 0;
+  var limpio = String(str).replace(/[^\d.,\-]/g, '').replace(/\./g, '').replace(',', '.');
+  return parseFloat(limpio) || 0;
+}
+
 function renderHistorial(filtro) {
   var q = (filtro || '').toLowerCase();
   var container = document.getElementById('historial-cards-container');
   if(!container) return;
   container.innerHTML = '';
 
-  historial.filter(function(h) {
-    return h.canal.toLowerCase().includes(q) || h.nota.toLowerCase().includes(q);
-  }).forEach(function(h) {
+  var filtrados = historial.filter(function(h) {
+    return (h.canal || '').toLowerCase().includes(q) || (h.nota || '').toLowerCase().includes(q);
+  });
+
+  // Actualizar barra de resumen acumulado
+  var totalBs = 0;
+  var totalUsdt = 0;
+  filtrados.forEach(function(h) {
+    totalBs += parseFloat(h.inversionBs) || 0;
+    totalUsdt += parsearNumeroVenezolano(h.gananciaUsdtFinal);
+  });
+
+  var elOps = document.getElementById('libro-total-ops');
+  var elTotBs = document.getElementById('libro-total-bs');
+  var elTotUsdt = document.getElementById('libro-total-usdt');
+  if (elOps) elOps.textContent = filtrados.length;
+  if (elTotBs) elTotBs.textContent = formato(totalBs) + ' Bs';
+  if (elTotUsdt) {
+    elTotUsdt.textContent = (totalUsdt >= 0 ? '+' : '') + formato(totalUsdt) + ' USDT';
+    elTotUsdt.style.color = totalUsdt >= 0 ? 'var(--neon-green)' : 'var(--danger-color)';
+  }
+
+  filtrados.forEach(function(h) {
     var card = document.createElement('div');
     card.className = 'history-card';
-    card.onclick = function() { abrirModalDetalle(h.id); };
+    card.onclick = function() { window.abrirModalDetalle(h.id); };
 
     var left = document.createElement('div');
     var dFecha = document.createElement('div');
@@ -1050,52 +1263,69 @@ window.copiarTexto = function(tipo) {
 window.limpiarTodo = function() {
   document.getElementById('main-amount-input').value = '';
   document.querySelectorAll('input').forEach(function(i) {
-    if(!['input-tasa-bcv','input-tasa-usdt','input-tasa-eur','input-tasa-cop','nuevo-horario','auth-email','auth-password'].includes(i.id)) {
+    if(!['input-tasa-bcv','input-tasa-usdt','input-tasa-eur','input-tasa-cop','nuevo-horario','auth-email','auth-password','com-porc-banco','com-porc-binance','com-porc-personal','arb-com-personal'].includes(i.id)) {
       i.value = '';
     }
   });
-  var cB = document.getElementById('com-porc-banco');
-  var cBin = document.getElementById('com-porc-binance');
-  var cP = document.getElementById('com-porc-personal');
-  var aP = document.getElementById('arb-com-personal');
-  
-  if(cB) cB.value = '2.5';
-  if(cBin) cBin.value = '0.0';
-  if(cP) cP.value = '0';
-  if(aP) aP.value = '0';
-  
-  window.actualizarTasasManuales(true);
-  window.mostrarToast("Campos restablecidos");
+  window.calcularMultimoneda();
+  window.calcularArbitraje();
+  window.calcularMetaNeta();
+  window.mostrarToast("Campos de cálculo limpiados");
 };
 
+// === GRÁFICA D3 REPARADA Y BLINDADA ===
 function renderGraficoD3() {
+  if (typeof d3 === 'undefined') return;
   var container = d3.select("#chart-container");
-  if(container.empty()) return;
+  if (container.empty()) return;
   container.html("");
+
+  asegurarHistoricoGrafico();
 
   var node = container.node();
   if (!node) return;
-  var width = node.getBoundingClientRect().width || 300;
-  var height = 180;
-  var margin = {top: 15, right: 15, bottom: 25, left: 45};
+  var width = node.getBoundingClientRect().width;
+  if (!width || width < 120) width = 310;
+  var height = 190;
+  var margin = {top: 22, right: 20, bottom: 28, left: 48};
 
   var svg = container.append("svg")
     .attr("width", width)
     .attr("height", height);
 
+  var datosLimpios = historicoGrafico.map(function(d) {
+    return {
+      fecha: String(d.fecha || 'Hoy'),
+      bcv: Number(d.bcv) || tasaBCV || 832.48,
+      usdt: Number(d.usdt) || tasaUSDT || 885.10
+    };
+  });
+
   var x = d3.scalePoint()
-    .domain(historicoGrafico.map(function(d) { return d.fecha; }))
-    .range([margin.left, width - margin.right]);
+    .domain(datosLimpios.map(function(d) { return d.fecha; }))
+    .range([margin.left, width - margin.right])
+    .padding(0.2);
+
+  var minVal = d3.min(datosLimpios, function(d) { return Math.min(d.bcv, d.usdt); });
+  var maxVal = d3.max(datosLimpios, function(d) { return Math.max(d.bcv, d.usdt); });
+  if (minVal === maxVal) {
+    minVal = minVal * 0.95;
+    maxVal = maxVal * 1.05;
+  }
 
   var y = d3.scaleLinear()
-    .domain([
-      d3.min(historicoGrafico, function(d) { return Math.min(d.bcv, d.usdt); }) * 0.98,
-      d3.max(historicoGrafico, function(d) { return Math.max(d.bcv, d.usdt); }) * 1.02
-    ])
+    .domain([minVal * 0.985, maxVal * 1.015])
     .range([height - margin.bottom, margin.top]);
 
-  var lineBCV = d3.line().x(function(d) { return x(d.fecha); }).y(function(d) { return y(d.bcv); });
-  var lineUSDT = d3.line().x(function(d) { return x(d.fecha); }).y(function(d) { return y(d.usdt); });
+  var lineBCV = d3.line()
+    .curve(d3.curveMonotoneX)
+    .x(function(d) { return x(d.fecha); })
+    .y(function(d) { return y(d.bcv); });
+
+  var lineUSDT = d3.line()
+    .curve(d3.curveMonotoneX)
+    .x(function(d) { return x(d.fecha); })
+    .y(function(d) { return y(d.usdt); });
 
   svg.append("g")
     .attr("transform", "translate(0," + (height - margin.bottom) + ")")
@@ -1107,19 +1337,41 @@ function renderGraficoD3() {
     .call(d3.axisLeft(y).ticks(4))
     .attr("color", "#64748b");
 
+  // Línea BCV (Verde Neón)
   svg.append("path")
-    .datum(historicoGrafico)
+    .datum(datosLimpios)
     .attr("fill", "none")
     .attr("stroke", "#00e676")
-    .attr("stroke-width", 2.5)
+    .attr("stroke-width", 2.8)
     .attr("d", lineBCV);
 
+  // Línea USDT (Amarillo Oro)
   svg.append("path")
-    .datum(historicoGrafico)
+    .datum(datosLimpios)
     .attr("fill", "none")
     .attr("stroke", "#f0b90b")
-    .attr("stroke-width", 2.5)
+    .attr("stroke-width", 2.8)
     .attr("d", lineUSDT);
+
+  // Puntos BCV
+  svg.selectAll(".dot-bcv")
+    .data(datosLimpios)
+    .enter()
+    .append("circle")
+    .attr("cx", function(d) { return x(d.fecha); })
+    .attr("cy", function(d) { return y(d.bcv); })
+    .attr("r", 3.5)
+    .attr("fill", "#00e676");
+
+  // Puntos USDT
+  svg.selectAll(".dot-usdt")
+    .data(datosLimpios)
+    .enter()
+    .append("circle")
+    .attr("cx", function(d) { return x(d.fecha); })
+    .attr("cy", function(d) { return y(d.usdt); })
+    .attr("r", 3.5)
+    .attr("fill", "#f0b90b");
 }
 
 window.solicitarPermisoNotificaciones = function() {
