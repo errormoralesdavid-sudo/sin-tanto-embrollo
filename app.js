@@ -106,7 +106,6 @@ window.agregarOperador = function(operador) {
   if (!input) return;
   var val = input.value.trim();
   if (val === '') return;
-  // Si ya termina en un operador, lo reemplaza por el nuevo
   if (/[\+\-\*\/]$/.test(val)) {
     input.value = val.slice(0, -1) + operador;
   } else {
@@ -199,7 +198,6 @@ function asegurarHistoricoGrafico() {
 window.onload = function() {
   registrarServiceWorkerYBackgroundSync();
 
-  // Cargamos siempre el respaldo local inmediatamente para que la gráfica y tus datos estén listos desde el segundo 0
   cargarDatosGuardados();
   asegurarHistoricoGrafico();
 
@@ -262,13 +260,15 @@ function sincronizarConfigConServiceWorker() {
   }
 }
 
-function dispararNotificacion(titulo, cuerpo) {
+function dispararNotificacion(titulo, cuerpo, tagPersonalizado) {
   if (!("Notification" in window) || Notification.permission !== "granted") return;
+  var tagFinal = tagPersonalizado || 'finance-pro-alert';
   if (navigator.serviceWorker && navigator.serviceWorker.controller) {
     navigator.serviceWorker.controller.postMessage({
-      type: 'NOTIFY',
+      type: 'SHOW_NOTIFICATION',
       title: titulo,
-      body: cuerpo
+      body: cuerpo,
+      tag: tagFinal
     });
   } else if ('serviceWorker' in navigator) {
     navigator.serviceWorker.ready.then(function(reg) {
@@ -278,7 +278,7 @@ function dispararNotificacion(titulo, cuerpo) {
         badge: './logo.png',
         vibrate: [250, 120, 250],
         renotify: true,
-        tag: 'finance-pro-alert'
+        tag: tagFinal
       });
     });
   }
@@ -896,24 +896,38 @@ window.sincronizarDolarVzlaAPI = async function(mostrarAlerta) {
       var nuevoUsd = parseFloat(data.current.usd);
       if (nuevoUsd && Math.abs(nuevoUsd - tasaBCV) >= 0.01) {
         prevBCV = tasaBCV;
+        var diffUsd = Math.abs(nuevoUsd - prevBCV);
+        var subioUsd = nuevoUsd > prevBCV;
+        var etqUsd = subioUsd ? '[▲ SUBIÓ ' + formato(diffUsd) + ' Bs]' : '[▼ BAJÓ ' + formato(diffUsd) + ' Bs]';
+        var verboUsd = subioUsd ? 'avanza' : 'retrocede';
         if(document.getElementById('input-tasa-bcv')) document.getElementById('input-tasa-bcv').value = nuevoUsd;
         huboCambio = true;
         dispararNotificacion(
-          'Cambio en Dólar BCV Oficial',
-          'Nueva tasa: ' + formato(nuevoUsd) + ' Bs (Antes: ' + formato(prevBCV) + ' Bs)'
+          'Alerta BCV Oficial • Tasa en movimiento',
+          etqUsd + ' El Dólar Oficial ' + verboUsd + ' a ' + formato(nuevoUsd) + ' Bs (Antes: ' + formato(prevBCV) + ' Bs). Ajusta tus cuentas.',
+          'bcv-change-alert'
         );
       }
       var nuevoEur = parseFloat(data.current.eur);
       if (nuevoEur && Math.abs(nuevoEur - tasaEUR) >= 0.01) {
         prevEUR = tasaEUR;
+        var diffEur = Math.abs(nuevoEur - prevEUR);
+        var subioEur = nuevoEur > prevEUR;
+        var etqEur = subioEur ? '[▲ SUBIÓ ' + formato(diffEur) + ' Bs]' : '[▼ BAJÓ ' + formato(diffEur) + ' Bs]';
+        var verboEur = subioEur ? 'sube' : 'cede';
         if(document.getElementById('input-tasa-eur')) document.getElementById('input-tasa-eur').value = nuevoEur;
         huboCambio = true;
+        dispararNotificacion(
+          'Alerta Euro BCV • Nuevo ajuste oficial',
+          etqEur + ' El Euro Oficial ' + verboEur + ' a ' + formato(nuevoEur) + ' Bs (Antes: ' + formato(prevEUR) + ' Bs).',
+          'eur-change-alert'
+        );
       }
     }
     window.actualizarTasasManuales(huboCambio);
     var sync = document.getElementById('sync-status');
     if(sync) sync.textContent = 'Tasas Oficiales Sincronizadas';
-    if (mostrarAlerta) window.mostrarToast('Tasas BCV actualizadas');
+    if (mostrarAlerta) window.mostrarToast('Tasas BCV y Euro actualizadas');
   } catch (error) {
     var sync = document.getElementById('sync-status');
     if(sync) sync.textContent = 'Modo Offline Activo';
@@ -931,11 +945,17 @@ window.sincronizarBinanceP2P = async function(mostrarAlerta) {
       var huboCambio = false;
       if (nuevaTasa && Math.abs(nuevaTasa - tasaUSDT) >= 0.01) {
         prevUSDT = tasaUSDT;
+        var diffUsdt = Math.abs(nuevaTasa - prevUSDT);
+        var subioUsdt = nuevaTasa > prevUSDT;
+        var etqUsdt = subioUsdt ? '[▲ SUBIÓ ' + formato(diffUsdt) + ' Bs]' : '[▼ BAJÓ ' + formato(diffUsdt) + ' Bs]';
+        var accionUsdt = subioUsdt ? 'toma impulso y sube a' : 'retrocede a';
+        var brechaActual = tasaBCV > 0 ? ((nuevaTasa - tasaBCV) / tasaBCV) * 100 : 0;
         if(document.getElementById('input-tasa-usdt')) document.getElementById('input-tasa-usdt').value = nuevaTasa;
         huboCambio = true;
         dispararNotificacion(
-          'Cambio en USDT P2P',
-          'Nueva cotización: ' + formato(nuevaTasa) + ' Bs | BCV: ' + formato(tasaBCV) + ' Bs'
+          'Radar P2P • Movimiento en USDT',
+          etqUsdt + ' El mercado P2P ' + accionUsdt + ' ' + formato(nuevaTasa) + ' Bs (Antes: ' + formato(prevUSDT) + ' Bs) • Brecha: ' + formato(brechaActual) + '%.',
+          'usdt-change-alert'
         );
       }
       window.actualizarTasasManuales(huboCambio);
@@ -1104,7 +1124,6 @@ function renderHistorial(filtro) {
     return (h.canal || '').toLowerCase().includes(q) || (h.nota || '').toLowerCase().includes(q);
   });
 
-  // Actualizar barra de resumen acumulado
   var totalBs = 0;
   var totalUsdt = 0;
   filtrados.forEach(function(h) {
@@ -1337,7 +1356,6 @@ function renderGraficoD3() {
     .call(d3.axisLeft(y).ticks(4))
     .attr("color", "#64748b");
 
-  // Línea BCV (Verde Neón)
   svg.append("path")
     .datum(datosLimpios)
     .attr("fill", "none")
@@ -1345,7 +1363,6 @@ function renderGraficoD3() {
     .attr("stroke-width", 2.8)
     .attr("d", lineBCV);
 
-  // Línea USDT (Amarillo Oro)
   svg.append("path")
     .datum(datosLimpios)
     .attr("fill", "none")
@@ -1353,7 +1370,6 @@ function renderGraficoD3() {
     .attr("stroke-width", 2.8)
     .attr("d", lineUSDT);
 
-  // Puntos BCV
   svg.selectAll(".dot-bcv")
     .data(datosLimpios)
     .enter()
@@ -1363,7 +1379,6 @@ function renderGraficoD3() {
     .attr("r", 3.5)
     .attr("fill", "#00e676");
 
-  // Puntos USDT
   svg.selectAll(".dot-usdt")
     .data(datosLimpios)
     .enter()
@@ -1382,12 +1397,14 @@ window.solicitarPermisoNotificaciones = function() {
   Notification.requestPermission().then(function(permission) {
     if (permission === "granted") {
       var notifStatus = document.getElementById("notif-status");
-      if(notifStatus) notifStatus.textContent = "Alertas Activas (Horarios y Cambios de Tasa)";
+      if(notifStatus) notifStatus.textContent = "Alertas Activas (BCV, Euro, USDT y Horarios)";
       window.mostrarToast("Alertas activadas en segundo plano");
       sincronizarConfigConServiceWorker();
+      var brecha = tasaBCV > 0 ? ((tasaUSDT - tasaBCV) / tasaBCV) * 100 : 0;
       dispararNotificacion(
-        'Alertas Financieras Activas',
-        'BCV: ' + formato(tasaBCV) + ' Bs | USDT P2P: ' + formato(tasaUSDT) + ' Bs'
+        'Radar Finance PRO Activo • Monitoreando Mercado',
+        'BCV: ' + formato(tasaBCV) + ' Bs | EUR: ' + formato(tasaEUR) + ' Bs | USDT: ' + formato(tasaUSDT) + ' Bs (Brecha: ' + formato(brecha) + '%).',
+        'finance-pro-welcome'
       );
     } else {
       var notifStatus = document.getElementById("notif-status");
@@ -1408,9 +1425,11 @@ function iniciarRelojNotificaciones() {
 
     if (listaHorariosNotif.includes(currentTime) && ultimaHoraNotificada !== keyHoy) {
       ultimaHoraNotificada = keyHoy;
+      var brecha = tasaBCV > 0 ? ((tasaUSDT - tasaBCV) / tasaBCV) * 100 : 0;
       dispararNotificacion(
-        'Reporte Programado (' + currentTime + ')',
-        'BCV: ' + formato(tasaBCV) + ' Bs | USDT P2P: ' + formato(tasaUSDT) + ' Bs | EUR: ' + formato(tasaEUR) + ' Bs'
+        'Resumen de Mercado (' + currentTime + ') • Finance PRO',
+        'Así cotiza el día — BCV: ' + formato(tasaBCV) + ' Bs | EUR: ' + formato(tasaEUR) + ' Bs | USDT: ' + formato(tasaUSDT) + ' Bs (Brecha: ' + formato(brecha) + '%).',
+        'scheduled-report-' + currentTime
       );
     }
   }, 15000);
