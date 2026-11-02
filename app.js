@@ -38,6 +38,7 @@ var itemSeleccionadoModal = null;
 var isUserInteracting = false;
 var resumeTimeout = null;
 var aplicandoNube = false;
+var tasasFrescasRecibidas = false;
 
 function sanitizarTexto(str) {
   if (!str) return '';
@@ -195,6 +196,11 @@ function asegurarHistoricoGrafico() {
   }
 }
 
+function sincronizarTodasLasTasasAhora() {
+  window.sincronizarDolarVzlaAPI(false);
+  window.sincronizarBinanceP2P(false);
+}
+
 window.onload = function() {
   registrarServiceWorkerYBackgroundSync();
 
@@ -208,13 +214,11 @@ window.onload = function() {
   window.actualizarTasasManuales(false);
   renderGraficoD3();
   
-  window.sincronizarDolarVzlaAPI(false);
-  window.sincronizarBinanceP2P(false);
+  sincronizarTodasLasTasasAhora();
   
   setInterval(function() {
-    window.sincronizarDolarVzlaAPI(false);
-    window.sincronizarBinanceP2P(false);
-  }, 180000); 
+    sincronizarTodasLasTasasAhora();
+  }, 120000); 
 
   iniciarSmoothSlider();
   iniciarScrollWheelSlider();
@@ -224,6 +228,17 @@ window.onload = function() {
   window.addEventListener('resize', function() {
     renderGraficoD3();
   });
+
+  // Al volver a la app o desbloquear pantalla, actualiza BCV, Euro y P2P al instante
+  window.addEventListener('focus', function() {
+    sincronizarTodasLasTasasAhora();
+  });
+
+  document.addEventListener('visibilitychange', function() {
+    if (document.visibilityState === 'visible') {
+      sincronizarTodasLasTasasAhora();
+    }
+  });
 };
 
 async function registrarServiceWorkerYBackgroundSync() {
@@ -231,6 +246,40 @@ async function registrarServiceWorkerYBackgroundSync() {
     try {
       var reg = await navigator.serviceWorker.register('sw.js');
       sincronizarConfigConServiceWorker();
+
+      // Escuchar actualizaciones en tiempo real enviadas por sw.js
+      navigator.serviceWorker.addEventListener('message', function(event) {
+        if (!event.data || event.data.type !== 'RATES_UPDATED_FROM_SW') return;
+        var huboCambioSW = false;
+        var bcvSW = parseFloat(event.data.bcv);
+        var usdtSW = parseFloat(event.data.usdt);
+        var eurSW = parseFloat(event.data.eur);
+
+        if (bcvSW > 0 && Math.abs(bcvSW - tasaBCV) >= 0.01) {
+          prevBCV = tasaBCV;
+          var inBcv = document.getElementById('input-tasa-bcv');
+          if (inBcv) inBcv.value = bcvSW;
+          huboCambioSW = true;
+        }
+        if (usdtSW > 0 && Math.abs(usdtSW - tasaUSDT) >= 0.01) {
+          prevUSDT = tasaUSDT;
+          var inUsdt = document.getElementById('input-tasa-usdt');
+          if (inUsdt) inUsdt.value = usdtSW;
+          huboCambioSW = true;
+        }
+        if (eurSW > 0 && Math.abs(eurSW - tasaEUR) >= 0.01) {
+          prevEUR = tasaEUR;
+          var inEur = document.getElementById('input-tasa-eur');
+          if (inEur) inEur.value = eurSW;
+          huboCambioSW = true;
+        }
+
+        if (huboCambioSW) {
+          tasasFrescasRecibidas = true;
+          window.actualizarTasasManuales(true);
+          guardarRespaldoLocal();
+        }
+      });
 
       if ('periodicSync' in reg) {
         try {
@@ -375,6 +424,7 @@ window.obtenerPayloadActual = function() {
 function guardarDatos(subirANube = true) {
   var datos = window.obtenerPayloadActual();
   localStorage.setItem('embrollo_data_pro_v5', JSON.stringify(datos));
+  guardarRespaldoLocal();
   sincronizarConfigConServiceWorker();
 
   if (subirANube && !aplicandoNube && window.nubeCargadaInicialmente && window.guardarDatosEnFirebase) {
@@ -386,14 +436,17 @@ window.aplicarDatosDesdeNube = function(datos, esCargaLocal = false) {
   if (!datos) return;
   aplicandoNube = true;
   try {
-    if(datos.bcv && document.getElementById('input-tasa-bcv')) document.getElementById('input-tasa-bcv').value = datos.bcv;
-    if(datos.usdt && document.getElementById('input-tasa-usdt')) document.getElementById('input-tasa-usdt').value = datos.usdt;
-    if(datos.eur && document.getElementById('input-tasa-eur')) document.getElementById('input-tasa-eur').value = datos.eur;
+    // Si aún no hemos recibido tasas frescas de las APIs en esta sesión, usamos las guardadas; si ya llegaron de la API en vivo, no dejamos que la nube las pise con valores viejos
+    if (!tasasFrescasRecibidas || esCargaLocal) {
+      if(datos.bcv && document.getElementById('input-tasa-bcv')) document.getElementById('input-tasa-bcv').value = datos.bcv;
+      if(datos.usdt && document.getElementById('input-tasa-usdt')) document.getElementById('input-tasa-usdt').value = datos.usdt;
+      if(datos.eur && document.getElementById('input-tasa-eur')) document.getElementById('input-tasa-eur').value = datos.eur;
+    }
     if(datos.cop && document.getElementById('input-tasa-cop')) document.getElementById('input-tasa-cop').value = datos.cop;
     
-    if(datos.prevBCV !== undefined) prevBCV = datos.prevBCV;
-    if(datos.prevUSDT !== undefined) prevUSDT = datos.prevUSDT;
-    if(datos.prevEUR !== undefined) prevEUR = datos.prevEUR;
+    if(datos.prevBCV !== undefined && prevBCV === null) prevBCV = datos.prevBCV;
+    if(datos.prevUSDT !== undefined && prevUSDT === null) prevUSDT = datos.prevUSDT;
+    if(datos.prevEUR !== undefined && prevEUR === null) prevEUR = datos.prevEUR;
 
     if (Array.isArray(datos.bancos) && datos.bancos.length > 0) {
       listaBancos = esCargaLocal ? datos.bancos : fusionarListasConfig(listaBancos, datos.bancos);
@@ -450,7 +503,12 @@ window.aplicarDatosDesdeNube = function(datos, esCargaLocal = false) {
     sincronizarConfigConServiceWorker();
   } catch(e) {}
   
-  setTimeout(function() { aplicandoNube = false; }, 350); 
+  setTimeout(function() {
+    aplicandoNube = false;
+    if (!esCargaLocal && !tasasFrescasRecibidas) {
+      sincronizarTodasLasTasasAhora();
+    }
+  }, 300); 
 };
 
 function cargarDatosGuardados() {
@@ -887,48 +945,81 @@ function calcularVariacion(elementId, actual, previo) {
 }
 
 window.sincronizarDolarVzlaAPI = async function(mostrarAlerta) {
-  try {
-    var response = await fetch('https://rates.dolarvzla.com/bcv/current.json');
-    var data = await response.json();
-    var huboCambio = false;
+  var huboCambio = false;
+  var bcvObtenido = false;
 
-    if (data.current) {
-      var nuevoUsd = parseFloat(data.current.usd);
-      if (nuevoUsd && Math.abs(nuevoUsd - tasaBCV) >= 0.01) {
-        prevBCV = tasaBCV;
-        var diffUsd = Math.abs(nuevoUsd - prevBCV);
-        var subioUsd = nuevoUsd > prevBCV;
-        var etqUsd = subioUsd ? '[▲ SUBIÓ ' + formato(diffUsd) + ' Bs]' : '[▼ BAJÓ ' + formato(diffUsd) + ' Bs]';
-        var verboUsd = subioUsd ? 'avanza' : 'retrocede';
-        if(document.getElementById('input-tasa-bcv')) document.getElementById('input-tasa-bcv').value = nuevoUsd;
-        huboCambio = true;
-        dispararNotificacion(
-          'Alerta BCV Oficial • Tasa en movimiento',
-          etqUsd + ' El Dólar Oficial ' + verboUsd + ' a ' + formato(nuevoUsd) + ' Bs (Antes: ' + formato(prevBCV) + ' Bs). Ajusta tus cuentas.',
-          'bcv-change-alert'
-        );
-      }
-      var nuevoEur = parseFloat(data.current.eur);
-      if (nuevoEur && Math.abs(nuevoEur - tasaEUR) >= 0.01) {
-        prevEUR = tasaEUR;
-        var diffEur = Math.abs(nuevoEur - prevEUR);
-        var subioEur = nuevoEur > prevEUR;
-        var etqEur = subioEur ? '[▲ SUBIÓ ' + formato(diffEur) + ' Bs]' : '[▼ BAJÓ ' + formato(diffEur) + ' Bs]';
-        var verboEur = subioEur ? 'sube' : 'cede';
-        if(document.getElementById('input-tasa-eur')) document.getElementById('input-tasa-eur').value = nuevoEur;
-        huboCambio = true;
-        dispararNotificacion(
-          'Alerta Euro BCV • Nuevo ajuste oficial',
-          etqEur + ' El Euro Oficial ' + verboEur + ' a ' + formato(nuevoEur) + ' Bs (Antes: ' + formato(prevEUR) + ' Bs).',
-          'eur-change-alert'
-        );
+  try {
+    var response = await fetch('https://rates.dolarvzla.com/bcv/current.json?t=' + Date.now(), { cache: 'no-store' });
+    if (response.ok) {
+      var data = await response.json();
+      if (data && data.current) {
+        var nuevoUsd = parseFloat(data.current.usd);
+        if (nuevoUsd > 0) {
+          bcvObtenido = true;
+          tasasFrescasRecibidas = true;
+          if (Math.abs(nuevoUsd - tasaBCV) >= 0.01) {
+            prevBCV = tasaBCV;
+            var diffUsd = Math.abs(nuevoUsd - prevBCV);
+            var subioUsd = nuevoUsd > prevBCV;
+            var etqUsd = subioUsd ? '[▲ SUBIÓ ' + formato(diffUsd) + ' Bs]' : '[▼ BAJÓ ' + formato(diffUsd) + ' Bs]';
+            var verboUsd = subioUsd ? 'avanza' : 'retrocede';
+            if(document.getElementById('input-tasa-bcv')) document.getElementById('input-tasa-bcv').value = nuevoUsd;
+            huboCambio = true;
+            dispararNotificacion(
+              'Alerta BCV Oficial • Tasa en movimiento',
+              etqUsd + ' El Dólar Oficial ' + verboUsd + ' a ' + formato(nuevoUsd) + ' Bs (Antes: ' + formato(prevBCV) + ' Bs). Ajusta tus cuentas.',
+              'bcv-change-alert'
+            );
+          }
+        }
+        var nuevoEur = parseFloat(data.current.eur);
+        if (nuevoEur > 0) {
+          tasasFrescasRecibidas = true;
+          if (Math.abs(nuevoEur - tasaEUR) >= 0.01) {
+            prevEUR = tasaEUR;
+            var diffEur = Math.abs(nuevoEur - prevEUR);
+            var subioEur = nuevoEur > prevEUR;
+            var etqEur = subioEur ? '[▲ SUBIÓ ' + formato(diffEur) + ' Bs]' : '[▼ BAJÓ ' + formato(diffEur) + ' Bs]';
+            var verboEur = subioEur ? 'sube' : 'cede';
+            if(document.getElementById('input-tasa-eur')) document.getElementById('input-tasa-eur').value = nuevoEur;
+            huboCambio = true;
+            dispararNotificacion(
+              'Alerta Euro BCV • Nuevo ajuste oficial',
+              etqEur + ' El Euro Oficial ' + verboEur + ' a ' + formato(nuevoEur) + ' Bs (Antes: ' + formato(prevEUR) + ' Bs).',
+              'eur-change-alert'
+            );
+          }
+        }
       }
     }
+  } catch (error) {}
+
+  // Respaldo inmediato con DolarAPI Oficial si el primer servidor falló
+  if (!bcvObtenido) {
+    try {
+      var resBackup = await fetch('https://ve.dolarapi.com/v1/dolares/oficial?t=' + Date.now(), { cache: 'no-store' });
+      if (resBackup.ok) {
+        var dataBackup = await resBackup.json();
+        var usdBackup = parseFloat(dataBackup && dataBackup.promedio);
+        if (usdBackup > 0) {
+          bcvObtenido = true;
+          tasasFrescasRecibidas = true;
+          if (Math.abs(usdBackup - tasaBCV) >= 0.01) {
+            prevBCV = tasaBCV;
+            if(document.getElementById('input-tasa-bcv')) document.getElementById('input-tasa-bcv').value = usdBackup;
+            huboCambio = true;
+          }
+        }
+      }
+    } catch (e2) {}
+  }
+
+  if (bcvObtenido) {
     window.actualizarTasasManuales(huboCambio);
     var sync = document.getElementById('sync-status');
     if(sync) sync.textContent = 'Tasas Oficiales Sincronizadas';
     if (mostrarAlerta) window.mostrarToast('Tasas BCV y Euro actualizadas');
-  } catch (error) {
+  } else {
     var sync = document.getElementById('sync-status');
     if(sync) sync.textContent = 'Modo Offline Activo';
   }
@@ -936,32 +1027,35 @@ window.sincronizarDolarVzlaAPI = async function(mostrarAlerta) {
 
 window.sincronizarBinanceP2P = async function(mostrarAlerta) {
   try {
-    var response = await fetch('https://ve.dolarapi.com/v1/dolares');
+    var response = await fetch('https://ve.dolarapi.com/v1/dolares?t=' + Date.now(), { cache: 'no-store' });
     var data = await response.json();
     var binanceObj = data.find(function(item) { return item.fuente === 'paralelo' || item.fuente === 'cripto'; }) || data[1];
     
     if (binanceObj && binanceObj.promedio) {
       var nuevaTasa = parseFloat(binanceObj.promedio);
       var huboCambio = false;
-      if (nuevaTasa && Math.abs(nuevaTasa - tasaUSDT) >= 0.01) {
-        prevUSDT = tasaUSDT;
-        var diffUsdt = Math.abs(nuevaTasa - prevUSDT);
-        var subioUsdt = nuevaTasa > prevUSDT;
-        var etqUsdt = subioUsdt ? '[▲ SUBIÓ ' + formato(diffUsdt) + ' Bs]' : '[▼ BAJÓ ' + formato(diffUsdt) + ' Bs]';
-        var accionUsdt = subioUsdt ? 'toma impulso y sube a' : 'retrocede a';
-        var brechaActual = tasaBCV > 0 ? ((nuevaTasa - tasaBCV) / tasaBCV) * 100 : 0;
-        if(document.getElementById('input-tasa-usdt')) document.getElementById('input-tasa-usdt').value = nuevaTasa;
-        huboCambio = true;
-        dispararNotificacion(
-          'Radar P2P • Movimiento en USDT',
-          etqUsdt + ' El mercado P2P ' + accionUsdt + ' ' + formato(nuevaTasa) + ' Bs (Antes: ' + formato(prevUSDT) + ' Bs) • Brecha: ' + formato(brechaActual) + '%.',
-          'usdt-change-alert'
-        );
+      if (nuevaTasa > 0) {
+        tasasFrescasRecibidas = true;
+        if (Math.abs(nuevaTasa - tasaUSDT) >= 0.01) {
+          prevUSDT = tasaUSDT;
+          var diffUsdt = Math.abs(nuevaTasa - prevUSDT);
+          var subioUsdt = nuevaTasa > prevUSDT;
+          var etqUsdt = subioUsdt ? '[▲ SUBIÓ ' + formato(diffUsdt) + ' Bs]' : '[▼ BAJÓ ' + formato(diffUsdt) + ' Bs]';
+          var accionUsdt = subioUsdt ? 'toma impulso y sube a' : 'retrocede a';
+          var brechaActual = tasaBCV > 0 ? ((nuevaTasa - tasaBCV) / tasaBCV) * 100 : 0;
+          if(document.getElementById('input-tasa-usdt')) document.getElementById('input-tasa-usdt').value = nuevaTasa;
+          huboCambio = true;
+          dispararNotificacion(
+            'Radar P2P • Movimiento en USDT',
+            etqUsdt + ' El mercado P2P ' + accionUsdt + ' ' + formato(nuevaTasa) + ' Bs (Antes: ' + formato(prevUSDT) + ' Bs) • Brecha: ' + formato(brechaActual) + '%.',
+            'usdt-change-alert'
+          );
+        }
+        window.actualizarTasasManuales(huboCambio);
+        var sync = document.getElementById('sync-status');
+        if(sync) sync.textContent = 'Mercado P2P Sincronizado';
+        if (mostrarAlerta) window.mostrarToast('Tasa USDT P2P actualizada');
       }
-      window.actualizarTasasManuales(huboCambio);
-      var sync = document.getElementById('sync-status');
-      if(sync) sync.textContent = 'Mercado P2P Sincronizado';
-      if (mostrarAlerta) window.mostrarToast('Tasa USDT P2P actualizada');
     }
   } catch (e) {
     var sync = document.getElementById('sync-status');
@@ -1510,6 +1604,7 @@ window.addEventListener('offline', () => {
 
 window.addEventListener('online', () => {
   mostrarAvisoEstadoRed(false);
+  sincronizarTodasLasTasasAhora();
   activarSincronizacionFondo();
 });
 
