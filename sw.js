@@ -1,5 +1,5 @@
-const CACHE_NAME = 'finance-pro-v15';
-const API_CACHE_NAME = 'finance-pro-api-v7';
+const CACHE_NAME = 'finance-pro-v16';
+const API_CACHE_NAME = 'finance-pro-api-v8';
 
 const CORE_ASSETS = [
   './',
@@ -61,6 +61,20 @@ function formatNum(n) {
   });
 }
 
+async function notificarVentanasAbiertas(bcv, usdt, eur) {
+  try {
+    const allClients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    for (const client of allClients) {
+      client.postMessage({
+        type: 'RATES_UPDATED_FROM_SW',
+        bcv: bcv,
+        usdt: usdt,
+        eur: eur
+      });
+    }
+  } catch (e) {}
+}
+
 async function verificarMercadoYAlertarEnFondo() {
   const cfg = (await leerConfigDB()) || {
     horarios: ['04:00', '09:00', '13:00'],
@@ -73,10 +87,11 @@ async function verificarMercadoYAlertarEnFondo() {
   let bcvActual = parseFloat(cfg.tasaBCV) || 0;
   let usdtActual = parseFloat(cfg.tasaUSDT) || 0;
   let eurActual = parseFloat(cfg.tasaEUR) || 0;
+  let huboActualizacion = false;
 
   // 1. Verificar Dólar BCV y Euro BCV Oficial
   try {
-    const resOficial = await fetch('https://rates.dolarvzla.com/bcv/current.json', { cache: 'no-store' });
+    const resOficial = await fetch('https://rates.dolarvzla.com/bcv/current.json?t=' + Date.now(), { cache: 'no-store' });
     if (resOficial.ok) {
       const dataOficial = await resOficial.json();
       if (dataOficial && dataOficial.current) {
@@ -98,7 +113,9 @@ async function verificarMercadoYAlertarEnFondo() {
               renotify: true,
               tag: 'bcv-change-alert'
             });
+            huboActualizacion = true;
           }
+          if (nuevoBCV !== bcvActual) huboActualizacion = true;
           bcvActual = nuevoBCV;
         }
 
@@ -117,15 +134,16 @@ async function verificarMercadoYAlertarEnFondo() {
               renotify: true,
               tag: 'eur-change-alert'
             });
+            huboActualizacion = true;
           }
+          if (nuevoEUR !== eurActual) huboActualizacion = true;
           eurActual = nuevoEUR;
         }
       }
     }
   } catch (e) {
-    // Respaldo para BCV si falla el primer endpoint
     try {
-      const res1 = await fetch('https://ve.dolarapi.com/v1/dolares/oficial', { cache: 'no-store' });
+      const res1 = await fetch('https://ve.dolarapi.com/v1/dolares/oficial?t=' + Date.now(), { cache: 'no-store' });
       if (res1.ok) {
         const d1 = await res1.json();
         if (d1 && d1.promedio) {
@@ -143,7 +161,9 @@ async function verificarMercadoYAlertarEnFondo() {
               renotify: true,
               tag: 'bcv-change-alert'
             });
+            huboActualizacion = true;
           }
+          if (nuevoBCV !== bcvActual) huboActualizacion = true;
           bcvActual = nuevoBCV;
         }
       }
@@ -152,7 +172,7 @@ async function verificarMercadoYAlertarEnFondo() {
 
   // 2. Verificar Mercado USDT P2P
   try {
-    const res2 = await fetch('https://ve.dolarapi.com/v1/dolares/paralelo', { cache: 'no-store' });
+    const res2 = await fetch('https://ve.dolarapi.com/v1/dolares/paralelo?t=' + Date.now(), { cache: 'no-store' });
     if (res2.ok) {
       const d2 = await res2.json();
       if (d2 && d2.promedio) {
@@ -172,13 +192,20 @@ async function verificarMercadoYAlertarEnFondo() {
             renotify: true,
             tag: 'usdt-change-alert'
           });
+          huboActualizacion = true;
         }
+        if (nuevoUSDT !== usdtActual) huboActualizacion = true;
         usdtActual = nuevoUSDT;
       }
     }
   } catch (e) {}
 
-  // 3. Verificar Reportes Programados por Hora
+  // 3. Empujar tasas nuevas directamente a la app si está abierta
+  if (huboActualizacion || bcvActual > 0 || usdtActual > 0) {
+    await notificarVentanasAbiertas(bcvActual, usdtActual, eurActual);
+  }
+
+  // 4. Verificar Reportes Programados por Hora
   const now = new Date();
   const hh = String(now.getHours()).padStart(2, '0');
   const mm = String(now.getMinutes()).padStart(2, '0');
@@ -238,7 +265,7 @@ self.addEventListener('fetch', (e) => {
 
   if (url.hostname.includes('dolarapi.com') || url.hostname.includes('dolarvzla.com')) {
     e.respondWith(
-      fetch(e.request)
+      fetch(e.request, { cache: 'no-store' })
         .then((res) => {
           const clone = res.clone();
           caches.open(API_CACHE_NAME).then((cache) => cache.put(e.request, clone));
@@ -334,9 +361,23 @@ self.addEventListener('message', (e) => {
 self.addEventListener('notificationclick', (e) => {
   e.notification.close();
   e.waitUntil(
-    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((cl) => {
-      if (cl.length > 0) return cl[0].focus();
+    (async () => {
+      const cfg = await leerConfigDB();
+      const cl = await clients.matchAll({ type: 'window', includeUncontrolled: true });
+      if (cl.length > 0) {
+        if (cfg) {
+          cl.forEach((c) =>
+            c.postMessage({
+              type: 'RATES_UPDATED_FROM_SW',
+              bcv: cfg.tasaBCV,
+              usdt: cfg.tasaUSDT,
+              eur: cfg.tasaEUR
+            })
+          );
+        }
+        return cl[0].focus();
+      }
       return clients.openWindow('./');
-    })
+    })()
   );
 });
