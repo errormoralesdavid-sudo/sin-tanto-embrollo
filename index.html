@@ -70,7 +70,7 @@
   </div>
 
   <!-- PANTALLA DE ENTRADA CON VELAS CHINAS EN VIVO + LOGO FLOTANTE GRANDE -->
-  <div id="auth-overlay" class="auth-overlay">
+  <div id="auth-overlay" class="auth-overlay" style="display:none;">
     <svg class="bg-stock-login-svg" viewBox="0 0 800 400" preserveAspectRatio="none">
       <defs>
         <linearGradient id="stockGradLogin" x1="0" y1="0" x2="0" y2="1">
@@ -123,7 +123,7 @@
     </div>
   </div>
 
-  <!-- CABECERA (HEADER) RESTAURADA CON DISEÑO DE ONDA Y ESTADO DE NUBE INTERACTIVO -->
+  <!-- CABECERA (HEADER) CON DISEÑO DE ONDA Y ESTADO DE NUBE INTERACTIVO -->
   <header>
     <svg class="header-ticker-svg" viewBox="0 0 600 60" preserveAspectRatio="none">
       <path class="ticker-wave" d="M0,45 L50,38 L100,42 L150,25 L200,32 L250,18 L300,28 L350,12 L400,24 L450,15 L500,22 L550,8 L600,16" fill="none" stroke="var(--neon-green)" stroke-width="1.5" stroke-opacity="0.32"/>
@@ -134,7 +134,7 @@
       <div>
         <div style="font-size:13px; font-weight:800; letter-spacing:0.6px; color:var(--text-color);">FINANCE PRO</div>
         <div style="font-size:10px; color:var(--neon-green); display:flex; align-items:center; gap:5px;">
-          <span class="live-dot"></span> <span id="cloud-sync-indicator">CONECTANDO NUBE...</span>
+          <span class="live-dot"></span> <span id="cloud-sync-indicator">NUBE SINCRONIZADA</span>
         </div>
       </div>
     </div>
@@ -176,7 +176,7 @@
         <h3>BRECHA CAMBIARIA</h3>
       </div>
       <div class="price" id="rate-spread" style="color:var(--neon-green);">0,00%</div>
-      <div class="trend" style="color:var(--text-muted);">Spread BCV/USDT</div>
+      <div class="trend" id="rate-spread-sub" style="color:var(--text-muted); font-size:10px;">Dif: 0,00 Bs/$ • 1 USDT = 1,00 $</div>
     </div>
 
     <div class="card-rate">
@@ -267,7 +267,7 @@
       </div>
     </div>
 
-    <!-- PESTAÑA 1: INICIO (CONVERTIDOR MULTIMONEDA INTERACTIVO) -->
+    <!-- PESTAÑA 1: INICIO (CONVERTIDOR MULTIMONEDA CON TECLADO PROPIO) -->
     <div id="tab-inicio" class="tab-content active">
       <div class="calc-section desktop-layout">
         <div class="calc-inputs-col">
@@ -302,27 +302,45 @@
 
           <label id="main-input-label" style="margin-top:8px;">Monto en Dólares BCV ($):</label>
           
-          <!-- INPUT MATEMÁTICO CON BOTONES DE SVG -->
+          <!-- BARRA DE MONTO LIMPIA (SOLO PEGAR Y BORRAR) -->
           <div class="math-input-group">
-            <input type="text" inputmode="decimal" id="main-amount-input" placeholder="0.00" oninput="calcularMultimoneda()" onblur="resolverExpresionInput()">
-            <button class="btn-math" onclick="pegarAlInput()" title="Pegar Monto">
+            <input type="text" inputmode="none" readonly id="main-amount-input" placeholder="0.00" onclick="abrirTecladoApp()">
+            <button type="button" class="btn-math" onclick="pegarAlInput()" title="Pegar Monto">
               <svg class="icon-svg-sm" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
             </button>
-            <button class="btn-math" onclick="agregarOperador('/')" title="Dividir">
-              <svg class="icon-svg-sm" viewBox="0 0 24 24"><circle cx="12" cy="6" r="1.5" fill="currentColor"/><line x1="5" y1="12" x2="19" y2="12"/><circle cx="12" cy="18" r="1.5" fill="currentColor"/></svg>
+            <button type="button" class="btn-math danger-key" onclick="borrarDigitoInput()" title="Borrar">
+              <svg class="icon-svg-sm" viewBox="0 0 24 24"><path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"/><line x1="18" y1="9" x2="12" y2="15"/><line x1="12" y1="9" x2="18" y2="15"/></svg>
             </button>
-            <button class="btn-math" onclick="agregarOperador('*')" title="Multiplicar">
-              <svg class="icon-svg-sm" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-            </button>
-            <button class="btn-math" onclick="agregarOperador('-')" title="Restar">
-              <svg class="icon-svg-sm" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            </button>
-            <button class="btn-math" onclick="agregarOperador('+')" title="Sumar">
-              <svg class="icon-svg-sm" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            </button>
-            <button class="btn-math" onclick="resolverExpresionInput()" title="Resolver Operación" style="color:var(--neon-green); border-color:rgba(0,230,118,0.35);">
-              <svg class="icon-svg-sm" viewBox="0 0 24 24"><line x1="5" y1="9" x2="19" y2="9"/><line x1="5" y1="15" x2="19" y2="15"/></svg>
-            </button>
+          </div>
+
+          <!-- TECLADO FINANCIERO PRO INTEGRADO EN LA APLICACIÓN -->
+          <div class="app-keypad-wrap" id="app-custom-keypad">
+            <div class="app-keypad-grid">
+              <button type="button" class="key-btn key-clear" onclick="limpiarInputPrincipal()">C</button>
+              <button type="button" class="key-btn key-op" onclick="aplicarPorcentajeInput()">%</button>
+              <button type="button" class="key-btn key-op" onclick="agregarOperador('/')">÷</button>
+              <button type="button" class="key-btn key-op" onclick="agregarOperador('*')">×</button>
+
+              <button type="button" class="key-btn" onclick="teclearNumero('7')">7</button>
+              <button type="button" class="key-btn" onclick="teclearNumero('8')">8</button>
+              <button type="button" class="key-btn" onclick="teclearNumero('9')">9</button>
+              <button type="button" class="key-btn key-op" onclick="agregarOperador('-')">−</button>
+
+              <button type="button" class="key-btn" onclick="teclearNumero('4')">4</button>
+              <button type="button" class="key-btn" onclick="teclearNumero('5')">5</button>
+              <button type="button" class="key-btn" onclick="teclearNumero('6')">6</button>
+              <button type="button" class="key-btn key-op" onclick="agregarOperador('+')">+</button>
+
+              <button type="button" class="key-btn" onclick="teclearNumero('1')">1</button>
+              <button type="button" class="key-btn" onclick="teclearNumero('2')">2</button>
+              <button type="button" class="key-btn" onclick="teclearNumero('3')">3</button>
+              <button type="button" class="key-btn key-eq" onclick="resolverExpresionInput()">=</button>
+
+              <button type="button" class="key-btn" onclick="teclearNumero('00')">00</button>
+              <button type="button" class="key-btn" onclick="teclearNumero('0')">0</button>
+              <button type="button" class="key-btn" onclick="teclearNumero('.')">.</button>
+              <button type="button" class="key-btn key-op" onclick="borrarDigitoInput()" title="Borrar un dígito">⌫</button>
+            </div>
           </div>
         </div>
         
@@ -381,12 +399,18 @@
         </div>
       </div>
 
+      <!-- CURVA DE RENDIMIENTO MEJORADA + LISTA HISTÓRICA DE FECHAS Y MONTOS -->
       <div class="calc-section">
-        <h2 style="display:flex; align-items:center; justify-content:center; gap:8px;">
+        <h2 style="display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:8px;">
           <svg class="icon-svg" viewBox="0 0 24 24"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
           <span>Curva de Rendimiento BCV vs USDT</span>
         </h2>
-        <div id="chart-container" style="width:100%; height:195px;"></div>
+        <div class="chart-legend-row">
+          <span class="legend-item"><span class="legend-dot" style="background:#00e676;"></span> Dólar BCV Oficial</span>
+          <span class="legend-item"><span class="legend-dot" style="background:#f0b90b;"></span> USDT P2P</span>
+        </div>
+        <div id="chart-container" style="width:100%; height:205px;"></div>
+        <div id="chart-history-list" class="chart-history-list"></div>
       </div>
     </div>
 
@@ -501,14 +525,19 @@
           <label>Capital Inicial en Banco (Bs):</label>
           <input type="number" id="arb-bs-inicial" placeholder="Ej. 128000" oninput="calcularArbitraje()">
           
-          <div style="display:flex; gap:10px;">
+          <div style="display:flex; gap:10px; align-items:flex-end;">
             <div style="flex:1;">
-              <label>Tasa Compra Banco:</label>
-              <input type="number" id="arb-tasa-compra" value="832.48" oninput="calcularArbitraje()">
+              <div class="label-row-flex">
+                <label>Tasa Compra Banco:</label>
+                <button type="button" id="btn-plus-05-banco" class="btn-pill-plus" onclick="toggleRecargo05Banco()" title="Sumar 0.5% bancario para compra de divisa">+0.5% Banco</button>
+              </div>
+              <input type="number" id="arb-tasa-compra" value="832.48" step="0.0001" oninput="calcularArbitraje()">
             </div>
             <div style="flex:1;">
-              <label>Tasa Venta P2P:</label>
-              <input type="number" id="arb-tasa-venta" value="885.10" oninput="calcularArbitraje()">
+              <div class="label-row-flex">
+                <label>Tasa Venta P2P:</label>
+              </div>
+              <input type="number" id="arb-tasa-venta" value="885.10" step="0.0001" oninput="calcularArbitraje()">
             </div>
           </div>
 
@@ -599,26 +628,26 @@
 
   <!-- BARRA DE NAVEGACIÓN INFERIOR 100% SVG -->
   <nav class="nav-bar">
-    <div class="nav-item active" onclick="switchTab('inicio', this)">
+    <div class="nav-item active" id="nav-btn-inicio" onclick="switchTab('inicio', this)">
       <svg class="nav-svg" viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="16" y1="14" x2="16" y2="18"/><path d="M16 10h.01"/><path d="M12 10h.01"/><path d="M8 10h.01"/><path d="M12 14h.01"/><path d="M8 14h.01"/><path d="M12 18h.01"/><path d="M8 18h.01"/></svg>
       <span>Divisas</span>
     </div>
-    <div class="nav-item" onclick="switchTab('comisiones', this)">
+    <div class="nav-item" id="nav-btn-comisiones" onclick="switchTab('comisiones', this)">
       <svg class="nav-svg" viewBox="0 0 24 24"><line x1="19" y1="5" x2="5" y2="19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg>
       <span>Comisiones</span>
     </div>
-    <div class="nav-item" onclick="switchTab('arbitraje', this)">
+    <div class="nav-item" id="nav-btn-arbitraje" onclick="switchTab('arbitraje', this)">
       <svg class="nav-svg" viewBox="0 0 24 24"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
       <span>Arbitraje</span>
     </div>
   </nav>
 
-  <!-- FIREBASE V10 SDK VINCULADO POR CORREO ELECTRÓNICO EN FINANZAS_USUARIOS -->
+  <!-- FIREBASE V10 SDK CON SESIÓN PERMANENTE BLINDADA -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
     import { 
-      getAuth, 
-      setPersistence, 
+      initializeAuth,
+      indexedDBLocalPersistence,
       browserLocalPersistence, 
       signInWithEmailAndPassword, 
       signOut, 
@@ -642,15 +671,22 @@
     };
 
     const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
+    const auth = initializeAuth(app, {
+      persistence: [indexedDBLocalPersistence, browserLocalPersistence]
+    });
     const db = getFirestore(app);
 
     let unsubscribeCloud = null;
-    let currentDocId = null;
-    let currentUserUid = null;
-    window.nubeCargadaInicialmente = false; // CANDADO GLOBAL DE SEGURIDAD
+    let currentDocId = localStorage.getItem('finance_pro_logged_email') || null;
+    let currentUserUid = localStorage.getItem('finance_pro_logged_uid') || null;
+    window.nubeCargadaInicialmente = false;
 
-    setPersistence(auth, browserLocalPersistence).catch(() => {});
+    // Si ya había sesión guardada localmente, ocultamos el login desde el milisegundo 0
+    if (localStorage.getItem('user_session_active') === 'true' && currentDocId) {
+      document.getElementById('auth-overlay').style.display = 'none';
+    } else {
+      document.getElementById('auth-overlay').style.display = 'flex';
+    }
 
     window.guardarDatosEnFirebase = async function(payload, mostrarConfirmacion = false) {
       if (!currentDocId || !window.nubeCargadaInicialmente) {
@@ -672,8 +708,6 @@
         }
       } catch (e) {
         console.error("Error guardando en Firestore:", e);
-        const ind = document.getElementById('cloud-sync-indicator');
-        if (ind) ind.textContent = "ERROR PERMISOS NUBE";
       }
     };
 
@@ -686,12 +720,14 @@
     async function iniciarEscuchaNube(user) {
       currentDocId = (user.email || user.uid).toLowerCase().trim();
       currentUserUid = user.uid;
+      localStorage.setItem('finance_pro_logged_email', currentDocId);
+      localStorage.setItem('finance_pro_logged_uid', currentUserUid);
+      localStorage.setItem('user_session_active', 'true');
       window.nubeCargadaInicialmente = false;
 
       if (unsubscribeCloud) unsubscribeCloud();
       const userRef = doc(db, 'finanzas_usuarios', currentDocId);
 
-      // 1. Lectura inicial prioritaria para no perder jamás datos previos
       try {
         const initialSnap = await getDoc(userRef);
         if (initialSnap.exists()) {
@@ -712,7 +748,6 @@
         console.error("Error en lectura inicial:", err);
       }
 
-      // 2. Escucha en tiempo real continua entre dispositivos
       unsubscribeCloud = onSnapshot(userRef, (snap) => {
         if (snap.exists()) {
           const cloudData = snap.data();
@@ -743,6 +778,8 @@
       try {
         const cred = await signInWithEmailAndPassword(auth, email, pass);
         localStorage.setItem('user_session_active', 'true');
+        localStorage.setItem('finance_pro_logged_email', (cred.user.email || cred.user.uid).toLowerCase().trim());
+        localStorage.setItem('finance_pro_logged_uid', cred.user.uid);
         document.getElementById('auth-overlay').style.display = 'none';
         iniciarEscuchaNube(cred.user);
         if (window.mostrarToast) window.mostrarToast("Sesión iniciada correctamente");
@@ -758,6 +795,8 @@
       currentUserUid = null;
       window.nubeCargadaInicialmente = false;
       localStorage.removeItem('user_session_active');
+      localStorage.removeItem('finance_pro_logged_email');
+      localStorage.removeItem('finance_pro_logged_uid');
       await signOut(auth);
       document.getElementById('auth-overlay').style.display = 'flex';
     };
@@ -768,9 +807,12 @@
         document.getElementById('auth-overlay').style.display = 'none';
         iniciarEscuchaNube(user);
       } else {
-        window.nubeCargadaInicialmente = false;
-        localStorage.removeItem('user_session_active');
-        document.getElementById('auth-overlay').style.display = 'flex';
+        // Solo pedimos correo y clave si el usuario realmente cerró sesión manualmente
+        const sesionGuardada = localStorage.getItem('user_session_active') === 'true' && localStorage.getItem('finance_pro_logged_email');
+        if (!sesionGuardada) {
+          window.nubeCargadaInicialmente = false;
+          document.getElementById('auth-overlay').style.display = 'flex';
+        }
       }
     });
 
