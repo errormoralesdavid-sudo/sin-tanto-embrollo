@@ -10,6 +10,7 @@ var prevEUR = null;
 var monedaActiva = 'USD';
 var bancoActivoNombre = 'BdV';
 var binanceActivoNombre = 'Maker';
+var recargo05BancoActivo = false;
 
 var historial = [];
 var historicoGrafico = [];
@@ -86,14 +87,101 @@ function fallbackCopiar(texto) {
   window.mostrarToast("Copiado: " + texto);
 }
 
-// === FUNCIONES DEL INPUT MATEMÁTICO ===
+// === TECLADO FINANCIERO PRO INTEGRADO EN LA APLICACIÓN ===
+window.abrirTecladoApp = function() {
+  var kp = document.getElementById('app-custom-keypad');
+  if (kp) kp.style.display = 'block';
+};
+
+window.teclearNumero = function(digito) {
+  var input = document.getElementById('main-amount-input');
+  if (!input) return;
+  var actual = input.value;
+
+  if (digito === '.') {
+    var partes = actual.split(/[\+\-\*\/]/);
+    var ultimoBloque = partes[partes.length - 1];
+    if (ultimoBloque.includes('.')) return;
+    if (ultimoBloque === '') {
+      input.value = actual + '0.';
+    } else {
+      input.value = actual + '.';
+    }
+  } else if (digito === '00') {
+    if (actual === '' || actual === '0') {
+      input.value = '0';
+    } else {
+      input.value = actual + '00';
+    }
+  } else {
+    if (actual === '0') {
+      input.value = digito;
+    } else {
+      input.value = actual + digito;
+    }
+  }
+  window.calcularMultimoneda();
+};
+
+window.borrarDigitoInput = function() {
+  var input = document.getElementById('main-amount-input');
+  if (!input || !input.value) return;
+  input.value = input.value.slice(0, -1);
+  window.calcularMultimoneda();
+};
+
+window.limpiarInputPrincipal = function() {
+  var input = document.getElementById('main-amount-input');
+  if (!input) return;
+  input.value = '';
+  window.calcularMultimoneda();
+};
+
+window.aplicarPorcentajeInput = function() {
+  var input = document.getElementById('main-amount-input');
+  if (!input || !input.value) return;
+  var expr = input.value.replace(/,/g, '.').trim();
+
+  // Caso 1: base + X% o base - X% (ej. 100+10% => 110)
+  var matchSumaResta = expr.match(/^([0-9.]+)([\+\-])([0-9.]+)$/);
+  if (matchSumaResta) {
+    var base = parseFloat(matchSumaResta[1]) || 0;
+    var op = matchSumaResta[2];
+    var pct = parseFloat(matchSumaResta[3]) || 0;
+    var delta = base * (pct / 100);
+    var res = op === '+' ? (base + delta) : (base - delta);
+    input.value = Number(res.toFixed(2));
+    window.calcularMultimoneda();
+    return;
+  }
+
+  // Caso 2: base * X% o base / X%
+  var matchMultDiv = expr.match(/^([0-9.]+)([\*\/])([0-9.]+)$/);
+  if (matchMultDiv) {
+    var baseM = parseFloat(matchMultDiv[1]) || 0;
+    var opM = matchMultDiv[2];
+    var pctM = (parseFloat(matchMultDiv[3]) || 0) / 100;
+    var resM = opM === '*' ? (baseM * pctM) : (pctM !== 0 ? baseM / pctM : 0);
+    input.value = Number(resM.toFixed(2));
+    window.calcularMultimoneda();
+    return;
+  }
+
+  // Caso 3: un solo número (ej. 50% => 0.5)
+  var numSimple = parseFloat(expr);
+  if (isFinite(numSimple)) {
+    input.value = Number((numSimple / 100).toFixed(4));
+    window.calcularMultimoneda();
+  }
+};
+
 window.pegarAlInput = async function() {
   try {
     var texto = await navigator.clipboard.readText();
     var numLimpiado = texto.replace(/[^0-9.,+\-*/]/g, ''); 
     if (numLimpiado) {
       var input = document.getElementById('main-amount-input');
-      input.value = numLimpiado;
+      input.value = numLimpiado.replace(/,/g, '.');
       window.calcularMultimoneda();
       window.mostrarToast("Monto pegado");
     }
@@ -112,7 +200,6 @@ window.agregarOperador = function(operador) {
   } else {
     input.value = val + operador;
   }
-  input.focus();
 };
 
 window.resolverExpresionInput = function() {
@@ -130,6 +217,66 @@ window.resolverExpresionInput = function() {
     }
   } catch (e) {}
 };
+
+// === BOTÓN +0.5% TASA COMPRA BANCO EN ARBITRAJE ===
+window.toggleRecargo05Banco = function() {
+  recargo05BancoActivo = !recargo05BancoActivo;
+  var btn = document.getElementById('btn-plus-05-banco');
+  var arbC = document.getElementById('arb-tasa-compra');
+  if (btn) {
+    btn.classList.toggle('active', recargo05BancoActivo);
+  }
+  if (arbC) {
+    var tasaCalculada = recargo05BancoActivo ? +(tasaBCV * 1.005).toFixed(4) : +tasaBCV.toFixed(4);
+    arbC.value = tasaCalculada;
+  }
+  window.calcularArbitraje();
+  guardarDatos(true);
+  window.mostrarToast(recargo05BancoActivo ? "Aplicado +0.5% bancario a Tasa Compra" : "Tasa Compra restaurada a BCV oficial");
+};
+
+// === CONTROL DEL BOTÓN ATRÁS DEL CELULAR ===
+function iniciarControlBotonAtras() {
+  try {
+    window.history.replaceState({ tab: 'inicio' }, '', window.location.pathname);
+    window.history.pushState({ tab: 'inicio' }, '', window.location.pathname);
+  } catch (e) {}
+
+  window.addEventListener('popstate', function() {
+    var modalDetalle = document.getElementById('modal-detalle');
+    var modalCustom = document.getElementById('modal-input-custom');
+    var panelConfig = document.getElementById('panel-configuracion');
+    var tabInicio = document.getElementById('tab-inicio');
+
+    // 1. Si hay un modal abierto, lo cierra primero
+    if (modalDetalle && modalDetalle.style.display === 'flex') {
+      window.cerrarModalDetalle(null);
+      try { window.history.pushState({ tab: 'active' }, '', window.location.pathname); } catch (e) {}
+      return;
+    }
+    if (modalCustom && modalCustom.style.display === 'flex') {
+      window.cerrarModalInput();
+      try { window.history.pushState({ tab: 'active' }, '', window.location.pathname); } catch (e) {}
+      return;
+    }
+    if (panelConfig && panelConfig.style.display === 'block') {
+      panelConfig.style.display = 'none';
+      try { window.history.pushState({ tab: 'active' }, '', window.location.pathname); } catch (e) {}
+      return;
+    }
+
+    // 2. Si está en Comisiones o Arbitraje, regresa a Inicio (Divisas) sin cerrar la app
+    if (tabInicio && !tabInicio.classList.contains('active')) {
+      var btnInicio = document.getElementById('nav-btn-inicio') || document.querySelector('.nav-item');
+      window.switchTab('inicio', btnInicio, true);
+      try { window.history.pushState({ tab: 'inicio' }, '', window.location.pathname); } catch (e) {}
+      return;
+    }
+
+    // 3. Mantener el estado para evitar salida accidental
+    try { window.history.pushState({ tab: 'inicio' }, '', window.location.pathname); } catch (e) {}
+  });
+}
 
 // === FUSIÓN INTELIGENTE PARA NO PERDER DATOS ENTRE TELÉFONO Y NUBE ===
 function fusionarListasConfig(listaLocal, listaNube) {
@@ -172,9 +319,18 @@ function fusionarHistorialContable(histLocal, histNube) {
   return combinado;
 }
 
+function obtenerEtiquetaFechaCorto(diasAtras) {
+  var d = new Date();
+  d.setDate(d.getDate() - diasAtras);
+  var dia = String(d.getDate()).padStart(2, '0');
+  var mes = String(d.getMonth() + 1).padStart(2, '0');
+  return dia + '/' + mes;
+}
+
 function asegurarHistoricoGrafico() {
   var bcvBase = parseFloat(tasaBCV) || 832.48;
   var usdtBase = parseFloat(tasaUSDT) || 885.10;
+  var fechaHoyStr = obtenerEtiquetaFechaCorto(0);
 
   var valido = Array.isArray(historicoGrafico) && historicoGrafico.length >= 2 && historicoGrafico.every(function(d) {
     return d && isFinite(Number(d.bcv)) && Number(d.bcv) > 0 && isFinite(Number(d.usdt)) && Number(d.usdt) > 0;
@@ -182,14 +338,21 @@ function asegurarHistoricoGrafico() {
 
   if (!valido) {
     historicoGrafico = [
-      { fecha: 'T-3', bcv: +(bcvBase * 0.985).toFixed(2), usdt: +(usdtBase * 0.980).toFixed(2) },
-      { fecha: 'T-2', bcv: +(bcvBase * 0.992).toFixed(2), usdt: +(usdtBase * 0.990).toFixed(2) },
-      { fecha: 'Ayer', bcv: +(bcvBase * 0.997).toFixed(2), usdt: +(usdtBase * 0.995).toFixed(2) },
-      { fecha: 'Hoy', bcv: +bcvBase.toFixed(2), usdt: +usdtBase.toFixed(2) }
+      { fecha: obtenerEtiquetaFechaCorto(3), bcv: +(bcvBase * 0.985).toFixed(2), usdt: +(usdtBase * 0.980).toFixed(2) },
+      { fecha: obtenerEtiquetaFechaCorto(2), bcv: +(bcvBase * 0.992).toFixed(2), usdt: +(usdtBase * 0.990).toFixed(2) },
+      { fecha: obtenerEtiquetaFechaCorto(1), bcv: +(bcvBase * 0.997).toFixed(2), usdt: +(usdtBase * 0.995).toFixed(2) },
+      { fecha: 'Hoy (' + fechaHoyStr + ')', bcv: +bcvBase.toFixed(2), usdt: +usdtBase.toFixed(2) }
     ];
   } else {
-    historicoGrafico[historicoGrafico.length - 1] = {
-      fecha: 'Hoy',
+    // Reemplaza etiquetas genéricas T-3, T-2, Ayer por fechas reales
+    var total = historicoGrafico.length;
+    for (var i = 0; i < total - 1; i++) {
+      if (/^(T-\d|Ayer)$/i.test(String(historicoGrafico[i].fecha))) {
+        historicoGrafico[i].fecha = obtenerEtiquetaFechaCorto(total - 1 - i);
+      }
+    }
+    historicoGrafico[total - 1] = {
+      fecha: 'Hoy (' + fechaHoyStr + ')',
       bcv: +bcvBase.toFixed(2),
       usdt: +usdtBase.toFixed(2)
     };
@@ -203,6 +366,7 @@ function sincronizarTodasLasTasasAhora() {
 
 window.onload = function() {
   registrarServiceWorkerYBackgroundSync();
+  iniciarControlBotonAtras();
 
   cargarDatosGuardados();
   asegurarHistoricoGrafico();
@@ -229,7 +393,6 @@ window.onload = function() {
     renderGraficoD3();
   });
 
-  // Al volver a la app o desbloquear pantalla, actualiza BCV, Euro y P2P al instante
   window.addEventListener('focus', function() {
     sincronizarTodasLasTasasAhora();
   });
@@ -247,7 +410,6 @@ async function registrarServiceWorkerYBackgroundSync() {
       var reg = await navigator.serviceWorker.register('sw.js');
       sincronizarConfigConServiceWorker();
 
-      // Escuchar actualizaciones en tiempo real enviadas por sw.js
       navigator.serviceWorker.addEventListener('message', function(event) {
         if (!event.data || event.data.type !== 'RATES_UPDATED_FROM_SW') return;
         var huboCambioSW = false;
@@ -346,6 +508,7 @@ function iniciarScrollWheelSlider() {
 
 function iniciarAutoScrollEnInputs() {
   document.querySelectorAll('input').forEach(function(input) {
+    if (input.id === 'main-amount-input') return;
     input.addEventListener('focus', function() {
       var self = this;
       setTimeout(function() {
@@ -412,6 +575,7 @@ window.obtenerPayloadActual = function() {
     historicoGrafico: historicoGrafico,
     horariosNotif: listaHorariosNotif,
     monedaActiva: monedaActiva,
+    recargo05BancoActivo: recargo05BancoActivo,
     comPorcBanco: document.getElementById('com-porc-banco') ? document.getElementById('com-porc-banco').value : 0,
     comPorcBinance: document.getElementById('com-porc-binance') ? document.getElementById('com-porc-binance').value : 0,
     comPorcPersonal: document.getElementById('com-porc-personal') ? document.getElementById('com-porc-personal').value : 0,
@@ -436,7 +600,6 @@ window.aplicarDatosDesdeNube = function(datos, esCargaLocal = false) {
   if (!datos) return;
   aplicandoNube = true;
   try {
-    // Si aún no hemos recibido tasas frescas de las APIs en esta sesión, usamos las guardadas; si ya llegaron de la API en vivo, no dejamos que la nube las pise con valores viejos
     if (!tasasFrescasRecibidas || esCargaLocal) {
       if(datos.bcv && document.getElementById('input-tasa-bcv')) document.getElementById('input-tasa-bcv').value = datos.bcv;
       if(datos.usdt && document.getElementById('input-tasa-usdt')) document.getElementById('input-tasa-usdt').value = datos.usdt;
@@ -447,6 +610,12 @@ window.aplicarDatosDesdeNube = function(datos, esCargaLocal = false) {
     if(datos.prevBCV !== undefined && prevBCV === null) prevBCV = datos.prevBCV;
     if(datos.prevUSDT !== undefined && prevUSDT === null) prevUSDT = datos.prevUSDT;
     if(datos.prevEUR !== undefined && prevEUR === null) prevEUR = datos.prevEUR;
+
+    if (datos.recargo05BancoActivo !== undefined) {
+      recargo05BancoActivo = Boolean(datos.recargo05BancoActivo);
+      var btn05 = document.getElementById('btn-plus-05-banco');
+      if (btn05) btn05.classList.toggle('active', recargo05BancoActivo);
+    }
 
     if (Array.isArray(datos.bancos) && datos.bancos.length > 0) {
       listaBancos = esCargaLocal ? datos.bancos : fusionarListasConfig(listaBancos, datos.bancos);
@@ -909,13 +1078,24 @@ window.actualizarTasasManuales = function(subirNube = true) {
   calcularVariacion('var-usdt', tasaUSDT, prevUSDT);
   calcularVariacion('var-eur', tasaEUR, prevEUR);
 
+  // Brecha Cambiaria en %, diferencia en Bs/$ y equivalencia 1 USDT en $ BCV
   var spread = tasaBCV > 0 ? ((tasaUSDT - tasaBCV) / tasaBCV) * 100 : 0;
+  var diffBs = tasaUSDT - tasaBCV;
+  var eqUsdBcv = tasaBCV > 0 ? (tasaUSDT / tasaBCV) : 1;
+
   var rSpread = document.getElementById('rate-spread');
+  var rSpreadSub = document.getElementById('rate-spread-sub');
   if(rSpread) rSpread.textContent = spread.toFixed(2) + '%';
+  if(rSpreadSub) {
+    var signo = diffBs >= 0 ? '+' : '';
+    rSpreadSub.textContent = 'Dif: ' + signo + formato(diffBs) + ' Bs/$ • 1 USDT = ' + formato(eqUsdBcv) + ' $ BCV';
+  }
 
   var arbC = document.getElementById('arb-tasa-compra');
   var arbV = document.getElementById('arb-tasa-venta');
-  if(arbC) arbC.value = tasaBCV;
+  if(arbC) {
+    arbC.value = recargo05BancoActivo ? +(tasaBCV * 1.005).toFixed(4) : +tasaBCV.toFixed(4);
+  }
   if(arbV) arbV.value = tasaUSDT;
   
   asegurarHistoricoGrafico();
@@ -994,7 +1174,6 @@ window.sincronizarDolarVzlaAPI = async function(mostrarAlerta) {
     }
   } catch (error) {}
 
-  // Respaldo inmediato con DolarAPI Oficial si el primer servidor falló
   if (!bcvObtenido) {
     try {
       var resBackup = await fetch('https://ve.dolarapi.com/v1/dolares/oficial?t=' + Date.now(), { cache: 'no-store' });
@@ -1063,12 +1242,17 @@ window.sincronizarBinanceP2P = async function(mostrarAlerta) {
   }
 };
 
-window.switchTab = function(tabId, el) {
+window.switchTab = function(tabId, el, desdeBotonAtras = false) {
   document.querySelectorAll('.tab-content').forEach(function(t) { t.classList.remove('active'); });
   document.querySelectorAll('.nav-item').forEach(function(i) { i.classList.remove('active'); });
   var target = document.getElementById('tab-' + tabId);
   if(target) target.classList.add('active');
   if(el) el.classList.add('active');
+
+  if (!desdeBotonAtras && tabId !== 'inicio') {
+    try { window.history.pushState({ tab: tabId }, '', window.location.pathname); } catch (e) {}
+  }
+
   if (tabId === 'inicio') {
     setTimeout(renderGraficoD3, 60);
   }
@@ -1376,7 +1560,7 @@ window.copiarTexto = function(tipo) {
 window.limpiarTodo = function() {
   document.getElementById('main-amount-input').value = '';
   document.querySelectorAll('input').forEach(function(i) {
-    if(!['input-tasa-bcv','input-tasa-usdt','input-tasa-eur','input-tasa-cop','nuevo-horario','auth-email','auth-password','com-porc-banco','com-porc-binance','com-porc-personal','arb-com-personal'].includes(i.id)) {
+    if(!['input-tasa-bcv','input-tasa-usdt','input-tasa-eur','input-tasa-cop','nuevo-horario','auth-email','auth-password','com-porc-banco','com-porc-binance','com-porc-personal','arb-com-personal','arb-tasa-compra','arb-tasa-venta'].includes(i.id)) {
       i.value = '';
     }
   });
@@ -1386,7 +1570,30 @@ window.limpiarTodo = function() {
   window.mostrarToast("Campos de cálculo limpiados");
 };
 
-// === GRÁFICA D3 REPARADA Y BLINDADA ===
+// === GRÁFICA D3 MEJORADA CON ÁREAS DEGRADADAS + LISTA HISTÓRICA DE FECHAS Y MONTOS ===
+function renderTablaHistoricoGrafico(datosLimpios) {
+  var listCont = document.getElementById('chart-history-list');
+  if (!listCont) return;
+  listCont.innerHTML = '';
+
+  var head = document.createElement('div');
+  head.className = 'chart-history-row chart-history-head';
+  head.innerHTML = '<span>Fecha</span><span style="text-align:right;">Dólar BCV</span><span style="text-align:right;">USDT P2P</span><span style="text-align:right;">Brecha</span>';
+  listCont.appendChild(head);
+
+  datosLimpios.slice().reverse().forEach(function(d) {
+    var brechaDia = d.bcv > 0 ? ((d.usdt - d.bcv) / d.bcv) * 100 : 0;
+    var row = document.createElement('div');
+    row.className = 'chart-history-row';
+    row.innerHTML =
+      '<strong style="color:var(--text-color);">' + sanitizarTexto(d.fecha) + '</strong>' +
+      '<span style="text-align:right; color:#00e676; font-weight:700;">' + formato(d.bcv) + ' Bs</span>' +
+      '<span style="text-align:right; color:#f0b90b; font-weight:700;">' + formato(d.usdt) + ' Bs</span>' +
+      '<span style="text-align:right; color:var(--text-muted); font-weight:600;">' + brechaDia.toFixed(2) + '%</span>';
+    listCont.appendChild(row);
+  });
+}
+
 function renderGraficoD3() {
   if (typeof d3 === 'undefined') return;
   var container = d3.select("#chart-container");
@@ -1395,17 +1602,6 @@ function renderGraficoD3() {
 
   asegurarHistoricoGrafico();
 
-  var node = container.node();
-  if (!node) return;
-  var width = node.getBoundingClientRect().width;
-  if (!width || width < 120) width = 310;
-  var height = 190;
-  var margin = {top: 22, right: 20, bottom: 28, left: 48};
-
-  var svg = container.append("svg")
-    .attr("width", width)
-    .attr("height", height);
-
   var datosLimpios = historicoGrafico.map(function(d) {
     return {
       fecha: String(d.fecha || 'Hoy'),
@@ -1413,6 +1609,35 @@ function renderGraficoD3() {
       usdt: Number(d.usdt) || tasaUSDT || 885.10
     };
   });
+
+  renderTablaHistoricoGrafico(datosLimpios);
+
+  var node = container.node();
+  if (!node) return;
+  var width = node.getBoundingClientRect().width;
+  if (!width || width < 120) width = 310;
+  var height = 200;
+  var margin = {top: 24, right: 24, bottom: 28, left: 48};
+
+  var svg = container.append("svg")
+    .attr("width", width)
+    .attr("height", height);
+
+  var defs = svg.append("defs");
+
+  var gradUSDT = defs.append("linearGradient")
+    .attr("id", "gradAreaUSDT")
+    .attr("x1", "0%").attr("y1", "0%")
+    .attr("x2", "0%").attr("y2", "100%");
+  gradUSDT.append("stop").attr("offset", "0%").attr("stop-color", "#f0b90b").attr("stop-opacity", 0.28);
+  gradUSDT.append("stop").attr("offset", "100%").attr("stop-color", "#f0b90b").attr("stop-opacity", 0.0);
+
+  var gradBCV = defs.append("linearGradient")
+    .attr("id", "gradAreaBCV")
+    .attr("x1", "0%").attr("y1", "0%")
+    .attr("x2", "0%").attr("y2", "100%");
+  gradBCV.append("stop").attr("offset", "0%").attr("stop-color", "#00e676").attr("stop-opacity", 0.25);
+  gradBCV.append("stop").attr("offset", "100%").attr("stop-color", "#00e676").attr("stop-opacity", 0.0);
 
   var x = d3.scalePoint()
     .domain(datosLimpios.map(function(d) { return d.fecha; }))
@@ -1427,8 +1652,20 @@ function renderGraficoD3() {
   }
 
   var y = d3.scaleLinear()
-    .domain([minVal * 0.985, maxVal * 1.015])
+    .domain([minVal * 0.982, maxVal * 1.018])
     .range([height - margin.bottom, margin.top]);
+
+  var areaUSDT = d3.area()
+    .curve(d3.curveMonotoneX)
+    .x(function(d) { return x(d.fecha); })
+    .y0(height - margin.bottom)
+    .y1(function(d) { return y(d.usdt); });
+
+  var areaBCV = d3.area()
+    .curve(d3.curveMonotoneX)
+    .x(function(d) { return x(d.fecha); })
+    .y0(height - margin.bottom)
+    .y1(function(d) { return y(d.bcv); });
 
   var lineBCV = d3.line()
     .curve(d3.curveMonotoneX)
@@ -1439,6 +1676,16 @@ function renderGraficoD3() {
     .curve(d3.curveMonotoneX)
     .x(function(d) { return x(d.fecha); })
     .y(function(d) { return y(d.usdt); });
+
+  svg.append("path")
+    .datum(datosLimpios)
+    .attr("fill", "url(#gradAreaUSDT)")
+    .attr("d", areaUSDT);
+
+  svg.append("path")
+    .datum(datosLimpios)
+    .attr("fill", "url(#gradAreaBCV)")
+    .attr("d", areaBCV);
 
   svg.append("g")
     .attr("transform", "translate(0," + (height - margin.bottom) + ")")
@@ -1470,8 +1717,10 @@ function renderGraficoD3() {
     .append("circle")
     .attr("cx", function(d) { return x(d.fecha); })
     .attr("cy", function(d) { return y(d.bcv); })
-    .attr("r", 3.5)
-    .attr("fill", "#00e676");
+    .attr("r", 4)
+    .attr("fill", "#00e676")
+    .attr("stroke", "#0b0e11")
+    .attr("stroke-width", 1.5);
 
   svg.selectAll(".dot-usdt")
     .data(datosLimpios)
@@ -1479,8 +1728,10 @@ function renderGraficoD3() {
     .append("circle")
     .attr("cx", function(d) { return x(d.fecha); })
     .attr("cy", function(d) { return y(d.usdt); })
-    .attr("r", 3.5)
-    .attr("fill", "#f0b90b");
+    .attr("r", 4)
+    .attr("fill", "#f0b90b")
+    .attr("stroke", "#0b0e11")
+    .attr("stroke-width", 1.5);
 }
 
 window.solicitarPermisoNotificaciones = function() {
