@@ -1,4 +1,4 @@
-const CACHE_NAME = 'finance-pro-v16';
+const CACHE_NAME = 'finance-pro-v17';
 const API_CACHE_NAME = 'finance-pro-api-v8';
 
 const CORE_ASSETS = [
